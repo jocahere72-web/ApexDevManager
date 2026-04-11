@@ -8,3 +8,4 @@ export * from './api-response.js';
 export * from './auth.js';
 export * from './connections.js';
 export * from './errors.js';
+export * from './explorer.js';
