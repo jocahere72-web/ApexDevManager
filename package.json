@@ -1,0 +1,23 @@
+{
+  "name": "apex-dev-manager",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AI-native enterprise platform for Oracle APEX ecosystems on OCI",
+  "scripts": {
+    "test": "npm run test:api && npm run test:web",
+    "test:api": "cd apps/api && npm test",
+    "test:web": "cd apps/web && npm test",
+    "lint": "eslint . --ext .ts,.tsx",
+    "lint:fix": "eslint . --ext .ts,.tsx --fix",
+    "format": "prettier --check \"**/*.{ts,tsx,json,md}\"",
+    "format:fix": "prettier --write \"**/*.{ts,tsx,json,md}\"",
+    "typecheck": "tsc --noEmit",
+    "build": "pnpm -r build",
+    "dev": "pnpm -r --parallel dev"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@9.1.0"
+}

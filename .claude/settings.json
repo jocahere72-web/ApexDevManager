@@ -5,13 +5,18 @@
       "Bash(gh *)",
       "Bash(npm test*)",
       "Bash(npm run*)",
+      "Bash(pnpm *)",
+      "Bash(npx *)",
       "Bash(python3 scripts/*)",
       "Bash(bash scripts/*)",
       "Bash(node tests/*)",
       "Skill(create-issue *)",
       "Skill(start-issue *)",
       "Skill(close-issue *)",
-      "Skill(status)"
+      "Skill(create-pr *)",
+      "Skill(start-unit *)",
+      "Skill(project-info *)",
+      "Skill(status *)"
     ]
   },
   "hooks": {

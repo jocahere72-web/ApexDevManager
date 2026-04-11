@@ -1,5 +1,5 @@
 # Pre-commit hooks for Harness-Driven Development
-# Install: pre-commit install
+# Install: pre-commit install && pre-commit install --hook-type commit-msg
 # Run manually: pre-commit run --all-files
 
 repos:
@@ -17,3 +17,23 @@ repos:
         entry: bash scripts/check_issue_ref.sh
         language: system
         stages: [commit-msg]
+
+  # Code quality: ESLint
+  - repo: local
+    hooks:
+      - id: eslint
+        name: ESLint
+        entry: npx eslint --fix
+        language: system
+        types_or: [javascript, jsx, ts, tsx]
+        pass_filenames: true
+
+  # Code quality: Prettier
+  - repo: local
+    hooks:
+      - id: prettier
+        name: Prettier
+        entry: npx prettier --write
+        language: system
+        types_or: [javascript, jsx, ts, tsx, json, yaml, markdown, css]
+        pass_filenames: true
