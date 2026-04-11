@@ -1,0 +1,96 @@
+# APEX API - Staging Environment Values
+# ==============================================================================
+
+replicaCount: 2
+
+image:
+  repository: iad.ocir.io/apex-staging/apex-api
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 3000
+
+resources:
+  requests:
+    memory: '256Mi'
+    cpu: '200m'
+  limits:
+    memory: '512Mi'
+    cpu: '1000m'
+
+env:
+  NODE_ENV: 'staging'
+  LOG_LEVEL: 'info'
+  LOG_FORMAT: 'json'
+  PORT: '3000'
+  DB_SSL: 'true'
+  REDIS_TLS: 'true'
+  CORS_ORIGINS: 'https://staging.apex.example.com'
+  RATE_LIMIT_ENABLED: 'true'
+  RATE_LIMIT_WINDOW_MS: '60000'
+  RATE_LIMIT_MAX: '100'
+
+secrets:
+  # Injected from OCI Vault via CSI driver (prod-like configuration)
+  DB_URL: 'vault://apex-staging/db-url'
+  REDIS_URL: 'vault://apex-staging/redis-url'
+  JWT_SECRET: 'vault://apex-staging/jwt-secret'
+  ENCRYPTION_KEY: 'vault://apex-staging/encryption-key'
+
+ingress:
+  enabled: true
+  className: 'nginx'
+  annotations:
+    cert-manager.io/cluster-issuer: 'letsencrypt-staging'
+    nginx.ingress.kubernetes.io/ssl-redirect: 'true'
+    nginx.ingress.kubernetes.io/force-ssl-redirect: 'true'
+  hosts:
+    - host: api-staging.apex.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: apex-api-staging-tls
+      hosts:
+        - api-staging.apex.example.com
+
+autoscaling:
+  enabled: false
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 3000
+  initialDelaySeconds: 15
+  periodSeconds: 20
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /health
+    port: 3000
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  failureThreshold: 3
+
+nodeSelector:
+  env: staging
+tolerations: []
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - apex-api
+          topologyKey: kubernetes.io/hostname

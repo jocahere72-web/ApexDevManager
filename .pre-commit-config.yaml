@@ -18,7 +18,7 @@ repos:
         language: system
         stages: [commit-msg]
 
-  # Code quality: ESLint
+  # Code quality: ESLint (only app source code)
   - repo: local
     hooks:
       - id: eslint
@@ -26,14 +26,16 @@ repos:
         entry: npx eslint --fix
         language: system
         types_or: [javascript, jsx, ts, tsx]
+        exclude: (terraform/|deploy/helm/|migrations/)
         pass_filenames: true
 
-  # Code quality: Prettier
+  # Code quality: Prettier (exclude Helm templates and Terraform)
   - repo: local
     hooks:
       - id: prettier
         name: Prettier
-        entry: npx prettier --write
+        entry: npx prettier --write --ignore-unknown
         language: system
-        types_or: [javascript, jsx, ts, tsx, json, yaml, markdown, css]
+        types_or: [javascript, jsx, ts, tsx, json, css]
+        exclude: (terraform/|deploy/helm/|\.tpl$|build_spec\.yaml|deploy-spec\.yaml)
         pass_filenames: true

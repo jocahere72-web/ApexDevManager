@@ -1,0 +1,76 @@
+# APEX API - QA Environment Values
+# ==============================================================================
+
+replicaCount: 2
+
+image:
+  repository: iad.ocir.io/apex-qa/apex-api
+  tag: latest
+  pullPolicy: Always
+
+service:
+  type: ClusterIP
+  port: 3000
+
+resources:
+  requests:
+    memory: '128Mi'
+    cpu: '100m'
+  limits:
+    memory: '256Mi'
+    cpu: '500m'
+
+env:
+  NODE_ENV: 'qa'
+  LOG_LEVEL: 'info'
+  LOG_FORMAT: 'json'
+  PORT: '3000'
+  DB_SSL: 'true'
+  REDIS_TLS: 'false'
+  CORS_ORIGINS: 'https://qa.apex.example.com'
+  RATE_LIMIT_ENABLED: 'true'
+  RATE_LIMIT_WINDOW_MS: '60000'
+  RATE_LIMIT_MAX: '200'
+
+secrets:
+  # Injected from OCI Vault via CSI driver
+  DB_URL: 'vault://apex-qa/db-url'
+  REDIS_URL: 'vault://apex-qa/redis-url'
+  JWT_SECRET: 'vault://apex-qa/jwt-secret'
+  ENCRYPTION_KEY: 'vault://apex-qa/encryption-key'
+
+ingress:
+  enabled: true
+  className: 'nginx'
+  annotations:
+    cert-manager.io/cluster-issuer: 'letsencrypt-qa'
+  hosts:
+    - host: api-qa.apex.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: apex-api-qa-tls
+      hosts:
+        - api-qa.apex.example.com
+
+autoscaling:
+  enabled: false
+
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 3000
+  initialDelaySeconds: 15
+  periodSeconds: 20
+
+readinessProbe:
+  httpGet:
+    path: /health
+    port: 3000
+  initialDelaySeconds: 10
+  periodSeconds: 10
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

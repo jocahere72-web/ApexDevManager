@@ -1,0 +1,59 @@
+version: 0.1
+component: deployment
+timeoutInSeconds: 600
+shell: bash
+env:
+  variables:
+    HELM_RELEASE_NAME: 'apex'
+    HELM_NAMESPACE: 'apex'
+    HELM_TIMEOUT: '300s'
+
+steps:
+  - type: Command
+    name: 'Configure kubectl'
+    command: |
+      oci ce cluster create-kubeconfig \
+        --cluster-id ${OKE_CLUSTER_OCID} \
+        --file $HOME/.kube/config \
+        --region ${OCI_REGION} \
+        --token-version 2.0.0
+
+  - type: Command
+    name: 'Run Pre-Deploy Checks'
+    command: |
+      chmod +x deploy/scripts/pre-deploy.sh
+      ./deploy/scripts/pre-deploy.sh
+
+  - type: Command
+    name: 'Deploy API via Helm'
+    command: |
+      helm upgrade --install ${HELM_RELEASE_NAME}-api \
+        deploy/helm/apex-api \
+        --namespace ${HELM_NAMESPACE} \
+        --create-namespace \
+        --values deploy/helm/apex-api/values-${DEPLOY_ENVIRONMENT}.yaml \
+        --set image.tag=${OCI_BUILD_RUN_ID} \
+        --set image.repository=${OCI_REGISTRY}/apex-api \
+        --timeout ${HELM_TIMEOUT} \
+        --wait \
+        --atomic
+
+  - type: Command
+    name: 'Deploy Web via Helm'
+    command: |
+      helm upgrade --install ${HELM_RELEASE_NAME}-web \
+        deploy/helm/apex-web \
+        --namespace ${HELM_NAMESPACE} \
+        --create-namespace \
+        --values deploy/helm/apex-web/values-${DEPLOY_ENVIRONMENT}.yaml \
+        --set image.tag=${OCI_BUILD_RUN_ID} \
+        --set image.repository=${OCI_REGISTRY}/apex-web \
+        --timeout ${HELM_TIMEOUT} \
+        --wait \
+        --atomic
+
+  - type: Command
+    name: 'Run Post-Deploy Checks'
+    command: |
+      chmod +x deploy/scripts/post-deploy.sh
+      ./deploy/scripts/post-deploy.sh

@@ -1,0 +1,15 @@
+node_modules
+dist
+test
+tests
+__tests__
+coverage
+*.md
+.env*
+.git
+.gitignore
+.eslintrc*
+.prettierrc*
+tsconfig*.json
+jest.config.*
+vitest.config.*

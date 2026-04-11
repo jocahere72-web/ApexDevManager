@@ -1,0 +1,68 @@
+# APEX API - Development Environment Values
+# ==============================================================================
+
+replicaCount: 1
+
+image:
+  repository: iad.ocir.io/apex-dev/apex-api
+  tag: latest
+  pullPolicy: Always
+
+service:
+  type: ClusterIP
+  port: 3000
+
+resources:
+  requests:
+    memory: '64Mi'
+    cpu: '50m'
+  limits:
+    memory: '128Mi'
+    cpu: '200m'
+
+env:
+  NODE_ENV: 'development'
+  LOG_LEVEL: 'debug'
+  LOG_FORMAT: 'pretty'
+  PORT: '3000'
+  DB_SSL: 'false'
+  REDIS_TLS: 'false'
+  CORS_ORIGINS: '*'
+  RATE_LIMIT_ENABLED: 'false'
+
+secrets:
+  DB_URL: 'postgresql://apex:apex_dev_pass@apex-db:5432/apex_dev'
+  REDIS_URL: 'redis://apex-redis:6379/0'
+  JWT_SECRET: 'dev-jwt-secret-not-for-production'
+  ENCRYPTION_KEY: 'dev-encryption-key-not-for-production-32ch'
+
+ingress:
+  enabled: true
+  className: 'nginx'
+  hosts:
+    - host: api.apex.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+autoscaling:
+  enabled: false
+
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 3000
+  initialDelaySeconds: 10
+  periodSeconds: 15
+
+readinessProbe:
+  httpGet:
+    path: /health
+    port: 3000
+  initialDelaySeconds: 5
+  periodSeconds: 10
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
