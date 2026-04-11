@@ -1,0 +1,374 @@
+Actúa como una oficina completa de Product Engineering AI-DLC compuesta por:
+
+- Chief Product Officer
+- Enterprise Solution Architect
+- Oracle APEX Lead Architect
+- OCI Cloud Architect
+- Oracle DBA Architect
+- DevOps & Release Manager
+- QA Director
+- FinOps Lead
+- Security & Compliance Architect
+- AI Product Architect
+- UX/UI Enterprise Designer
+- Technical Documentation Lead
+- CTO Advisor
+
+Tu misión es diseñar el producto enterprise completo llamado:
+
+APEX Dev Manager
+
+IMPORTANTE:
+No quiero un MVP.
+No quiero una propuesta comercial.
+No quiero texto superficial.
+
+Quiero una ESPECIFICACIÓN ENTERPRISE COMPLETA, ACCIONABLE Y LISTA PARA EJECUCIÓN bajo metodología AI-DLC.
+
+La salida debe estar orientada a construcción real de software.
+
+==================================================
+1. CONTEXTO DEL PRODUCTO
+==================================================
+
+APEX Dev Manager es una plataforma web AI-native que centraliza de forma integral:
+
+- diseño funcional
+- desarrollo
+- mantenimiento
+- testing
+- gobierno de cambios
+- releases
+- observabilidad
+- documentación viva
+- control de costos
+- seguridad
+- auditoría
+- soporte
+- operación continua
+
+para ecosistemas Oracle APEX desplegados sobre Oracle Cloud Infrastructure (OCI).
+
+Debe operar como CENTRO DE COMANDO del ciclo de vida completo de aplicaciones Oracle APEX.
+
+Debe permitir administración centralizada de múltiples:
+
+- tenancies OCI
+- compartments
+- ambientes
+- workspaces APEX
+- aplicaciones
+- módulos
+- esquemas
+- ORDS
+- APIs
+- jobs
+- pipelines
+- releases
+- incidencias
+- costos
+
+La plataforma debe ser AI-native con copilotos especializados.
+
+==================================================
+2. VISIÓN DEL PRODUCTO
+==================================================
+
+Convertirse en la plataforma líder de gobierno, desarrollo y operación inteligente para ecosistemas Oracle APEX empresariales sobre OCI.
+
+Debe reducir:
+
+- dependencia de personas clave
+- errores de despliegue
+- falta de trazabilidad
+- deuda técnica
+- costos ocultos
+- tiempos de mantenimiento
+- riesgo operativo
+- fallas de seguridad
+
+Debe aumentar:
+
+- velocidad de desarrollo
+- control técnico
+- trazabilidad
+- calidad
+- visibilidad ejecutiva
+- eficiencia financiera
+- observabilidad
+- gobernanza
+
+==================================================
+3. PROBLEMAS A RESOLVER
+==================================================
+
+Diseña la solución para resolver:
+
+1. falta de visibilidad sobre aplicaciones APEX
+2. releases manuales y riesgosos
+3. poca trazabilidad entre requerimientos y cambios
+4. documentación técnica desactualizada
+5. falta de gobierno de cambios
+6. dificultad para monitorear performance
+7. alto costo OCI sin visibilidad
+8. dependencia de desarrolladores senior
+9. testing insuficiente
+10. dificultad para entender código legado
+11. soporte reactivo
+12. ausencia de auditoría completa
+
+==================================================
+4. MÓDULOS OBLIGATORIOS
+==================================================
+
+Diseña arquitectura completa para estos módulos:
+
+A. Ecosystem Discovery Manager
+- descubrimiento automático de workspaces
+- aplicaciones
+- módulos
+- páginas
+- procesos
+- componentes
+- autenticación
+- autorizaciones
+- objetos DB
+- paquetes PL/SQL
+- jobs
+- ORDS services
+- REST APIs
+
+B. AI Design Studio
+- generación asistida de especificaciones
+- análisis de impacto
+- copiloto funcional
+- copiloto técnico APEX
+- sugerencias UX
+- generación SQL/PLSQL
+- documentación automática
+- análisis de dependencias
+
+C. Change Governance Center
+- solicitudes de cambio
+- evaluación impacto
+- scoring de riesgo
+- aprobaciones multinivel
+- segregación de funciones
+- evidencia de auditoría
+
+D. Release Control Tower
+- versionamiento
+- paquetes release
+- aprobaciones
+- deployment windows
+- rollback
+- evidencias post-release
+- estado por ambiente
+
+E. Test & Quality Hub
+- casos de prueba
+- smoke tests
+- regresión
+- validación estándares
+- análisis código
+- scoring calidad
+
+F. OCI Observability Center
+- performance
+- sesiones
+- errores
+- trazas
+- logs
+- DB health
+- ORDS health
+- alertas
+
+G. FinOps & Cost Control
+- costo por ambiente
+- costo por app
+- costo por módulo
+- tendencia
+- forecasting
+- alertas de sobreconsumo
+- optimización OCI
+
+H. Living Documentation Hub
+- documentación viva
+- manuales funcionales
+- manuales técnicos
+- diccionario de objetos
+- historial cambios
+
+I. AI Support Copilot
+- análisis de incidentes
+- root cause analysis
+- sugerencias corrección
+- correlación cambio-incidente
+
+==================================================
+5. ENTREGABLES OBLIGATORIOS
+==================================================
+
+Construye TODAS estas secciones:
+
+1. Executive Summary
+2. Product Vision
+3. Business Objectives
+4. Strategic Value Proposition
+5. Stakeholders
+6. User Personas
+7. Functional Scope
+8. Out of Scope
+9. Enterprise Functional Architecture
+10. Enterprise Technical Architecture
+11. Module Architecture
+12. End-to-End Flows
+13. Functional Requirements (RF)
+14. Non Functional Requirements (NFR)
+15. Business Rules
+16. Domain Model
+17. Conceptual Data Model
+18. Core Entities
+19. Entity Relationships
+20. API & Integration Design
+21. OCI Integration Strategy
+22. Oracle APEX Metadata Strategy
+23. Security Model
+24. IAM / RBAC Matrix
+25. Audit Model
+26. Logging Strategy
+27. Monitoring Strategy
+28. Release Strategy
+29. Testing Strategy
+30. Deployment Strategy
+31. Backup / DR Strategy
+32. AI Copilot Strategy
+33. Anti-hallucination Strategy
+34. FinOps Model
+35. KPI Framework
+36. Product Dashboard Design
+37. Operations Command Center Design
+38. Epic Backlog
+39. User Stories
+40. Acceptance Criteria
+41. Risk Matrix
+42. Technical Debt Risks
+43. Compliance Risks
+44. Adoption Risks
+45. Dependency Matrix
+46. Assumptions
+47. Implementation Roadmap
+48. Delivery Phases
+49. Success Metrics
+50. Open Questions
+
+==================================================
+6. CALIDAD DE LA RESPUESTA
+==================================================
+
+Cada requisito funcional debe escribirse así:
+
+RF-001
+Nombre
+Descripción
+Prioridad
+Actor
+Entradas
+Proceso
+Salida
+Excepciones
+Criterio de aceptación
+
+Cada NFR debe ser medible:
+
+Ejemplo:
+NFR-001 Disponibilidad >= 99.95%
+
+Cada módulo debe incluir:
+
+- objetivo
+- funcionalidades
+- entradas
+- salidas
+- reglas
+- riesgos
+- KPIs
+- dependencias
+
+Cada épica debe incluir historias de usuario.
+
+Cada historia debe incluir criterio Given / When / Then.
+
+==================================================
+7. ARQUITECTURA
+==================================================
+
+Diseña arquitectura pensando en:
+
+- Oracle APEX
+- Oracle DB
+- OCI
+- ORDS
+- OCI Logging
+- OCI Monitoring
+- OCI Cost Analysis
+- OCI IAM
+- OCI DevOps
+- Object Storage
+- VCN / LB / Network
+- Vault / Secrets
+- AI services
+- observabilidad
+- trazabilidad
+
+==================================================
+8. DASHBOARD PRINCIPAL
+==================================================
+
+Diseña dashboard ejecutivo en tiempo real con:
+
+- estado general ecosistema
+- incidentes críticos
+- releases activos
+- cambios pendientes
+- costos OCI
+- performance apps
+- errores por aplicación
+- top riesgos
+- top usuarios activos
+- salud por ambiente
+- alertas IA
+- deuda técnica
+- releases fallidos
+- consumo presupuesto cloud
+
+==================================================
+9. ENFOQUE AI-DLC
+==================================================
+
+Trabaja como si este documento fuera la base para:
+
+- PRD
+- arquitectura
+- sprint backlog
+- desarrollo
+- QA
+- operación
+- soporte
+- gobierno
+
+La salida debe servir como documento maestro de construcción.
+
+==================================================
+10. BLOQUE FINAL OBLIGATORIO
+==================================================
+
+Al final agrega:
+
+A. decisiones críticas que debe tomar el sponsor
+B. vacíos funcionales
+C. riesgos de arquitectura
+D. quick wins para fase 1
+E. backlog sugerido para primeros 90 días
+
+Ahora genera la ESPECIFICACIÓN ENTERPRISE COMPLETA.
