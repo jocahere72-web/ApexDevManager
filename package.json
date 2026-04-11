@@ -4,20 +4,29 @@
   "private": true,
   "description": "AI-native enterprise platform for Oracle APEX ecosystems on OCI",
   "scripts": {
-    "test": "npm run test:api && npm run test:web",
-    "test:api": "cd apps/api && npm test",
-    "test:web": "cd apps/web && npm test",
-    "lint": "eslint . --ext .ts,.tsx",
-    "lint:fix": "eslint . --ext .ts,.tsx --fix",
+    "test": "turbo run test",
+    "test:api": "turbo run test --filter=@apex-dev/api",
+    "test:web": "turbo run test --filter=@apex-dev/web",
+    "lint": "turbo run lint",
+    "lint:fix": "turbo run lint -- --fix",
     "format": "prettier --check \"**/*.{ts,tsx,json,md}\"",
     "format:fix": "prettier --write \"**/*.{ts,tsx,json,md}\"",
-    "typecheck": "tsc --noEmit",
-    "build": "pnpm -r build",
-    "dev": "pnpm -r --parallel dev"
+    "typecheck": "turbo run typecheck",
+    "build": "turbo run build",
+    "dev": "turbo run dev"
   },
   "engines": {
-    "node": ">=18.0.0",
-    "pnpm": ">=8.0.0"
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
   },
-  "packageManager": "pnpm@9.1.0"
+  "packageManager": "pnpm@9.1.0",
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "eslint": "^9.0.0",
+    "prettier": "^3.3.0",
+    "turbo": "^2.0.0",
+    "typescript": "^5.5.0",
+    "typescript-eslint": "^8.0.0"
+  }
 }

@@ -1,0 +1,103 @@
+# APEX API - Production Environment Values
+# ==============================================================================
+
+replicaCount: 2
+
+image:
+  repository: iad.ocir.io/apex-prod/apex-api
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 3000
+
+resources:
+  requests:
+    memory: '256Mi'
+    cpu: '250m'
+  limits:
+    memory: '512Mi'
+    cpu: '1000m'
+
+env:
+  NODE_ENV: 'production'
+  LOG_LEVEL: 'warn'
+  LOG_FORMAT: 'json'
+  PORT: '3000'
+  DB_SSL: 'true'
+  REDIS_TLS: 'true'
+  CORS_ORIGINS: 'https://apex.example.com'
+  RATE_LIMIT_ENABLED: 'true'
+  RATE_LIMIT_WINDOW_MS: '60000'
+  RATE_LIMIT_MAX: '60'
+
+secrets:
+  # Injected from OCI Vault via CSI driver (production secrets)
+  DB_URL: 'vault://apex-prod/db-url'
+  REDIS_URL: 'vault://apex-prod/redis-url'
+  JWT_SECRET: 'vault://apex-prod/jwt-secret'
+  ENCRYPTION_KEY: 'vault://apex-prod/encryption-key'
+
+ingress:
+  enabled: true
+  className: 'nginx'
+  annotations:
+    cert-manager.io/cluster-issuer: 'letsencrypt-prod'
+    nginx.ingress.kubernetes.io/ssl-redirect: 'true'
+    nginx.ingress.kubernetes.io/force-ssl-redirect: 'true'
+    nginx.ingress.kubernetes.io/proxy-body-size: '10m'
+    nginx.ingress.kubernetes.io/rate-limit: 'on'
+    nginx.ingress.kubernetes.io/rate-limit-rps: '50'
+  hosts:
+    - host: api.apex.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: apex-api-prod-tls
+      hosts:
+        - api.apex.example.com
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 3000
+  initialDelaySeconds: 20
+  periodSeconds: 30
+  failureThreshold: 3
+  timeoutSeconds: 5
+
+readinessProbe:
+  httpGet:
+    path: /health
+    port: 3000
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  failureThreshold: 3
+  timeoutSeconds: 5
+
+nodeSelector:
+  env: production
+tolerations: []
+affinity:
+  podAntiAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchExpressions:
+            - key: app
+              operator: In
+              values:
+                - apex-api
+        topologyKey: kubernetes.io/hostname

@@ -1,0 +1,66 @@
+replicaCount: 1
+
+image:
+  repository: apex-api
+  pullPolicy: IfNotPresent
+  tag: '0.1.0'
+
+imagePullSecrets: []
+nameOverride: ''
+fullnameOverride: ''
+
+serviceAccount:
+  create: true
+  annotations:
+    oci.oraclecloud.com/workload-identity: 'true'
+  name: ''
+
+service:
+  type: ClusterIP
+  port: 3001
+
+probes:
+  liveness:
+    path: /health
+    initialDelaySeconds: 15
+    periodSeconds: 20
+    timeoutSeconds: 5
+    failureThreshold: 3
+  readiness:
+    path: /ready
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+resources:
+  limits:
+    cpu: 250m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+
+config:
+  nodeEnv: production
+  logLevel: info
+  port: '3001'
+
+secrets:
+  vaultOCID: ''
+  provider: oci
+
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1001
+  readOnlyRootFilesystem: true
+  allowPrivilegeEscalation: false
+
+podSecurityContext:
+  fsGroup: 1001

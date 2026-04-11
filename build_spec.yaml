@@ -1,0 +1,72 @@
+version: 0.1
+component: build
+timeoutInSeconds: 1800
+shell: bash
+env:
+  variables:
+    NODE_VERSION: '20'
+    PNPM_VERSION: '9'
+  exportedVariables:
+    - BUILD_HASH
+    - BUILD_TIMESTAMP
+
+steps:
+  - type: Command
+    name: 'Set Build Metadata'
+    command: |
+      export BUILD_HASH=$(git rev-parse --short HEAD)
+      export BUILD_TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+      echo "Build Hash: ${BUILD_HASH}"
+      echo "Build Timestamp: ${BUILD_TIMESTAMP}"
+
+  - type: Command
+    name: 'Install Dependencies'
+    command: |
+      npm install -g pnpm@${PNPM_VERSION}
+      pnpm install --frozen-lockfile
+
+  - type: Command
+    name: 'Lint'
+    command: |
+      pnpm lint
+
+  - type: Command
+    name: 'Type Check'
+    command: |
+      pnpm typecheck
+
+  - type: Command
+    name: 'Test'
+    command: |
+      pnpm test
+
+  - type: Command
+    name: 'Build'
+    command: |
+      pnpm build
+
+  - type: Command
+    name: 'Build API Docker Image'
+    command: |
+      docker build \
+        --build-arg BUILD_HASH=${BUILD_HASH} \
+        --build-arg BUILD_TIMESTAMP=${BUILD_TIMESTAMP} \
+        -t apex-api:${OCI_BUILD_RUN_ID} \
+        apps/api
+
+  - type: Command
+    name: 'Build Web Docker Image'
+    command: |
+      docker build \
+        --build-arg BUILD_HASH=${BUILD_HASH} \
+        --build-arg BUILD_TIMESTAMP=${BUILD_TIMESTAMP} \
+        -t apex-web:${OCI_BUILD_RUN_ID} \
+        apps/web
+
+outputArtifacts:
+  - name: apex-api-image
+    type: DOCKER_IMAGE
+    location: apex-api:${OCI_BUILD_RUN_ID}
+  - name: apex-web-image
+    type: DOCKER_IMAGE
+    location: apex-web:${OCI_BUILD_RUN_ID}

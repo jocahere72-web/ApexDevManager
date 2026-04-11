@@ -1,0 +1,15 @@
+[
+  {
+    "name": "APEX Demo",
+    "slug": "apex-demo",
+    "plan": "PROFESSIONAL",
+    "status": "ACTIVE",
+    "settings": {
+      "maxUsers": 50,
+      "maxConnections": 10,
+      "maxEnvironments": 4,
+      "aiCreditsMonthly": 1000,
+      "features": ["ai-studio", "prd-builder", "change-manager"]
+    }
+  }
+]

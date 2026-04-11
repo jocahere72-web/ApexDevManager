@@ -1,0 +1,37 @@
+replicaCount: 1
+
+image:
+  repository: apex-web
+  pullPolicy: IfNotPresent
+  tag: '0.1.0'
+
+imagePullSecrets: []
+nameOverride: ''
+fullnameOverride: ''
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: false
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+  hosts:
+    - host: apex.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+  #  - secretName: apex-web-tls
+  #    hosts:
+  #      - apex.example.com
+
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 50m
+    memory: 64Mi

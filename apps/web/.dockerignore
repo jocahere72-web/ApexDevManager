@@ -1,0 +1,12 @@
+node_modules
+dist
+coverage
+*.md
+.env*
+.git
+.gitignore
+.eslintrc*
+.prettierrc*
+tsconfig*.json
+vite.config.*
+vitest.config.*

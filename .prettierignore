@@ -1,0 +1,12 @@
+dist
+build
+coverage
+node_modules
+.next
+*.min.js
+pnpm-lock.yaml
+terraform/
+deploy/helm/
+*.tpl
+build_spec.yaml
+deploy/deploy-spec.yaml
