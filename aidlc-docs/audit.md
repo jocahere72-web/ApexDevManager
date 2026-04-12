@@ -2,6 +2,66 @@
 
 ---
 
+## User Request — Follow-up Findings Review
+**Timestamp**: 2026-04-12T04:08:25Z
+**User Input**: "# Review findings:
+
+## Finding 1 (apps/api/src/modules/schema-inspector/schema.service.ts:62-67) [added]
+[P1] Repositorio de conexiones se invoca sin client tenant-scoped
+
+`getConnectionForTenant()` acepta `client?: PoolClient`, pero este consumidor lo llama sin pasarlo, asi que `tenantQuery()` cae al fallback de `pool.query()`. El query ya usa columnas reales, pero no usa el cliente donde `tenantResolver()` aplico `app.current_tenant`, dejando RLS incompleto en Explorer/Editor/Schema/Dependencies/Auto Docs.
+
+## Finding 2 (apps/api/src/modules/explorer/explorer.service.ts:84-85) [added]
+[P1] Explorer convierte workspaceName a WORKSPACE_ID
+
+El repositorio solo mapea `workspace_name` a `config.workspaceName`, pero Explorer hace `Number(conn.config.workspaceName ?? 0)` y lo pasa a consultas que filtran por `WORKSPACE_ID`. Si el valor es un nombre de workspace, termina como `NaN` y el listado de aplicaciones puede quedar vacio o fallar.
+
+## Finding 3 (apps/web/package.json:14) [added]
+[P1] Dependencia compartida omitida afecta muchos módulos
+
+Decenas de imports usan `@apex-dev-manager/shared-types`, pero API y web no lo declaran como dependencia workspace. El problema no se limita a Explorer: impacta múltiples módulos backend y frontend en instalación limpia.
+
+## My request for Codex:
+"
+**AI Response**: "Verifique `apps/web/package.json` y `apps/api/package.json`; ambos declaran `@apex-dev-manager/shared-types` como `workspace:^`, asi que el tercer hallazgo esta resuelto/no aplica en el estado actual. Actualice `revision.md` con la nueva marca de revision y el estado de esa dependencia."
+**Context**: Code Review - Follow-up findings verification.
+
+---
+
+## User Request — Update Revision Report
+**Timestamp**: 2026-04-12T04:02:53Z
+**User Input**: "actualiza revision.md"
+**AI Response**: "Actualice `revision.md` con una marca explicita de ultima actualizacion para dejar claro que el reporte vigente corresponde a la revalidacion mas reciente."
+**Context**: Code Review - Revision report timestamp update.
+
+---
+
+## User Request — Follow-up Review
+**Timestamp**: 2026-04-12T04:00:14Z
+**User Input**: "# Review findings:
+
+## Finding 1 (apps/api/src/modules/schema-inspector/schema.service.ts:76-79) [added]
+[P1] Consumidores de connections siguen usando columnas inexistentes
+
+Este servicio todavia consulta `type` y `config` desde `connections`, pero las migraciones canonicas crean `connection_type`, `ords_url`, `db_host`, `service_name`, `schema_name` y `workspace_name`. El mismo patron sigue en explorer, editor, dependency-analyzer y auto-docs, asi que esos modulos pueden fallar aunque el CRUD principal de conexiones ya este corregido.
+
+## Finding 2 (apps/api/src/modules/dashboards/dashboard.service.ts:78-80) [added]
+[P1] Dashboard lee columnas viejas de health
+
+La query usa `last_tested_at`, `response_time_ms` y `error_message`, pero las migraciones actuales de `connections` definen `last_check_at`, `last_latency_ms` y `last_error`. Esta seccion del dashboard puede caer con `column does not exist` contra una DB migrada.
+
+## Finding 3 (apps/api/src/modules/usage-intelligence/usage.service.ts:37-43) [added]
+[P1] RLS sigue aplicado parcialmente
+
+Este servicio sigue consultando con `pool.query()` directo. Como el tenant resolver setea `app.current_tenant` sobre `req.dbClient`, estas queries no garantizan usar el cliente tenant-scoped; dashboards y otros servicios tienen el mismo problema.
+
+## My request for Codex:
+revisa de nuevo "
+**AI Response**: "Revalide los hallazgos contra el codigo actual. Los patrones viejos de columnas de `connections`, health dashboard y `pool.query()` en dashboard/usage ya fueron corregidos, pero quedan riesgos nuevos: los consumidores MCP/Oracle usan `getConnectionForTenant` sin pasar `req.dbClient`, y Explorer convierte `workspaceName` a numero para filtrar por `WORKSPACE_ID`."
+**Context**: Code Review - Follow-up verification pass.
+
+---
+
 ## User Request — Follow-up Review
 **Timestamp**: 2026-04-12T03:49:25Z
 **User Input**: "revisa de nuevo"

@@ -57,8 +57,9 @@ interface ChangeLogRow {
 async function getConnectionDetails(
   tenantId: string,
   connectionId: string,
+  client?: PoolClient,
 ): Promise<ResolvedConnection> {
-  const conn = await getConnectionForTenant(tenantId, connectionId);
+  const conn = await getConnectionForTenant(tenantId, connectionId, client);
   if (!conn) throw new NotFoundError('Connection not found or inactive');
   return conn;
 }
@@ -154,7 +155,7 @@ export async function getComponentSource(
   componentId: string,
   client?: PoolClient,
 ): Promise<ComponentSource> {
-  const conn = await getConnectionDetails(tenantId, connectionId);
+  const conn = await getConnectionDetails(tenantId, connectionId, client);
   const mcpConfig = buildMCPConfig(conn);
 
   let source = '';
@@ -164,10 +165,10 @@ export async function getComponentSource(
   let modifiedBy: string | null = null;
 
   if (mcpConfig.baseUrl) {
-    const client = new MCPClient(mcpConfig);
+    const mcpClient = new MCPClient(mcpConfig);
     try {
-      await client.connect();
-      const result = await client.callTool('get_component_source', {
+      await mcpClient.connect();
+      const result = await mcpClient.callTool('get_component_source', {
         componentType,
         componentId,
       });
@@ -357,14 +358,14 @@ export async function applyCode(
   const diff = computeDiff(codeBefore, code);
 
   // Write the new code via MCP
-  const conn = await getConnectionDetails(tenantId, session.connection_id);
+  const conn = await getConnectionDetails(tenantId, session.connection_id, client);
   const mcpConfig = buildMCPConfig(conn);
 
   if (mcpConfig.baseUrl) {
-    const client = new MCPClient(mcpConfig);
+    const mcpClient = new MCPClient(mcpConfig);
     try {
-      await client.connect();
-      await client.callTool('apply_component_source', {
+      await mcpClient.connect();
+      await mcpClient.callTool('apply_component_source', {
         componentType: session.component_type,
         componentId: session.component_id,
         source: code,

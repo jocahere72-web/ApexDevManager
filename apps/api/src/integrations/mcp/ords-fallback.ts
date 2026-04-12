@@ -184,24 +184,43 @@ function mapComponent(row: Record<string, unknown>, componentType: string): Apex
 /**
  * List APEX applications via ORDS REST SQL endpoint.
  * Same interface as mcp-apex-adapter.listApplications.
+ * Accepts a workspace filter with optional id or name.
  */
 export async function listApplications(
   conn: OrdsConnectionInfo,
-  workspaceId: number,
+  workspace: { id?: number; name?: string },
 ): Promise<ApexApplication[]> {
-  logger.debug({ workspaceId }, 'ORDS fallback: listing applications');
+  logger.debug({ workspace }, 'ORDS fallback: listing applications');
 
-  const rows = await executeSql(
-    conn,
-    `SELECT APPLICATION_ID, APPLICATION_NAME, APPLICATION_GROUP,
+  let sql: string;
+  let binds: Record<string, unknown>;
+
+  if (workspace.id !== undefined) {
+    sql = `SELECT APPLICATION_ID, APPLICATION_NAME, APPLICATION_GROUP,
             OWNER, WORKSPACE_ID, WORKSPACE, VERSION, PAGES,
             LAST_UPDATED_BY, LAST_UPDATED_ON
      FROM APEX_APPLICATIONS
      WHERE WORKSPACE_ID = :workspace_id
-     ORDER BY APPLICATION_NAME`,
-    { workspace_id: workspaceId },
-  );
+     ORDER BY APPLICATION_NAME`;
+    binds = { workspace_id: workspace.id };
+  } else if (workspace.name !== undefined) {
+    sql = `SELECT APPLICATION_ID, APPLICATION_NAME, APPLICATION_GROUP,
+            OWNER, WORKSPACE_ID, WORKSPACE, VERSION, PAGES,
+            LAST_UPDATED_BY, LAST_UPDATED_ON
+     FROM APEX_APPLICATIONS
+     WHERE WORKSPACE = :workspace_name
+     ORDER BY APPLICATION_NAME`;
+    binds = { workspace_name: workspace.name };
+  } else {
+    sql = `SELECT APPLICATION_ID, APPLICATION_NAME, APPLICATION_GROUP,
+            OWNER, WORKSPACE_ID, WORKSPACE, VERSION, PAGES,
+            LAST_UPDATED_BY, LAST_UPDATED_ON
+     FROM APEX_APPLICATIONS
+     ORDER BY APPLICATION_NAME`;
+    binds = {};
+  }
 
+  const rows = await executeSql(conn, sql, binds);
   return rows.map(mapApplication);
 }
 

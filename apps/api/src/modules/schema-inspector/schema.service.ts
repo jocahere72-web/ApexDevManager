@@ -62,8 +62,9 @@ function assertOracleType(type: string): string {
 async function getConnectionDetails(
   tenantId: string,
   connectionId: string,
+  client?: PoolClient,
 ): Promise<ResolvedConnection> {
-  const conn = await getConnectionForTenant(tenantId, connectionId);
+  const conn = await getConnectionForTenant(tenantId, connectionId, client);
   if (!conn) throw new NotFoundError('Connection not found or inactive');
   return conn;
 }
@@ -72,8 +73,9 @@ async function executeSqlViaOrds(
   tenantId: string,
   connectionId: string,
   sql: string,
+  client?: PoolClient,
 ): Promise<Record<string, unknown>[]> {
-  const conn = await getConnectionDetails(tenantId, connectionId);
+  const conn = await getConnectionDetails(tenantId, connectionId, client);
   const creds = decryptCredentials(conn.encryptedCredentials, conn.tenantId);
   const mcpConfig: MCPConnectionConfig = {
     baseUrl: (conn.config.ordsBaseUrl ?? '') as string,

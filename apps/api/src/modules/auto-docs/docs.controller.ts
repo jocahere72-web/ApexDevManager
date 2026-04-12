@@ -10,7 +10,7 @@ docsRouter.post(
   '/generate',
   async (req: Request, res: Response<ApiResponse<GeneratedDoc>>, next: NextFunction) => {
     try {
-      const doc = await docsService.generateDocs(req.tenantId!, req.userId!, req.body);
+      const doc = await docsService.generateDocs(req.tenantId!, req.userId!, req.body, req.dbClient);
       res.status(201).json({ success: true, data: doc });
     } catch (err) {
       next(err);
@@ -24,7 +24,7 @@ docsRouter.post(
   async (req: Request, res: Response<ApiResponse<GeneratedDoc>>, next: NextFunction) => {
     try {
       const { connectionId } = req.body;
-      const doc = await docsService.generateAPIDoc(req.tenantId!, req.userId!, connectionId);
+      const doc = await docsService.generateAPIDoc(req.tenantId!, req.userId!, connectionId, req.dbClient);
       res.status(201).json({ success: true, data: doc });
     } catch (err) {
       next(err);

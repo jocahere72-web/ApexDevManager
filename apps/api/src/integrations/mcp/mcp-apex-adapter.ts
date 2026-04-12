@@ -144,21 +144,41 @@ function mapComponent(row: Record<string, unknown>, componentType: string): Apex
 
 /**
  * List all APEX applications in a workspace via the MCP client.
+ * Accepts a workspace filter with optional id or name.
  */
 export async function listApplications(
   client: MCPClient,
-  workspaceId: number,
+  workspace: { id?: number; name?: string },
 ): Promise<ApexApplication[]> {
-  const result: MCPQueryResult = await client.query(
-    `SELECT APPLICATION_ID, APPLICATION_NAME, APPLICATION_GROUP,
+  let sql: string;
+  let binds: unknown[];
+
+  if (workspace.id !== undefined) {
+    sql = `SELECT APPLICATION_ID, APPLICATION_NAME, APPLICATION_GROUP,
             OWNER, WORKSPACE_ID, WORKSPACE, VERSION, PAGES,
             LAST_UPDATED_BY, LAST_UPDATED_ON
      FROM APEX_APPLICATIONS
      WHERE WORKSPACE_ID = :1
-     ORDER BY APPLICATION_NAME`,
-    [workspaceId],
-  );
+     ORDER BY APPLICATION_NAME`;
+    binds = [workspace.id];
+  } else if (workspace.name !== undefined) {
+    sql = `SELECT APPLICATION_ID, APPLICATION_NAME, APPLICATION_GROUP,
+            OWNER, WORKSPACE_ID, WORKSPACE, VERSION, PAGES,
+            LAST_UPDATED_BY, LAST_UPDATED_ON
+     FROM APEX_APPLICATIONS
+     WHERE WORKSPACE = :1
+     ORDER BY APPLICATION_NAME`;
+    binds = [workspace.name];
+  } else {
+    sql = `SELECT APPLICATION_ID, APPLICATION_NAME, APPLICATION_GROUP,
+            OWNER, WORKSPACE_ID, WORKSPACE, VERSION, PAGES,
+            LAST_UPDATED_BY, LAST_UPDATED_ON
+     FROM APEX_APPLICATIONS
+     ORDER BY APPLICATION_NAME`;
+    binds = [];
+  }
 
+  const result: MCPQueryResult = await client.query(sql, binds);
   return result.rows.map(mapApplication);
 }
 

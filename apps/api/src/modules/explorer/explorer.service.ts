@@ -1,4 +1,5 @@
 import { pool } from '../../config/database.js';
+import { PoolClient } from 'pg';
 import { logger } from '../../lib/logger.js';
 import { NotFoundError, AppError } from '../../lib/errors.js';
 import { MCPClient, type MCPConnectionConfig } from '../../integrations/mcp/mcp-client.js';
@@ -49,8 +50,9 @@ const cache = new ExplorerCacheService();
 async function getConnectionDetails(
   tenantId: string,
   connectionId: string,
+  client?: PoolClient,
 ): Promise<ResolvedConnection> {
-  const conn = await getConnectionForTenant(tenantId, connectionId);
+  const conn = await getConnectionForTenant(tenantId, connectionId, client);
   if (!conn) throw new NotFoundError('Connection not found or inactive');
   return conn;
 }
@@ -81,8 +83,12 @@ function buildOrdsConfig(conn: ResolvedConnection): OrdsConnectionInfo {
   };
 }
 
-function getWorkspaceId(conn: ResolvedConnection): number {
-  return Number(conn.config.workspaceName ?? 0);
+function getWorkspaceFilter(conn: ResolvedConnection): { id?: number; name?: string } {
+  const ws = conn.config.workspaceName;
+  if (!ws) return {};
+  const asNum = Number(ws);
+  if (!isNaN(asNum)) return { id: asNum };
+  return { name: String(ws) };
 }
 
 /**
@@ -133,6 +139,7 @@ async function withMcpFallback<T>(
 export async function listApplications(
   tenantId: string,
   connectionId: string,
+  client?: PoolClient,
 ): Promise<ApexApplication[]> {
   // Check cache
   const cached = await cache.getApps(tenantId, connectionId);
@@ -141,13 +148,13 @@ export async function listApplications(
     return cached;
   }
 
-  const conn = await getConnectionDetails(tenantId, connectionId);
-  const workspaceId = getWorkspaceId(conn);
+  const conn = await getConnectionDetails(tenantId, connectionId, client);
+  const workspaceFilter = getWorkspaceFilter(conn);
 
   const apps = await withMcpFallback(
     conn,
-    (client) => mcpAdapter.listApplications(client, workspaceId),
-    (ordsConn) => ordsFallback.listApplications(ordsConn, workspaceId),
+    (mcpClient) => mcpAdapter.listApplications(mcpClient, workspaceFilter),
+    (ordsConn) => ordsFallback.listApplications(ordsConn, workspaceFilter),
   );
 
   // Cache result
@@ -169,6 +176,7 @@ export async function listPages(
   tenantId: string,
   connectionId: string,
   appId: number,
+  client?: PoolClient,
 ): Promise<ApexPage[]> {
   // Check cache
   const cached = await cache.getPages(tenantId, connectionId, appId);
@@ -177,7 +185,7 @@ export async function listPages(
     return cached;
   }
 
-  const conn = await getConnectionDetails(tenantId, connectionId);
+  const conn = await getConnectionDetails(tenantId, connectionId, client);
 
   const pages = await withMcpFallback(
     conn,
@@ -205,6 +213,7 @@ export async function listComponents(
   connectionId: string,
   pageId: number,
   type: ApexComponentType = 'regions',
+  client?: PoolClient,
 ): Promise<ApexComponent[]> {
   // Check cache
   const cached = await cache.getComponents(tenantId, connectionId, pageId, type);
@@ -213,7 +222,7 @@ export async function listComponents(
     return cached;
   }
 
-  const conn = await getConnectionDetails(tenantId, connectionId);
+  const conn = await getConnectionDetails(tenantId, connectionId, client);
 
   const components = await withMcpFallback(
     conn,
@@ -239,9 +248,10 @@ export async function getApplicationTree(
   tenantId: string,
   connectionId: string,
   appId: number,
+  client?: PoolClient,
 ): Promise<ApplicationTree> {
   // Fetch application info from the apps list
-  const apps = await listApplications(tenantId, connectionId);
+  const apps = await listApplications(tenantId, connectionId, client);
   const application = apps.find((a) => a.applicationId === appId);
 
   if (!application) {
@@ -249,7 +259,7 @@ export async function getApplicationTree(
   }
 
   // Fetch all pages
-  const pages = await listPages(tenantId, connectionId, appId);
+  const pages = await listPages(tenantId, connectionId, appId, client);
 
   // Fetch components for each page (regions by default)
   const pagesWithComponents = await Promise.all(
@@ -260,6 +270,7 @@ export async function getApplicationTree(
           connectionId,
           page.pageId,
           'regions',
+          client,
         );
         return { ...page, components };
       } catch (err) {
@@ -289,6 +300,7 @@ export async function searchObjects(
   objectTypes?: ApexSearchObjectType[],
   limit = 50,
   offset = 0,
+  client?: PoolClient,
 ): Promise<{ results: ApexSearchResult[]; total: number }> {
   // Check cache
   const cached = await cache.getSearchResults(tenantId, connectionId, term, objectTypes);
@@ -298,7 +310,7 @@ export async function searchObjects(
     return { results: sliced, total: cached.length };
   }
 
-  const conn = await getConnectionDetails(tenantId, connectionId);
+  const conn = await getConnectionDetails(tenantId, connectionId, client);
 
   const allResults = await withMcpFallback(
     conn,
@@ -326,6 +338,7 @@ export async function searchObjects(
 export async function syncConnection(
   tenantId: string,
   connectionId: string,
+  client?: PoolClient,
 ): Promise<{ invalidatedKeys: number }> {
   const trackingKey = `${tenantId}:${connectionId}`;
 
@@ -339,7 +352,7 @@ export async function syncConnection(
     const invalidatedKeys = await cache.invalidateConnection(tenantId, connectionId);
 
     // Re-fetch apps to warm the cache
-    await listApplications(tenantId, connectionId);
+    await listApplications(tenantId, connectionId, client);
 
     syncTracking.set(trackingKey, {
       status: 'idle',
@@ -369,6 +382,7 @@ export async function syncConnection(
 export async function getSyncStatus(
   tenantId: string,
   connectionId: string,
+  _client?: PoolClient,
 ): Promise<SyncStatus> {
   const trackingKey = `${tenantId}:${connectionId}`;
   const tracking = syncTracking.get(trackingKey);

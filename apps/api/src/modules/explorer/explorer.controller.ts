@@ -29,6 +29,7 @@ explorerRouter.get(
       const apps = await explorerService.listApplications(
         req.tenantId!,
         parsed.data.connectionId,
+        req.dbClient,
       );
 
       res.json({ success: true, data: apps });
@@ -52,6 +53,7 @@ explorerRouter.get(
         req.tenantId!,
         parsed.data.connectionId,
         parsed.data.appId,
+        req.dbClient,
       );
 
       res.json({ success: true, data: pages });
@@ -81,6 +83,7 @@ explorerRouter.get(
         paramsParsed.data.connectionId,
         paramsParsed.data.pageId,
         queryParsed.data.type,
+        req.dbClient,
       );
 
       res.json({ success: true, data: components });
@@ -104,6 +107,7 @@ explorerRouter.get(
         req.tenantId!,
         parsed.data.connectionId,
         parsed.data.appId,
+        req.dbClient,
       );
 
       res.json({ success: true, data: tree });
@@ -132,6 +136,7 @@ explorerRouter.get(
         objectTypes,
         limit,
         offset,
+        req.dbClient,
       );
 
       res.json({
@@ -158,6 +163,7 @@ explorerRouter.post(
       const result = await explorerService.syncConnection(
         req.tenantId!,
         parsed.data.connectionId,
+        req.dbClient,
       );
 
       res.json({ success: true, data: result });
@@ -180,6 +186,7 @@ explorerRouter.get(
       const status = await explorerService.getSyncStatus(
         req.tenantId!,
         parsed.data.connectionId,
+        req.dbClient,
       );
 
       res.json({ success: true, data: status });
