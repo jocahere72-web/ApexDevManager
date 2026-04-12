@@ -85,6 +85,21 @@ function rowToProfile(row: Record<string, unknown>): ConnectionProfile {
     consecutiveFailures: (row.consecutive_failures as number) ?? 0,
     createdAt: row.created_at as Date,
     updatedAt: row.updated_at as Date,
+    // Extended fields
+    description: (row.description as string) ?? null,
+    ordsBaseUrl: (row.ords_url as string) ?? null,
+    ordsUsername: (row.ords_username as string) ?? null,
+    dbHost: (row.db_host as string) ?? null,
+    dbPort: (row.db_port as number) ?? 1521,
+    dbServiceName: (row.service_name as string) ?? null,
+    dbSid: (row.db_sid as string) ?? null,
+    dbUsername: (row.db_username as string) ?? null,
+    schemaName: (row.schema_name as string) ?? null,
+    workspaceName: (row.workspace_name as string) ?? null,
+    apexWorkspace: (row.apex_workspace as string) ?? null,
+    apexAppId: (row.apex_app_id as number) ?? null,
+    apexBaseUrl: (row.apex_base_url as string) ?? null,
+    apexVersion: (row.apex_version as string) ?? null,
   };
 }
 
@@ -136,21 +151,33 @@ export async function createConnection(
     client,
     `INSERT INTO connections (
        tenant_id, name, connection_type, environment, ords_url, db_host, service_name,
+       schema_name, workspace_name, db_port, db_username, db_sid,
+       apex_workspace, apex_app_id, apex_base_url, apex_version,
+       ords_username, description,
        encrypted_credentials, status, tags, labels, is_active, consecutive_failures,
        last_check_at, last_latency_ms, change_log, created_at, updated_at
      )
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, true, 0, NOW(), $12, $13, NOW(), NOW())
-     RETURNING id, tenant_id, name, connection_type, environment, ords_url, db_host, service_name,
-               status, tags, labels, is_active, last_check_at, last_latency_ms,
-               consecutive_failures, created_at, updated_at`,
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, true, 0, NOW(), $23, $24, NOW(), NOW())
+     RETURNING *`,
     [
       tenantId,
       data.name,
       data.type,
       data.environment,
-      data.type === 'ords' ? data.ordsBaseUrl : null,
-      data.type === 'jdbc' ? data.host : null,
-      data.type === 'jdbc' ? data.serviceName : null,
+      (data as any).ordsBaseUrl || null,
+      (data as any).host || null,
+      (data as any).serviceName || null,
+      (data as any).schemaName || null,
+      (data as any).apexWorkspace || (data as any).workspaceName || null,
+      (data as any).port || 1521,
+      (data as any).dbUsername || null,
+      (data as any).dbSid || null,
+      (data as any).apexWorkspace || null,
+      (data as any).apexAppId || null,
+      (data as any).apexBaseUrl || null,
+      (data as any).apexVersion || null,
+      (data as any).ordsUsername || (data as any).username || null,
+      (data as any).description || null,
       JSON.stringify(encryptedCreds),
       initialStatus,
       data.tags ?? [],
