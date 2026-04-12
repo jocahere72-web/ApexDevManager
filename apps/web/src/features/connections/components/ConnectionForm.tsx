@@ -32,7 +32,7 @@ export default function ConnectionForm() {
 
   const [type, setType] = useState<ConnectionType>('ords');
   const [name, setName] = useState('');
-  const [environment, setEnvironment] = useState<Environment>('development');
+  const [environment, setEnvironment] = useState<Environment>('dev');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [tagsInput, setTagsInput] = useState('');
@@ -173,9 +173,10 @@ export default function ConnectionForm() {
               setEnvironment(e.target.value as Environment)
             }
           >
-            <option value="development">Development</option>
+            <option value="dev">Development</option>
+            <option value="test">Test</option>
             <option value="staging">Staging</option>
-            <option value="production">Production</option>
+            <option value="prod">Production</option>
           </select>
         </div>
 

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 // ── Connection environments ──────────────────────────────────────────────────
-export const ENVIRONMENTS = ['development', 'staging', 'production', 'test'] as const;
+export const ENVIRONMENTS = ['dev', 'test', 'staging', 'prod'] as const;
 export type Environment = (typeof ENVIRONMENTS)[number];
 
 // ── Connection statuses ──────────────────────────────────────────────────────
