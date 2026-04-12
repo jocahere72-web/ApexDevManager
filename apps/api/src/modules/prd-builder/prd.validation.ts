@@ -11,6 +11,7 @@ export const CreateSessionSchema = z.object({
     .max(200, 'Title too long (max 200 characters)'),
   appId: z.coerce.number().int().positive().optional(),
   issueId: z.string().uuid().optional(),
+  configId: z.string().uuid().optional(),
 });
 
 export type CreateSessionInput = z.infer<typeof CreateSessionSchema>;
