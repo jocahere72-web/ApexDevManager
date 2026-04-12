@@ -1,16 +1,13 @@
-import { useState, type CSSProperties, type FormEvent, type ChangeEvent, useEffect } from 'react';
+import { useState, type FormEvent, type ChangeEvent, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { AppPage, AppPageHeader } from '@/components/ui/AppTemplate';
 import {
   useConnection,
   useCreateConnection,
   useUpdateConnection,
   useTestConnection,
 } from '../hooks/useConnections';
-import type {
-  ConnectionPayload,
-  ConnectionType,
-  Environment,
-} from '@/services/connections.api';
+import type { ConnectionPayload, ConnectionType, Environment } from '@/services/connections.api';
 
 // ---------------------------------------------------------------------------
 // Component
@@ -117,139 +114,60 @@ export default function ConnectionForm() {
   // -- Loading state ---------------------------------------------------------
 
   if (isEdit && loadingExisting) {
-    return <p style={{ color: '#6b7280' }}>Loading connection...</p>;
+    return <p className="conn-muted-text">Loading connection...</p>;
   }
-
-  // -- Styles ----------------------------------------------------------------
-
-  const formStyle: CSSProperties = {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '1.25rem',
-    maxWidth: '36rem',
-  };
-
-  const fieldsetStyle: CSSProperties = {
-    border: '1px solid #e5e7eb',
-    borderRadius: '0.5rem',
-    padding: '1.25rem',
-    margin: 0,
-  };
-
-  const legendStyle: CSSProperties = {
-    fontSize: '0.875rem',
-    fontWeight: 600,
-    color: '#374151',
-    padding: '0 0.375rem',
-  };
-
-  const labelStyle: CSSProperties = {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '0.25rem',
-    fontSize: '0.875rem',
-    fontWeight: 500,
-    color: '#374151',
-  };
-
-  const inputStyle: CSSProperties = {
-    padding: '0.5rem 0.75rem',
-    border: '1px solid #d1d5db',
-    borderRadius: '0.375rem',
-    fontSize: '0.875rem',
-  };
-
-  const selectStyle: CSSProperties = { ...inputStyle, cursor: 'pointer' };
-
-  const toggleContainerStyle: CSSProperties = {
-    display: 'flex',
-    gap: '0',
-    borderRadius: '0.375rem',
-    overflow: 'hidden',
-    border: '1px solid #d1d5db',
-    width: 'fit-content',
-  };
-
-  const toggleBtnStyle = (active: boolean): CSSProperties => ({
-    padding: '0.5rem 1.25rem',
-    fontSize: '0.875rem',
-    fontWeight: 600,
-    border: 'none',
-    cursor: 'pointer',
-    backgroundColor: active ? '#2563eb' : '#ffffff',
-    color: active ? '#ffffff' : '#374151',
-    transition: 'all 0.15s',
-  });
-
-  const btnPrimary: CSSProperties = {
-    padding: '0.5rem 1.25rem',
-    backgroundColor: '#2563eb',
-    color: '#ffffff',
-    fontWeight: 600,
-    fontSize: '0.875rem',
-    border: 'none',
-    borderRadius: '0.375rem',
-    cursor: 'pointer',
-  };
-
-  const btnSecondary: CSSProperties = {
-    padding: '0.5rem 1.25rem',
-    backgroundColor: '#ffffff',
-    color: '#374151',
-    fontWeight: 500,
-    fontSize: '0.875rem',
-    border: '1px solid #d1d5db',
-    borderRadius: '0.375rem',
-    cursor: 'pointer',
-  };
 
   const isSubmitting = createMutation.isPending || updateMutation.isPending;
   const submitError = createMutation.error || updateMutation.error;
 
   return (
-    <div>
-      <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1.25rem' }}>
-        {isEdit ? 'Edit Connection' : 'New Connection'}
-      </h2>
+    <AppPage>
+      <AppPageHeader
+        eyebrow="Connections"
+        title={isEdit ? 'Edit Connection' : 'New Connection'}
+        description="Configure ORDS or JDBC access for APEX metadata and automation workflows."
+      />
 
-      <form onSubmit={handleSubmit} style={formStyle}>
+      <form onSubmit={handleSubmit} className="conn-form">
         {/* Connection Type Toggle */}
-        <label style={labelStyle}>
-          Connection Type
-          <div style={toggleContainerStyle}>
+        <div className="app-field">
+          <span className="app-label">Connection Type</span>
+          <div className="conn-type-toggle">
             <button
               type="button"
-              style={toggleBtnStyle(type === 'ords')}
+              className={`conn-type-toggle-btn${type === 'ords' ? ' conn-type-toggle-btn-active' : ''}`}
               onClick={() => setType('ords')}
             >
               ORDS
             </button>
             <button
               type="button"
-              style={toggleBtnStyle(type === 'jdbc')}
+              className={`conn-type-toggle-btn${type === 'jdbc' ? ' conn-type-toggle-btn-active' : ''}`}
               onClick={() => setType('jdbc')}
             >
               JDBC
             </button>
           </div>
-        </label>
+        </div>
 
         {/* Common Fields */}
-        <label style={labelStyle}>
-          Name
+        <div className="app-field">
+          <label className="app-label" htmlFor="conn-name">Name</label>
           <input
-            style={inputStyle}
+            id="conn-name"
+            className="app-input"
             value={name}
             onChange={(e: ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
             placeholder="My Database Connection"
             required
           />
-        </label>
+        </div>
 
-        <label style={labelStyle}>
-          Environment
+        <div className="app-field">
+          <label className="app-label" htmlFor="conn-env">Environment</label>
           <select
-            style={selectStyle}
+            id="conn-env"
+            className="app-select"
             value={environment}
             onChange={(e: ChangeEvent<HTMLSelectElement>) =>
               setEnvironment(e.target.value as Environment)
@@ -259,83 +177,87 @@ export default function ConnectionForm() {
             <option value="staging">Staging</option>
             <option value="production">Production</option>
           </select>
-        </label>
+        </div>
 
         {/* Type-specific fields */}
         {type === 'ords' ? (
-          <fieldset style={fieldsetStyle}>
-            <legend style={legendStyle}>ORDS Settings</legend>
-            <label style={labelStyle}>
-              ORDS Base URL
+          <fieldset className="conn-fieldset">
+            <legend className="conn-legend">ORDS Settings</legend>
+            <div className="app-field">
+              <label className="app-label" htmlFor="conn-ords-url">ORDS Base URL</label>
               <input
-                style={inputStyle}
+                id="conn-ords-url"
+                className="app-input"
                 value={ordsBaseUrl}
                 onChange={(e: ChangeEvent<HTMLInputElement>) => setOrdsBaseUrl(e.target.value)}
                 placeholder="https://example.com/ords"
                 required
               />
-            </label>
+            </div>
           </fieldset>
         ) : (
-          <fieldset style={fieldsetStyle}>
-            <legend style={legendStyle}>JDBC Settings</legend>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              <label style={labelStyle}>
-                Host
+          <fieldset className="conn-fieldset">
+            <legend className="conn-legend">JDBC Settings</legend>
+            <div className="app-stack">
+              <div className="app-field">
+                <label className="app-label" htmlFor="conn-host">Host</label>
                 <input
-                  style={inputStyle}
+                  id="conn-host"
+                  className="app-input"
                   value={host}
                   onChange={(e: ChangeEvent<HTMLInputElement>) => setHost(e.target.value)}
                   placeholder="db.example.com"
                   required
                 />
-              </label>
-              <div style={{ display: 'flex', gap: '0.75rem' }}>
-                <label style={{ ...labelStyle, flex: 1 }}>
-                  Port
+              </div>
+              <div className="conn-jdbc-row">
+                <div className="app-field conn-jdbc-port">
+                  <label className="app-label" htmlFor="conn-port">Port</label>
                   <input
-                    style={inputStyle}
+                    id="conn-port"
+                    className="app-input"
                     type="number"
                     value={port}
                     onChange={(e: ChangeEvent<HTMLInputElement>) => setPort(e.target.value)}
                     required
                   />
-                </label>
-                <label style={{ ...labelStyle, flex: 2 }}>
-                  Service Name
+                </div>
+                <div className="app-field conn-jdbc-service">
+                  <label className="app-label" htmlFor="conn-service">Service Name</label>
                   <input
-                    style={inputStyle}
+                    id="conn-service"
+                    className="app-input"
                     value={serviceName}
-                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                      setServiceName(e.target.value)
-                    }
+                    onChange={(e: ChangeEvent<HTMLInputElement>) => setServiceName(e.target.value)}
                     placeholder="XEPDB1"
                     required
                   />
-                </label>
+                </div>
               </div>
             </div>
           </fieldset>
         )}
 
         {/* Credentials */}
-        <fieldset style={fieldsetStyle}>
-          <legend style={legendStyle}>Credentials</legend>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            <label style={labelStyle}>
-              Username
+        <fieldset className="conn-fieldset">
+          <legend className="conn-legend">Credentials</legend>
+          <div className="app-stack">
+            <div className="app-field">
+              <label className="app-label" htmlFor="conn-user">Username</label>
               <input
-                style={inputStyle}
+                id="conn-user"
+                className="app-input"
                 value={username}
                 onChange={(e: ChangeEvent<HTMLInputElement>) => setUsername(e.target.value)}
                 autoComplete="off"
                 required
               />
-            </label>
-            <label style={labelStyle}>
-              Password
+            </div>
+            <div className="app-field">
+              <label className="app-label" htmlFor="conn-pass">Password</label>
               <input
-                style={inputStyle}
+                id="conn-pass"
+                className="app-input"
                 type="password"
                 value={password}
                 onChange={(e: ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
@@ -343,44 +265,42 @@ export default function ConnectionForm() {
                 placeholder={isEdit ? '(unchanged if empty)' : ''}
                 required={!isEdit}
               />
-            </label>
+            </div>
           </div>
         </fieldset>
 
         {/* Tags */}
-        <label style={labelStyle}>
-          Tags
+        <div className="app-field">
+          <label className="app-label" htmlFor="conn-tags">Tags</label>
           <input
-            style={inputStyle}
+            id="conn-tags"
+            className="app-input"
             value={tagsInput}
             onChange={(e: ChangeEvent<HTMLInputElement>) => setTagsInput(e.target.value)}
             placeholder="tag1, tag2, tag3"
           />
-          <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>
-            Comma-separated list of tags
-          </span>
-        </label>
+          <span className="conn-hint">Comma-separated list of tags</span>
+        </div>
 
         {/* Test Connection */}
-        <div>
-          <button type="button" style={btnSecondary} onClick={handleTest} disabled={testMutation.isPending || !id}>
+        <div className="app-toolbar">
+          <button
+            type="button"
+            className="app-button"
+            onClick={handleTest}
+            disabled={testMutation.isPending || !id}
+          >
             {testMutation.isPending ? 'Testing...' : 'Test Connection'}
           </button>
           {testMutation.isSuccess && (
-            <span
-              style={{
-                marginLeft: '0.75rem',
-                fontSize: '0.875rem',
-                color: testMutation.data.success ? '#15803d' : '#dc2626',
-              }}
-            >
+            <span className={testMutation.data.success ? 'conn-test-success' : 'conn-test-fail'}>
               {testMutation.data.success
                 ? `Connected (${testMutation.data.latencyMs}ms)`
                 : testMutation.data.message}
             </span>
           )}
           {testMutation.isError && (
-            <span style={{ marginLeft: '0.75rem', fontSize: '0.875rem', color: '#dc2626' }}>
+            <span className="conn-test-fail">
               Test failed: {testMutation.error.message}
             </span>
           )}
@@ -388,25 +308,19 @@ export default function ConnectionForm() {
 
         {/* Submit error */}
         {submitError && (
-          <p style={{ color: '#dc2626', fontSize: '0.875rem', margin: 0 }}>
-            {submitError.message}
-          </p>
+          <p className="conn-submit-error">{submitError.message}</p>
         )}
 
         {/* Actions */}
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
-          <button type="submit" style={btnPrimary} disabled={isSubmitting}>
+        <div className="app-toolbar">
+          <button type="submit" className="app-button app-button-primary" disabled={isSubmitting}>
             {isSubmitting ? 'Saving...' : isEdit ? 'Update Connection' : 'Create Connection'}
           </button>
-          <button
-            type="button"
-            style={btnSecondary}
-            onClick={() => navigate('/connections')}
-          >
+          <button type="button" className="app-button" onClick={() => navigate('/connections')}>
             Cancel
           </button>
         </div>
       </form>
-    </div>
+    </AppPage>
   );
 }

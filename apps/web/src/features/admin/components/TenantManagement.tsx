@@ -99,6 +99,8 @@ const statusColors: Record<SaaSTenantStatus, { bg: string; color: string }> = {
   deleted: { bg: '#f3f4f6', color: '#6b7280' },
 };
 
+type TenantPlan = 'free' | 'starter' | 'professional' | 'enterprise';
+
 const quotaBarOuter: CSSProperties = {
   width: '100%',
   height: '0.375rem',
@@ -130,11 +132,11 @@ export function TenantManagement() {
   const [formName, setFormName] = useState('');
   const [formSlug, setFormSlug] = useState('');
   const [formEmail, setFormEmail] = useState('');
-  const [formPlan, setFormPlan] = useState<'free' | 'starter' | 'professional' | 'enterprise'>('starter');
+  const [formPlan, setFormPlan] = useState<TenantPlan>('starter');
 
   // Config editor state
   const [configName, setConfigName] = useState('');
-  const [configPlan, setConfigPlan] = useState<'free' | 'starter' | 'professional' | 'enterprise'>('starter');
+  const [configPlan, setConfigPlan] = useState<TenantPlan>('starter');
 
   const handleLoadTenant = useCallback(async (tenantId: string) => {
     setLoading(true);
@@ -218,17 +220,26 @@ export function TenantManagement() {
     const unlimited = max === -1;
     return (
       <div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#6b7280' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            fontSize: '0.75rem',
+            color: '#6b7280',
+          }}
+        >
           <span>{label}</span>
           <span>{unlimited ? `${current} / Unlimited` : `${current} / ${max}`}</span>
         </div>
         <div style={quotaBarOuter}>
-          <div style={{
-            width: unlimited ? '5%' : `${percent}%`,
-            height: '100%',
-            backgroundColor: percent > 90 ? '#ef4444' : percent > 70 ? '#eab308' : '#22c55e',
-            borderRadius: '9999px',
-          }} />
+          <div
+            style={{
+              width: unlimited ? '5%' : `${percent}%`,
+              height: '100%',
+              backgroundColor: percent > 90 ? '#ef4444' : percent > 70 ? '#eab308' : '#22c55e',
+              borderRadius: '9999px',
+            }}
+          />
         </div>
       </div>
     );
@@ -237,14 +248,30 @@ export function TenantManagement() {
   return (
     <div style={containerStyle}>
       <div style={headerStyle}>
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#111827' }}>Tenant Management</h2>
-        <button type="button" style={buttonStyle} onClick={() => setShowCreateForm(!showCreateForm)}>
+        <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#111827' }}>
+          Tenant Management
+        </h2>
+        <button
+          type="button"
+          style={buttonStyle}
+          onClick={() => setShowCreateForm(!showCreateForm)}
+        >
           {showCreateForm ? 'Cancel' : 'Create Tenant'}
         </button>
       </div>
 
       {error && (
-        <div style={{ padding: '0.75rem', backgroundColor: '#fef2f2', border: '1px solid #fecaca', borderRadius: '0.375rem', color: '#991b1b', marginBottom: '1rem', fontSize: '0.875rem' }}>
+        <div
+          style={{
+            padding: '0.75rem',
+            backgroundColor: '#fef2f2',
+            border: '1px solid #fecaca',
+            borderRadius: '0.375rem',
+            color: '#991b1b',
+            marginBottom: '1rem',
+            fontSize: '0.875rem',
+          }}
+        >
           {error}
         </div>
       )}
@@ -254,19 +281,46 @@ export function TenantManagement() {
         <div style={{ ...cardStyle, borderColor: '#2563eb' }}>
           <div style={{ fontWeight: 600, marginBottom: '0.75rem' }}>Create New Tenant</div>
           <label style={labelStyle}>Organization Name *</label>
-          <input type="text" style={inputStyle} value={formName} onChange={(e) => setFormName(e.target.value)} placeholder="Acme Corp" />
+          <input
+            type="text"
+            style={inputStyle}
+            value={formName}
+            onChange={(e) => setFormName(e.target.value)}
+            placeholder="Acme Corp"
+          />
           <label style={labelStyle}>Slug * (URL-friendly identifier)</label>
-          <input type="text" style={inputStyle} value={formSlug} onChange={(e) => setFormSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))} placeholder="acme-corp" />
+          <input
+            type="text"
+            style={inputStyle}
+            value={formSlug}
+            onChange={(e) => setFormSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))}
+            placeholder="acme-corp"
+          />
           <label style={labelStyle}>Admin Email *</label>
-          <input type="email" style={inputStyle} value={formEmail} onChange={(e) => setFormEmail(e.target.value)} placeholder="admin@acme.com" />
+          <input
+            type="email"
+            style={inputStyle}
+            value={formEmail}
+            onChange={(e) => setFormEmail(e.target.value)}
+            placeholder="admin@acme.com"
+          />
           <label style={labelStyle}>Plan</label>
-          <select style={selectStyle} value={formPlan} onChange={(e) => setFormPlan(e.target.value as any)}>
+          <select
+            style={selectStyle}
+            value={formPlan}
+            onChange={(e) => setFormPlan(e.target.value as TenantPlan)}
+          >
             <option value="free">Free</option>
             <option value="starter">Starter</option>
             <option value="professional">Professional</option>
             <option value="enterprise">Enterprise</option>
           </select>
-          <button type="button" style={buttonStyle} onClick={handleCreate} disabled={!formName || !formSlug || !formEmail}>
+          <button
+            type="button"
+            style={buttonStyle}
+            onClick={handleCreate}
+            disabled={!formName || !formSlug || !formEmail}
+          >
             Create Tenant
           </button>
         </div>
@@ -276,12 +330,25 @@ export function TenantManagement() {
       {tenants.length === 0 && !selectedTenant ? (
         <div style={{ textAlign: 'center', padding: '2rem', color: '#6b7280' }}>
           No tenants loaded. Create a new tenant or enter a tenant ID to view.
-          <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
-            <input type="text" style={{ ...inputStyle, width: 300, marginBottom: 0 }} placeholder="Enter tenant ID" id="tenant-id-input" />
-            <button type="button" style={secondaryButton} onClick={() => {
-              const input = document.getElementById('tenant-id-input') as HTMLInputElement;
-              if (input?.value) handleLoadTenant(input.value);
-            }}>Load</button>
+          <div
+            style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem', justifyContent: 'center' }}
+          >
+            <input
+              type="text"
+              style={{ ...inputStyle, width: 300, marginBottom: 0 }}
+              placeholder="Enter tenant ID"
+              id="tenant-id-input"
+            />
+            <button
+              type="button"
+              style={secondaryButton}
+              onClick={() => {
+                const input = document.getElementById('tenant-id-input') as HTMLInputElement;
+                if (input?.value) handleLoadTenant(input.value);
+              }}
+            >
+              Load
+            </button>
           </div>
         </div>
       ) : null}
@@ -289,11 +356,17 @@ export function TenantManagement() {
       {tenants.map((tenant) => {
         const sColor = statusColors[tenant.status] ?? statusColors.active;
         return (
-          <div key={tenant.id} style={{ ...cardStyle, cursor: 'pointer' }} onClick={() => setSelectedTenant(tenant)}>
+          <div
+            key={tenant.id}
+            style={{ ...cardStyle, cursor: 'pointer' }}
+            onClick={() => setSelectedTenant(tenant)}
+          >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <span style={{ fontWeight: 600, marginRight: '0.5rem' }}>{tenant.name}</span>
-                <span style={{ ...badgeBase, backgroundColor: sColor.bg, color: sColor.color }}>{tenant.status}</span>
+                <span style={{ ...badgeBase, backgroundColor: sColor.bg, color: sColor.color }}>
+                  {tenant.status}
+                </span>
               </div>
               <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>{tenant.plan} plan</span>
             </div>
@@ -304,67 +377,149 @@ export function TenantManagement() {
       {/* Selected tenant detail */}
       {selectedTenant && (
         <div style={{ ...cardStyle, marginTop: '1rem', borderColor: '#2563eb' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'flex-start',
+              marginBottom: '1rem',
+            }}
+          >
             <div>
               <h3 style={{ fontSize: '1.125rem', fontWeight: 600 }}>{selectedTenant.name}</h3>
               <div style={{ fontSize: '0.8125rem', color: '#6b7280' }}>
                 {selectedTenant.slug} | {selectedTenant.adminEmail}
               </div>
               <div style={{ marginTop: '0.25rem' }}>
-                <span style={{ ...badgeBase, ...(statusColors[selectedTenant.status] ?? {}) }}>{selectedTenant.status}</span>
-                <span style={{ marginLeft: '0.5rem', fontSize: '0.75rem', color: '#6b7280' }}>{selectedTenant.plan} plan</span>
+                <span style={{ ...badgeBase, ...(statusColors[selectedTenant.status] ?? {}) }}>
+                  {selectedTenant.status}
+                </span>
+                <span style={{ marginLeft: '0.5rem', fontSize: '0.75rem', color: '#6b7280' }}>
+                  {selectedTenant.plan} plan
+                </span>
               </div>
             </div>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button type="button" style={secondaryButton} onClick={() => setShowConfigEditor(!showConfigEditor)}>Edit Config</button>
+              <button
+                type="button"
+                style={secondaryButton}
+                onClick={() => setShowConfigEditor(!showConfigEditor)}
+              >
+                Edit Config
+              </button>
               {selectedTenant.status === 'active' && (
-                <button type="button" style={warningButton} onClick={() => handleSuspend(selectedTenant.id)}>Suspend</button>
+                <button
+                  type="button"
+                  style={warningButton}
+                  onClick={() => handleSuspend(selectedTenant.id)}
+                >
+                  Suspend
+                </button>
               )}
-              <button type="button" style={dangerButton} onClick={() => handleDelete(selectedTenant.id)}>Delete</button>
+              <button
+                type="button"
+                style={dangerButton}
+                onClick={() => handleDelete(selectedTenant.id)}
+              >
+                Delete
+              </button>
             </div>
           </div>
 
           {/* Config editor */}
           {showConfigEditor && (
-            <div style={{ padding: '1rem', backgroundColor: '#f9fafb', borderRadius: '0.375rem', marginBottom: '1rem' }}>
+            <div
+              style={{
+                padding: '1rem',
+                backgroundColor: '#f9fafb',
+                borderRadius: '0.375rem',
+                marginBottom: '1rem',
+              }}
+            >
               <div style={{ fontWeight: 500, marginBottom: '0.5rem' }}>Edit Configuration</div>
               <label style={labelStyle}>Name</label>
-              <input type="text" style={inputStyle} value={configName} onChange={(e) => setConfigName(e.target.value)} />
+              <input
+                type="text"
+                style={inputStyle}
+                value={configName}
+                onChange={(e) => setConfigName(e.target.value)}
+              />
               <label style={labelStyle}>Plan</label>
-              <select style={selectStyle} value={configPlan} onChange={(e) => setConfigPlan(e.target.value as any)}>
+              <select
+                style={selectStyle}
+                value={configPlan}
+                onChange={(e) => setConfigPlan(e.target.value as TenantPlan)}
+              >
                 <option value="free">Free</option>
                 <option value="starter">Starter</option>
                 <option value="professional">Professional</option>
                 <option value="enterprise">Enterprise</option>
               </select>
-              <button type="button" style={buttonStyle} onClick={handleUpdateConfig}>Save Changes</button>
+              <button type="button" style={buttonStyle} onClick={handleUpdateConfig}>
+                Save Changes
+              </button>
             </div>
           )}
 
           {/* Quotas */}
           <div style={{ fontWeight: 500, marginBottom: '0.5rem' }}>Resource Quotas</div>
           <div style={gridStyle}>
-            {renderQuotaBar(selectedTenant.quota.currentUsers, selectedTenant.quota.maxUsers, 'Users')}
-            {renderQuotaBar(selectedTenant.quota.currentConnections, selectedTenant.quota.maxConnections, 'Connections')}
-            {renderQuotaBar(selectedTenant.quota.currentApps, selectedTenant.quota.maxApps, 'Applications')}
+            {renderQuotaBar(
+              selectedTenant.quota.currentUsers,
+              selectedTenant.quota.maxUsers,
+              'Users',
+            )}
+            {renderQuotaBar(
+              selectedTenant.quota.currentConnections,
+              selectedTenant.quota.maxConnections,
+              'Connections',
+            )}
+            {renderQuotaBar(
+              selectedTenant.quota.currentApps,
+              selectedTenant.quota.maxApps,
+              'Applications',
+            )}
           </div>
 
           {/* Settings summary */}
           <div style={{ marginTop: '1rem', fontSize: '0.8125rem' }}>
             <div style={{ fontWeight: 500, marginBottom: '0.5rem' }}>Settings</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.375rem', color: '#4b5563' }}>
-              <div>SSO: <strong>{selectedTenant.ssoConfigured ? 'Configured' : 'Not configured'}</strong></div>
-              <div>SCIM: <strong>{selectedTenant.scimConfigured ? 'Enabled' : 'Disabled'}</strong></div>
-              <div>Timezone: <strong>{selectedTenant.settings.defaultTimezone}</strong></div>
-              <div>Locale: <strong>{selectedTenant.settings.defaultLocale}</strong></div>
-              <div>Enforce SSO: <strong>{selectedTenant.settings.enforceSSO ? 'Yes' : 'No'}</strong></div>
-              <div>Public Signup: <strong>{selectedTenant.settings.allowPublicSignup ? 'Yes' : 'No'}</strong></div>
+            <div
+              className="app-responsive-two-column"
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: '0.375rem',
+                color: '#4b5563',
+              }}
+            >
+              <div>
+                SSO:{' '}
+                <strong>{selectedTenant.ssoConfigured ? 'Configured' : 'Not configured'}</strong>
+              </div>
+              <div>
+                SCIM: <strong>{selectedTenant.scimConfigured ? 'Enabled' : 'Disabled'}</strong>
+              </div>
+              <div>
+                Timezone: <strong>{selectedTenant.settings.defaultTimezone}</strong>
+              </div>
+              <div>
+                Locale: <strong>{selectedTenant.settings.defaultLocale}</strong>
+              </div>
+              <div>
+                Enforce SSO: <strong>{selectedTenant.settings.enforceSSO ? 'Yes' : 'No'}</strong>
+              </div>
+              <div>
+                Public Signup:{' '}
+                <strong>{selectedTenant.settings.allowPublicSignup ? 'Yes' : 'No'}</strong>
+              </div>
             </div>
           </div>
 
           {selectedTenant.provisionedAt && (
             <div style={{ marginTop: '0.75rem', fontSize: '0.75rem', color: '#9ca3af' }}>
-              Provisioned: {new Date(selectedTenant.provisionedAt).toLocaleString()} | Created: {new Date(selectedTenant.createdAt).toLocaleString()}
+              Provisioned: {new Date(selectedTenant.provisionedAt).toLocaleString()} | Created:{' '}
+              {new Date(selectedTenant.createdAt).toLocaleString()}
             </div>
           )}
         </div>

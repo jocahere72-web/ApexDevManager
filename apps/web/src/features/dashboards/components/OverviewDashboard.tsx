@@ -147,7 +147,9 @@ export function OverviewDashboard() {
   if (loading) {
     return (
       <div style={containerStyle}>
-        <div style={{ textAlign: 'center', padding: '3rem', color: '#6b7280' }}>Loading dashboard...</div>
+        <div style={{ textAlign: 'center', padding: '3rem', color: '#6b7280' }}>
+          Loading dashboard...
+        </div>
       </div>
     );
   }
@@ -155,7 +157,9 @@ export function OverviewDashboard() {
   if (!overview) {
     return (
       <div style={containerStyle}>
-        <div style={{ textAlign: 'center', padding: '3rem', color: '#6b7280' }}>No dashboard data available.</div>
+        <div style={{ textAlign: 'center', padding: '3rem', color: '#6b7280' }}>
+          No dashboard data available.
+        </div>
       </div>
     );
   }
@@ -167,7 +171,17 @@ export function OverviewDashboard() {
       </h2>
 
       {error && (
-        <div style={{ padding: '0.75rem', backgroundColor: '#fef2f2', border: '1px solid #fecaca', borderRadius: '0.375rem', color: '#991b1b', marginBottom: '1rem', fontSize: '0.875rem' }}>
+        <div
+          style={{
+            padding: '0.75rem',
+            backgroundColor: '#fef2f2',
+            border: '1px solid #fecaca',
+            borderRadius: '0.375rem',
+            color: '#991b1b',
+            marginBottom: '1rem',
+            fontSize: '0.875rem',
+          }}
+        >
           {error}
         </div>
       )}
@@ -176,9 +190,19 @@ export function OverviewDashboard() {
       {alerts.map((alert) => {
         const colors = severityColors[alert.severity] ?? severityColors.info;
         return (
-          <div key={alert.id} style={{ ...alertBanner, backgroundColor: colors.bg, border: `1px solid ${colors.border}`, color: colors.text }}>
+          <div
+            key={alert.id}
+            style={{
+              ...alertBanner,
+              backgroundColor: colors.bg,
+              border: `1px solid ${colors.border}`,
+              color: colors.text,
+            }}
+          >
             <span style={{ fontWeight: 600 }}>[{alert.severity.toUpperCase()}]</span>
-            <span>{alert.title}: {alert.message}</span>
+            <span>
+              {alert.title}: {alert.message}
+            </span>
           </div>
         );
       })}
@@ -197,14 +221,21 @@ export function OverviewDashboard() {
           <div style={cardTitle}>AI Usage Today</div>
           <div style={cardValue}>{overview.aiUsage.totalTokensToday.toLocaleString()}</div>
           <div style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.25rem' }}>
-            ${overview.aiUsage.estimatedCostToday.toFixed(2)} | {overview.aiUsage.conversationsToday} chats
+            ${overview.aiUsage.estimatedCostToday.toFixed(2)} |{' '}
+            {overview.aiUsage.conversationsToday} chats
           </div>
         </div>
 
         <div style={cardStyle}>
           <div style={cardTitle}>Deployments</div>
           <div style={cardValue}>{overview.deployments.totalDeployments}</div>
-          <div style={{ fontSize: '0.75rem', color: overview.deployments.successRate >= 90 ? '#22c55e' : '#ef4444', marginTop: '0.25rem' }}>
+          <div
+            style={{
+              fontSize: '0.75rem',
+              color: overview.deployments.successRate >= 90 ? '#22c55e' : '#ef4444',
+              marginTop: '0.25rem',
+            }}
+          >
             {overview.deployments.successRate}% success rate
           </div>
         </div>
@@ -213,7 +244,14 @@ export function OverviewDashboard() {
           <div style={cardTitle}>Test Coverage</div>
           <div style={cardValue}>{overview.testCoverage.percent.toFixed(0)}%</div>
           <div style={progressBarOuter}>
-            <div style={{ width: `${overview.testCoverage.percent}%`, height: '100%', backgroundColor: overview.testCoverage.percent >= 80 ? '#22c55e' : '#eab308', borderRadius: '9999px' }} />
+            <div
+              style={{
+                width: `${overview.testCoverage.percent}%`,
+                height: '100%',
+                backgroundColor: overview.testCoverage.percent >= 80 ? '#22c55e' : '#eab308',
+                borderRadius: '9999px',
+              }}
+            />
           </div>
           <div style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.25rem' }}>
             {overview.testCoverage.totalSuites} suites | {overview.testCoverage.passRate}% pass rate
@@ -238,13 +276,18 @@ export function OverviewDashboard() {
       </div>
 
       {/* Two-column layout */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+      <div
+        className="app-responsive-two-column"
+        style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}
+      >
         {/* Connection health */}
         <div>
           <div style={sectionTitle}>Connection Health</div>
           <div style={cardStyle}>
             {overview.connections.length === 0 ? (
-              <div style={{ color: '#9ca3af', fontSize: '0.8125rem', padding: '0.5rem 0' }}>No connections configured.</div>
+              <div style={{ color: '#9ca3af', fontSize: '0.8125rem', padding: '0.5rem 0' }}>
+                No connections configured.
+              </div>
             ) : (
               overview.connections.map((conn) => (
                 <div key={conn.connectionId} style={connRowStyle}>
@@ -253,7 +296,9 @@ export function OverviewDashboard() {
                     <span style={{ fontWeight: 500 }}>{conn.connectionName}</span>
                   </div>
                   <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>{conn.responseTimeMs}ms</span>
+                    <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                      {conn.responseTimeMs}ms
+                    </span>
                     <span style={{ fontSize: '0.6875rem', color: '#9ca3af' }}>
                       {new Date(conn.lastCheckedAt).toLocaleTimeString()}
                     </span>
@@ -269,15 +314,28 @@ export function OverviewDashboard() {
           <div style={sectionTitle}>Recent Activity</div>
           <div style={cardStyle}>
             {overview.recentActivity.length === 0 ? (
-              <div style={{ color: '#9ca3af', fontSize: '0.8125rem', padding: '0.5rem 0' }}>No recent activity.</div>
+              <div style={{ color: '#9ca3af', fontSize: '0.8125rem', padding: '0.5rem 0' }}>
+                No recent activity.
+              </div>
             ) : (
               overview.recentActivity.slice(0, 10).map((activity) => (
                 <div key={activity.id} style={activityRowStyle}>
-                  <div style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#2563eb', marginTop: '0.375rem', flexShrink: 0 }} />
+                  <div
+                    style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: '50%',
+                      backgroundColor: '#2563eb',
+                      marginTop: '0.375rem',
+                      flexShrink: 0,
+                    }}
+                  />
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: 500 }}>{activity.title}</div>
                     {activity.description && (
-                      <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>{activity.description}</div>
+                      <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                        {activity.description}
+                      </div>
                     )}
                   </div>
                   <div style={{ fontSize: '0.6875rem', color: '#9ca3af', whiteSpace: 'nowrap' }}>

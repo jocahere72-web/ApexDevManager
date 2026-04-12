@@ -263,7 +263,7 @@ export default function SchemaExplorer({ connectionId: propConnectionId }: Props
   );
 
   return (
-    <div style={styles.container}>
+    <div className="app-responsive-two-column" style={styles.container}>
       {/* Sidebar */}
       <div style={styles.sidebar}>
         <div style={styles.sidebarHeader}>Schema Objects</div>
@@ -306,9 +306,7 @@ export default function SchemaExplorer({ connectionId: propConnectionId }: Props
       {/* Main content */}
       <div style={styles.main}>
         <div style={styles.header}>
-          <h2 style={styles.title}>
-            {selectedTable ? selectedTable.name : 'Schema Explorer'}
-          </h2>
+          <h2 style={styles.title}>{selectedTable ? selectedTable.name : 'Schema Explorer'}</h2>
           <div>
             <button style={styles.snapshotBtn} onClick={handleSnapshot}>
               Take Snapshot
@@ -361,7 +359,13 @@ export default function SchemaExplorer({ connectionId: propConnectionId }: Props
                         {col.nullable ? (
                           <span style={{ color: '#999' }}>Yes</span>
                         ) : (
-                          <span style={{ ...styles.badge, backgroundColor: '#fce4ec', color: '#c62828' }}>
+                          <span
+                            style={{
+                              ...styles.badge,
+                              backgroundColor: '#fce4ec',
+                              color: '#c62828',
+                            }}
+                          >
                             NOT NULL
                           </span>
                         )}
@@ -418,14 +422,22 @@ export default function SchemaExplorer({ connectionId: propConnectionId }: Props
                 <tbody>
                   {selectedTable.indexes.map((idx) => (
                     <tr key={idx.name}>
-                      <td style={styles.colTd}><strong>{idx.name}</strong></td>
+                      <td style={styles.colTd}>
+                        <strong>{idx.name}</strong>
+                      </td>
                       <td style={styles.colTd}>
                         <code style={{ fontSize: '12px' }}>{idx.columns.join(', ')}</code>
                       </td>
                       <td style={styles.colTd}>{idx.indexType}</td>
                       <td style={styles.colTd}>
                         {idx.isUnique ? (
-                          <span style={{ ...styles.badge, backgroundColor: '#e8f5e9', color: '#2e7d32' }}>
+                          <span
+                            style={{
+                              ...styles.badge,
+                              backgroundColor: '#e8f5e9',
+                              color: '#2e7d32',
+                            }}
+                          >
                             UNIQUE
                           </span>
                         ) : (
@@ -436,7 +448,10 @@ export default function SchemaExplorer({ connectionId: propConnectionId }: Props
                   ))}
                   {selectedTable.indexes.length === 0 && (
                     <tr>
-                      <td colSpan={4} style={{ ...styles.colTd, textAlign: 'center', color: '#999' }}>
+                      <td
+                        colSpan={4}
+                        style={{ ...styles.colTd, textAlign: 'center', color: '#999' }}
+                      >
                         No indexes found
                       </td>
                     </tr>
@@ -447,16 +462,12 @@ export default function SchemaExplorer({ connectionId: propConnectionId }: Props
 
             {/* DDL tab */}
             {activeTab === 'ddl' && (
-              <div style={styles.ddlBlock}>
-                {ddl ? ddl.ddl : 'Loading DDL...'}
-              </div>
+              <div style={styles.ddlBlock}>{ddl ? ddl.ddl : 'Loading DDL...'}</div>
             )}
 
             {/* ERD tab */}
             {activeTab === 'erd' && (
-              <div style={styles.erdContainer}>
-                {erd || 'Loading ERD...'}
-              </div>
+              <div style={styles.erdContainer}>{erd || 'Loading ERD...'}</div>
             )}
           </>
         )}

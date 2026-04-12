@@ -1,16 +1,5 @@
-import { type CSSProperties } from 'react';
+import { AppPage, AppPageHeader } from '@/components/ui/AppTemplate';
 import { PageGenerator } from './components/PageGenerator';
-
-// ---------------------------------------------------------------------------
-// Styles
-// ---------------------------------------------------------------------------
-
-const layoutStyle: CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  height: '100%',
-  overflow: 'hidden',
-};
 
 // ---------------------------------------------------------------------------
 // PRDToPagePage
@@ -18,9 +7,14 @@ const layoutStyle: CSSProperties = {
 
 export function PRDToPagePage() {
   return (
-    <div style={layoutStyle}>
+    <AppPage fullWidth>
+      <AppPageHeader
+        eyebrow="PRD to Page"
+        title="Page Generator"
+        description="Turn approved requirements into APEX page structure and implementation notes."
+      />
       <PageGenerator />
-    </div>
+    </AppPage>
   );
 }
 

@@ -1,4 +1,5 @@
 import { Routes, Route } from 'react-router-dom';
+import { AppPage, AppPageHeader } from '@/components/ui/AppTemplate';
 import ReleaseList from './components/ReleaseList';
 import ReleasePipeline from './components/ReleasePipeline';
 
@@ -11,9 +12,16 @@ import ReleasePipeline from './components/ReleasePipeline';
  */
 export default function ReleaseManagerPage() {
   return (
-    <Routes>
-      <Route index element={<ReleaseList />} />
-      <Route path=":id" element={<ReleasePipeline />} />
-    </Routes>
+    <AppPage fullWidth>
+      <AppPageHeader
+        eyebrow="Release Manager"
+        title="Releases"
+        description="Coordinate packaging, approvals, and release pipeline progress."
+      />
+      <Routes>
+        <Route index element={<ReleaseList />} />
+        <Route path=":id" element={<ReleasePipeline />} />
+      </Routes>
+    </AppPage>
   );
 }

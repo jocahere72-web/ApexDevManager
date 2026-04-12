@@ -123,7 +123,9 @@ export function SSOConfigPanel() {
   const [ssoUrl, setSsoUrl] = useState('');
   const [certificate, setCertificate] = useState('');
   const [entityId, setEntityId] = useState('');
-  const [nameIdFormat, setNameIdFormat] = useState('urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress');
+  const [nameIdFormat, setNameIdFormat] = useState(
+    'urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress',
+  );
   const [allowIdpInitiated, setAllowIdpInitiated] = useState(false);
   const [signRequests, setSignRequests] = useState(true);
 
@@ -225,19 +227,33 @@ export function SSOConfigPanel() {
   if (loading) {
     return (
       <div style={containerStyle}>
-        <div style={{ textAlign: 'center', padding: '3rem', color: '#6b7280' }}>Loading SSO configuration...</div>
+        <div style={{ textAlign: 'center', padding: '3rem', color: '#6b7280' }}>
+          Loading SSO configuration...
+        </div>
       </div>
     );
   }
 
   return (
     <div style={containerStyle}>
-      <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#111827', marginBottom: '1.5rem' }}>
+      <h2
+        style={{ fontSize: '1.25rem', fontWeight: 600, color: '#111827', marginBottom: '1.5rem' }}
+      >
         SSO & Identity Configuration
       </h2>
 
       {error && (
-        <div style={{ padding: '0.75rem', backgroundColor: '#fef2f2', border: '1px solid #fecaca', borderRadius: '0.375rem', color: '#991b1b', marginBottom: '1rem', fontSize: '0.875rem' }}>
+        <div
+          style={{
+            padding: '0.75rem',
+            backgroundColor: '#fef2f2',
+            border: '1px solid #fecaca',
+            borderRadius: '0.375rem',
+            color: '#991b1b',
+            marginBottom: '1rem',
+            fontSize: '0.875rem',
+          }}
+        >
           {error}
         </div>
       )}
@@ -245,11 +261,25 @@ export function SSOConfigPanel() {
       {/* SSO Status */}
       <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
         <span style={statusIndicator(!!ssoConfig?.enabled)}>
-          <span style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: ssoConfig?.enabled ? '#22c55e' : '#ef4444' }} />
+          <span
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: '50%',
+              backgroundColor: ssoConfig?.enabled ? '#22c55e' : '#ef4444',
+            }}
+          />
           SSO: {ssoConfig?.enabled ? 'Active' : 'Not Configured'}
         </span>
         <span style={statusIndicator(!!scimConfig?.enabled)}>
-          <span style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: scimConfig?.enabled ? '#22c55e' : '#ef4444' }} />
+          <span
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: '50%',
+              backgroundColor: scimConfig?.enabled ? '#22c55e' : '#ef4444',
+            }}
+          />
           SCIM: {scimConfig?.enabled ? 'Active' : 'Disabled'}
         </span>
         {testResult && (
@@ -264,48 +294,109 @@ export function SSOConfigPanel() {
         <div style={sectionTitle}>SAML 2.0 Configuration</div>
 
         <label style={labelStyle}>Issuer (Identity Provider Entity ID) *</label>
-        <input type="text" style={inputStyle} value={issuer} onChange={(e) => setIssuer(e.target.value)} placeholder="https://idp.example.com/metadata" />
+        <input
+          type="text"
+          style={inputStyle}
+          value={issuer}
+          onChange={(e) => setIssuer(e.target.value)}
+          placeholder="https://idp.example.com/metadata"
+        />
 
         <label style={labelStyle}>SSO URL (Single Sign-On Service URL) *</label>
-        <input type="text" style={inputStyle} value={ssoUrl} onChange={(e) => setSsoUrl(e.target.value)} placeholder="https://idp.example.com/sso" />
+        <input
+          type="text"
+          style={inputStyle}
+          value={ssoUrl}
+          onChange={(e) => setSsoUrl(e.target.value)}
+          placeholder="https://idp.example.com/sso"
+        />
 
         <label style={labelStyle}>Entity ID (Service Provider) *</label>
-        <input type="text" style={inputStyle} value={entityId} onChange={(e) => setEntityId(e.target.value)} placeholder="https://apexdev.example.com/saml/metadata" />
+        <input
+          type="text"
+          style={inputStyle}
+          value={entityId}
+          onChange={(e) => setEntityId(e.target.value)}
+          placeholder="https://apexdev.example.com/saml/metadata"
+        />
 
         <label style={labelStyle}>X.509 Certificate (PEM format) *</label>
-        <textarea style={textareaStyle} value={certificate} onChange={(e) => setCertificate(e.target.value)} placeholder="-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----" />
+        <textarea
+          style={textareaStyle}
+          value={certificate}
+          onChange={(e) => setCertificate(e.target.value)}
+          placeholder="-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----"
+        />
 
         <label style={labelStyle}>Name ID Format</label>
-        <select style={{ ...selectStyle, width: '100%' }} value={nameIdFormat} onChange={(e) => setNameIdFormat(e.target.value)}>
-          <option value="urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress">Email Address</option>
+        <select
+          style={{ ...selectStyle, width: '100%' }}
+          value={nameIdFormat}
+          onChange={(e) => setNameIdFormat(e.target.value)}
+        >
+          <option value="urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress">
+            Email Address
+          </option>
           <option value="urn:oasis:names:tc:SAML:2.0:nameid-format:persistent">Persistent</option>
           <option value="urn:oasis:names:tc:SAML:2.0:nameid-format:transient">Transient</option>
         </select>
 
         <div style={{ marginTop: '0.5rem' }}>
           <label style={checkboxLabelStyle}>
-            <input type="checkbox" checked={allowIdpInitiated} onChange={(e) => setAllowIdpInitiated(e.target.checked)} />
+            <input
+              type="checkbox"
+              checked={allowIdpInitiated}
+              onChange={(e) => setAllowIdpInitiated(e.target.checked)}
+            />
             Allow IdP-initiated SSO
           </label>
           <label style={checkboxLabelStyle}>
-            <input type="checkbox" checked={signRequests} onChange={(e) => setSignRequests(e.target.checked)} />
+            <input
+              type="checkbox"
+              checked={signRequests}
+              onChange={(e) => setSignRequests(e.target.checked)}
+            />
             Sign authentication requests
           </label>
         </div>
 
         <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-          <button type="button" style={buttonStyle} onClick={handleSaveSAML} disabled={saving || !issuer || !ssoUrl || !certificate || !entityId}>
+          <button
+            type="button"
+            style={buttonStyle}
+            onClick={handleSaveSAML}
+            disabled={saving || !issuer || !ssoUrl || !certificate || !entityId}
+          >
             {saving ? 'Saving...' : 'Save SAML Configuration'}
           </button>
-          <button type="button" style={secondaryButton} onClick={handleTestConnection} disabled={testing || !ssoConfig}>
+          <button
+            type="button"
+            style={secondaryButton}
+            onClick={handleTestConnection}
+            disabled={testing || !ssoConfig}
+          >
             {testing ? 'Testing...' : 'Test Connection'}
           </button>
         </div>
 
         {/* Test result */}
         {testResult && (
-          <div style={{ marginTop: '0.75rem', padding: '0.75rem', backgroundColor: testResult.success ? '#f0fdf4' : '#fef2f2', borderRadius: '0.375rem', fontSize: '0.8125rem' }}>
-            <div style={{ fontWeight: 500, color: testResult.success ? '#166534' : '#991b1b', marginBottom: '0.25rem' }}>
+          <div
+            style={{
+              marginTop: '0.75rem',
+              padding: '0.75rem',
+              backgroundColor: testResult.success ? '#f0fdf4' : '#fef2f2',
+              borderRadius: '0.375rem',
+              fontSize: '0.8125rem',
+            }}
+          >
+            <div
+              style={{
+                fontWeight: 500,
+                color: testResult.success ? '#166534' : '#991b1b',
+                marginBottom: '0.25rem',
+              }}
+            >
               {testResult.success ? 'Connection Successful' : 'Connection Failed'}
             </div>
             <div style={{ color: '#4b5563' }}>{testResult.message}</div>
@@ -321,23 +412,39 @@ export function SSOConfigPanel() {
         <div style={sectionTitle}>SCIM User Provisioning</div>
 
         <label style={checkboxLabelStyle}>
-          <input type="checkbox" checked={scimEnabled} onChange={(e) => setScimEnabled(e.target.checked)} />
+          <input
+            type="checkbox"
+            checked={scimEnabled}
+            onChange={(e) => setScimEnabled(e.target.checked)}
+          />
           Enable SCIM provisioning
         </label>
 
         {scimEnabled && (
           <>
             <label style={checkboxLabelStyle}>
-              <input type="checkbox" checked={syncUsers} onChange={(e) => setSyncUsers(e.target.checked)} />
+              <input
+                type="checkbox"
+                checked={syncUsers}
+                onChange={(e) => setSyncUsers(e.target.checked)}
+              />
               Sync users from IdP
             </label>
             <label style={checkboxLabelStyle}>
-              <input type="checkbox" checked={syncGroups} onChange={(e) => setSyncGroups(e.target.checked)} />
+              <input
+                type="checkbox"
+                checked={syncGroups}
+                onChange={(e) => setSyncGroups(e.target.checked)}
+              />
               Sync groups from IdP
             </label>
 
             <label style={labelStyle}>Default role for provisioned users</label>
-            <select style={selectStyle} value={defaultRole} onChange={(e) => setDefaultRole(e.target.value)}>
+            <select
+              style={selectStyle}
+              value={defaultRole}
+              onChange={(e) => setDefaultRole(e.target.value)}
+            >
               <option value="viewer">Viewer</option>
               <option value="developer">Developer</option>
               <option value="tech_lead">Tech Lead</option>
@@ -345,21 +452,51 @@ export function SSOConfigPanel() {
             </select>
 
             {scimConfig && (
-              <div style={{ marginTop: '0.75rem', padding: '0.75rem', backgroundColor: '#f9fafb', borderRadius: '0.375rem', fontSize: '0.8125rem' }}>
+              <div
+                style={{
+                  marginTop: '0.75rem',
+                  padding: '0.75rem',
+                  backgroundColor: '#f9fafb',
+                  borderRadius: '0.375rem',
+                  fontSize: '0.8125rem',
+                }}
+              >
                 <div style={{ fontWeight: 500, marginBottom: '0.25rem' }}>SCIM Endpoint</div>
                 <code style={{ fontSize: '0.75rem', color: '#4b5563' }}>{scimConfig.endpoint}</code>
-                <div style={{ marginTop: '0.5rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.25rem', color: '#6b7280' }}>
-                  <span>Status: <strong>{scimConfig.status}</strong></span>
-                  <span>Synced Users: <strong>{scimConfig.syncedUsers}</strong></span>
-                  <span>Synced Groups: <strong>{scimConfig.syncedGroups}</strong></span>
-                  {scimConfig.lastSyncAt && <span>Last Sync: {new Date(scimConfig.lastSyncAt).toLocaleString()}</span>}
+                <div
+                  className="app-responsive-two-column"
+                  style={{
+                    marginTop: '0.5rem',
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr',
+                    gap: '0.25rem',
+                    color: '#6b7280',
+                  }}
+                >
+                  <span>
+                    Status: <strong>{scimConfig.status}</strong>
+                  </span>
+                  <span>
+                    Synced Users: <strong>{scimConfig.syncedUsers}</strong>
+                  </span>
+                  <span>
+                    Synced Groups: <strong>{scimConfig.syncedGroups}</strong>
+                  </span>
+                  {scimConfig.lastSyncAt && (
+                    <span>Last Sync: {new Date(scimConfig.lastSyncAt).toLocaleString()}</span>
+                  )}
                 </div>
               </div>
             )}
           </>
         )}
 
-        <button type="button" style={{ ...buttonStyle, marginTop: '0.75rem' }} onClick={handleSaveSCIM} disabled={saving}>
+        <button
+          type="button"
+          style={{ ...buttonStyle, marginTop: '0.75rem' }}
+          onClick={handleSaveSCIM}
+          disabled={saving}
+        >
           {saving ? 'Saving...' : 'Save SCIM Configuration'}
         </button>
       </div>

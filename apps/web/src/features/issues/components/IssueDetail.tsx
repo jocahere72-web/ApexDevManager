@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { AppEmptyState, AppStatusPill } from '@/components/ui/AppTemplate';
 import {
   fetchIssue,
   updateIssue,
@@ -18,10 +19,10 @@ interface IssueDetailProps {
 }
 
 const PRIORITY_COLORS: Record<string, string> = {
-  critical: '#dc2626',
-  high: '#ea580c',
-  medium: '#2563eb',
-  low: '#6b7280',
+  critical: 'var(--app-danger)',
+  high: 'var(--app-warm)',
+  medium: 'var(--app-accent-strong)',
+  low: 'var(--app-muted)',
 };
 
 const TYPE_ICONS: Record<string, string> = {
@@ -105,16 +106,10 @@ export default function IssueDetail({ issueId, onClose, onUpdated }: IssueDetail
     }
   };
 
-  if (loading) {
-    return (
-      <div style={{ padding: '2rem', color: '#6b7280' }}>Loading issue...</div>
-    );
-  }
+  if (loading) return <AppEmptyState>Loading issue...</AppEmptyState>;
 
   if (!issue) {
-    return (
-      <div style={{ padding: '2rem', color: '#ef4444' }}>Issue not found.</div>
-    );
+    return <AppEmptyState>Issue not found.</AppEmptyState>;
   }
 
   const currentIndex = ISSUE_STATUSES.indexOf(issue.status);
@@ -124,7 +119,7 @@ export default function IssueDetail({ issueId, onClose, onUpdated }: IssueDetail
   const labelStyle: React.CSSProperties = {
     fontSize: '0.7rem',
     fontWeight: 600,
-    color: '#6b7280',
+    color: 'var(--app-muted)',
     textTransform: 'uppercase',
     letterSpacing: '0.04em',
     marginBottom: '2px',
@@ -132,17 +127,7 @@ export default function IssueDetail({ issueId, onClose, onUpdated }: IssueDetail
 
   const valueStyle: React.CSSProperties = {
     fontSize: '0.85rem',
-    color: '#111827',
-  };
-
-  const inputStyle: React.CSSProperties = {
-    width: '100%',
-    padding: '6px 8px',
-    border: '1px solid #d1d5db',
-    borderRadius: '6px',
-    fontSize: '0.85rem',
-    outline: 'none',
-    boxSizing: 'border-box',
+    color: 'var(--app-text)',
   };
 
   return (
@@ -151,14 +136,14 @@ export default function IssueDetail({ issueId, onClose, onUpdated }: IssueDetail
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
-        backgroundColor: '#ffffff',
+        backgroundColor: 'var(--app-surface)',
       }}
     >
       {/* Header */}
       <div
         style={{
           padding: '16px 20px',
-          borderBottom: '1px solid #e5e7eb',
+          borderBottom: '1px solid var(--app-border)',
           display: 'flex',
           flexDirection: 'column',
           gap: '12px',
@@ -172,33 +157,22 @@ export default function IssueDetail({ issueId, onClose, onUpdated }: IssueDetail
                   fontFamily: 'monospace',
                   fontWeight: 700,
                   fontSize: '0.85rem',
-                  color: '#4b5563',
+                  color: 'var(--app-muted)',
                 }}
               >
                 {issue.code}
               </span>
-              <span
-                style={{
-                  fontSize: '0.65rem',
-                  fontWeight: 600,
-                  padding: '2px 8px',
-                  borderRadius: '9999px',
-                  backgroundColor: '#dbeafe',
-                  color: '#1d4ed8',
-                  textTransform: 'uppercase',
-                }}
-              >
-                {STATUS_LABELS[issue.status]}
-              </span>
+              <AppStatusPill tone="accent">{STATUS_LABELS[issue.status]}</AppStatusPill>
             </div>
             {editing ? (
               <input
                 value={editTitle}
                 onChange={(e) => setEditTitle(e.target.value)}
-                style={{ ...inputStyle, fontSize: '1.1rem', fontWeight: 600 }}
+                className="app-input"
+                style={{ fontSize: '1.1rem', fontWeight: 600 }}
               />
             ) : (
-              <h2 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600, color: '#111827' }}>
+              <h2 className="app-card-title" style={{ margin: 0 }}>
                 {issue.title}
               </h2>
             )}
@@ -206,13 +180,13 @@ export default function IssueDetail({ issueId, onClose, onUpdated }: IssueDetail
           <button
             onClick={onClose}
             style={{
-              background: 'none',
-              border: 'none',
-              fontSize: '1.2rem',
+              width: 32,
+              height: 32,
+              border: '1px solid var(--app-border)',
+              borderRadius: 'var(--app-radius-sm)',
+              background: 'var(--app-surface)',
+              color: 'var(--app-muted)',
               cursor: 'pointer',
-              color: '#6b7280',
-              padding: '4px',
-              lineHeight: 1,
             }}
           >
             ×
@@ -223,74 +197,27 @@ export default function IssueDetail({ issueId, onClose, onUpdated }: IssueDetail
         <IssuePipeline currentStatus={issue.status} />
 
         {/* Action buttons */}
-        <div style={{ display: 'flex', gap: '8px' }}>
+        <div className="app-toolbar">
           {canAdvance && (
             <button
               onClick={handleAdvance}
               disabled={advancing}
-              style={{
-                padding: '6px 14px',
-                backgroundColor: '#3b82f6',
-                color: '#ffffff',
-                border: 'none',
-                borderRadius: '6px',
-                fontSize: '0.8rem',
-                fontWeight: 600,
-                cursor: advancing ? 'not-allowed' : 'pointer',
-                opacity: advancing ? 0.6 : 1,
-              }}
+              className="app-button app-button-primary"
+              style={{ opacity: advancing ? 0.6 : 1 }}
             >
-              {advancing
-                ? 'Advancing...'
-                : `Advance to ${STATUS_LABELS[nextStatus!]}`}
+              {advancing ? 'Advancing...' : `Advance to ${STATUS_LABELS[nextStatus!]}`}
             </button>
           )}
           {!editing ? (
-            <button
-              onClick={startEdit}
-              style={{
-                padding: '6px 14px',
-                backgroundColor: '#f3f4f6',
-                color: '#374151',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
-                fontSize: '0.8rem',
-                fontWeight: 500,
-                cursor: 'pointer',
-              }}
-            >
+            <button onClick={startEdit} className="app-button">
               Edit
             </button>
           ) : (
             <>
-              <button
-                onClick={saveEdit}
-                style={{
-                  padding: '6px 14px',
-                  backgroundColor: '#22c55e',
-                  color: '#ffffff',
-                  border: 'none',
-                  borderRadius: '6px',
-                  fontSize: '0.8rem',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                }}
-              >
+              <button onClick={saveEdit} className="app-button app-button-primary">
                 Save
               </button>
-              <button
-                onClick={() => setEditing(false)}
-                style={{
-                  padding: '6px 14px',
-                  backgroundColor: '#f3f4f6',
-                  color: '#374151',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '6px',
-                  fontSize: '0.8rem',
-                  fontWeight: 500,
-                  cursor: 'pointer',
-                }}
-              >
+              <button onClick={() => setEditing(false)} className="app-button">
                 Cancel
               </button>
             </>
@@ -302,6 +229,7 @@ export default function IssueDetail({ issueId, onClose, onUpdated }: IssueDetail
       <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px' }}>
         {/* Info grid */}
         <div
+          className="app-responsive-two-column"
           style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1fr',
@@ -319,7 +247,7 @@ export default function IssueDetail({ issueId, onClose, onUpdated }: IssueDetail
               <select
                 value={editPriority}
                 onChange={(e) => setEditPriority(e.target.value as IssuePriority)}
-                style={inputStyle}
+                className="app-select"
               >
                 <option value="critical">Critical</option>
                 <option value="high">High</option>
@@ -345,7 +273,7 @@ export default function IssueDetail({ issueId, onClose, onUpdated }: IssueDetail
               <select
                 value={editType}
                 onChange={(e) => setEditType(e.target.value as IssueType)}
-                style={inputStyle}
+                className="app-select"
               >
                 <option value="feature">Feature</option>
                 <option value="bug">Bug</option>
@@ -365,7 +293,7 @@ export default function IssueDetail({ issueId, onClose, onUpdated }: IssueDetail
                 value={editAssignedTo}
                 onChange={(e) => setEditAssignedTo(e.target.value)}
                 placeholder="User ID"
-                style={inputStyle}
+                className="app-input"
               />
             ) : (
               <div style={valueStyle}>{issue.assignedToName ?? 'Unassigned'}</div>
@@ -378,22 +306,24 @@ export default function IssueDetail({ issueId, onClose, onUpdated }: IssueDetail
           <div>
             <div style={labelStyle}>Tags</div>
             <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-              {issue.tags.length > 0
-                ? issue.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      style={{
-                        fontSize: '0.65rem',
-                        padding: '1px 6px',
-                        borderRadius: '4px',
-                        backgroundColor: '#f3f4f6',
-                        color: '#4b5563',
-                      }}
-                    >
-                      {tag}
-                    </span>
-                  ))
-                : <span style={{ fontSize: '0.8rem', color: '#9ca3af' }}>--</span>}
+              {issue.tags.length > 0 ? (
+                issue.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    style={{
+                      fontSize: '0.65rem',
+                      padding: '1px 6px',
+                      borderRadius: '4px',
+                      backgroundColor: 'var(--app-soft)',
+                      color: 'var(--app-muted)',
+                    }}
+                  >
+                    {tag}
+                  </span>
+                ))
+              ) : (
+                <span style={{ fontSize: '0.8rem', color: 'var(--app-muted)' }}>--</span>
+              )}
             </div>
           </div>
         </div>
@@ -406,10 +336,17 @@ export default function IssueDetail({ issueId, onClose, onUpdated }: IssueDetail
               value={editDescription}
               onChange={(e) => setEditDescription(e.target.value)}
               rows={4}
-              style={{ ...inputStyle, resize: 'vertical' }}
+              className="app-textarea"
             />
           ) : (
-            <p style={{ fontSize: '0.85rem', color: '#374151', lineHeight: 1.5, margin: '4px 0 0' }}>
+            <p
+              style={{
+                fontSize: '0.85rem',
+                color: 'var(--app-text)',
+                lineHeight: 1.5,
+                margin: '4px 0 0',
+              }}
+            >
               {issue.description || 'No description.'}
             </p>
           )}
@@ -432,21 +369,25 @@ export default function IssueDetail({ issueId, onClose, onUpdated }: IssueDetail
                   justifyContent: 'space-between',
                   alignItems: 'center',
                   padding: '6px 10px',
-                  backgroundColor: '#f9fafb',
-                  borderRadius: '6px',
+                  backgroundColor: 'var(--app-surface-raised)',
+                  borderRadius: 'var(--app-radius-sm)',
                   fontSize: '0.8rem',
                 }}
               >
-                <span style={{ color: '#6b7280' }}>{artifact.label}</span>
+                <span style={{ color: 'var(--app-muted)' }}>{artifact.label}</span>
                 {artifact.value ? (
                   <a
                     href={`${artifact.path}/${artifact.value}`}
-                    style={{ color: '#3b82f6', textDecoration: 'none', fontWeight: 500 }}
+                    style={{
+                      color: 'var(--app-accent-strong)',
+                      textDecoration: 'none',
+                      fontWeight: 600,
+                    }}
                   >
                     {artifact.value.slice(0, 8)}...
                   </a>
                 ) : (
-                  <span style={{ color: '#d1d5db' }}>Not linked</span>
+                  <span style={{ color: 'var(--app-muted)' }}>Not linked</span>
                 )}
               </div>
             ))}
@@ -466,7 +407,7 @@ export default function IssueDetail({ issueId, onClose, onUpdated }: IssueDetail
                     alignItems: 'center',
                     gap: '8px',
                     fontSize: '0.78rem',
-                    color: '#374151',
+                    color: 'var(--app-text)',
                   }}
                 >
                   <div
@@ -474,7 +415,7 @@ export default function IssueDetail({ issueId, onClose, onUpdated }: IssueDetail
                       width: '8px',
                       height: '8px',
                       borderRadius: '50%',
-                      backgroundColor: '#3b82f6',
+                      backgroundColor: 'var(--app-accent)',
                       flexShrink: 0,
                     }}
                   />
@@ -489,14 +430,18 @@ export default function IssueDetail({ issueId, onClose, onUpdated }: IssueDetail
                     )}
                     <em>{STATUS_LABELS[t.to]}</em>
                   </span>
-                  <span style={{ marginLeft: 'auto', color: '#9ca3af', fontSize: '0.7rem' }}>
+                  <span
+                    style={{ marginLeft: 'auto', color: 'var(--app-muted)', fontSize: '0.7rem' }}
+                  >
                     {new Date(t.at).toLocaleString()}
                   </span>
                 </div>
               ))}
             </div>
           ) : (
-            <p style={{ fontSize: '0.8rem', color: '#9ca3af', margin: 0 }}>No activity yet.</p>
+            <p style={{ fontSize: '0.8rem', color: 'var(--app-muted)', margin: 0 }}>
+              No activity yet.
+            </p>
           )}
         </div>
       </div>

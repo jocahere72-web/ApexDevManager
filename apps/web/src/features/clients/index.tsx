@@ -1,5 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
+  AppCard,
+  AppEmptyState,
+  AppPage,
+  AppPageHeader,
+  AppStatusPill,
+} from '@/components/ui/AppTemplate';
+import {
   fetchClients,
   createClient,
   updateClient,
@@ -44,7 +51,6 @@ export default function ClientsPage() {
   // connections for dropdown
   const [connections, setConnections] = useState<{ id: string; name: string }[]>([]);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const debouncedSetSearch = useCallback(
     debounce((...args: unknown[]) => setDebouncedSearch(args[0] as string), 300),
     [],
@@ -131,390 +137,246 @@ export default function ClientsPage() {
     }
   };
 
-  // Styles
-  const headerStyle: React.CSSProperties = {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '1.25rem',
-    flexWrap: 'wrap',
-    gap: '0.75rem',
-  };
-
-  const searchStyle: React.CSSProperties = {
-    padding: '8px 12px',
-    border: '1px solid #d1d5db',
-    borderRadius: '8px',
-    fontSize: '0.85rem',
-    width: '260px',
-    outline: 'none',
-    boxSizing: 'border-box' as const,
-  };
-
-  const btnPrimary: React.CSSProperties = {
-    padding: '8px 18px',
-    backgroundColor: '#3b82f6',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '8px',
-    fontSize: '0.85rem',
-    fontWeight: 600,
-    cursor: 'pointer',
-  };
-
-  const btnSecondary: React.CSSProperties = {
-    padding: '6px 12px',
-    backgroundColor: '#f3f4f6',
-    color: '#374151',
-    border: '1px solid #d1d5db',
-    borderRadius: '6px',
-    fontSize: '0.75rem',
-    fontWeight: 500,
-    cursor: 'pointer',
-  };
-
-  const cardStyle: React.CSSProperties = {
-    border: '1px solid #e5e7eb',
-    borderRadius: '10px',
-    padding: '16px 18px',
-    backgroundColor: '#ffffff',
-    cursor: 'pointer',
-    transition: 'box-shadow 0.15s, border-color 0.15s',
-  };
-
-  const badgeStyle = (bg: string, color: string): React.CSSProperties => ({
-    fontSize: '0.6rem',
-    fontWeight: 700,
-    padding: '2px 8px',
-    borderRadius: '9999px',
-    backgroundColor: bg,
-    color,
-    textTransform: 'uppercase',
-    letterSpacing: '0.04em',
-  });
-
-  const overlayStyle: React.CSSProperties = {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 1000,
-  };
-
-  const modalStyle: React.CSSProperties = {
-    backgroundColor: '#fff',
-    borderRadius: '12px',
-    padding: '24px',
-    width: '460px',
-    maxWidth: '90vw',
-    maxHeight: '85vh',
-    overflowY: 'auto',
-    boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
-  };
-
-  const fieldStyle: React.CSSProperties = {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '4px',
-    marginBottom: '14px',
-  };
-
-  const labelStyle: React.CSSProperties = {
-    fontSize: '0.75rem',
-    fontWeight: 600,
-    color: '#374151',
-  };
-
-  const inputStyle: React.CSSProperties = {
-    padding: '8px 10px',
-    border: '1px solid #d1d5db',
-    borderRadius: '6px',
-    fontSize: '0.85rem',
-    outline: 'none',
-    boxSizing: 'border-box' as const,
-  };
-
   return (
-    <div>
-      {/* Header */}
-      <div style={headerStyle}>
-        <h1 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700, color: '#111827' }}>
-          Clients
-        </h1>
-        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-          <input
-            placeholder="Search clients..."
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              debouncedSetSearch(e.target.value);
-            }}
-            style={searchStyle}
-          />
-          <button onClick={openNew} style={btnPrimary}>
-            + New Client
-          </button>
-        </div>
-      </div>
-
-      {/* Loading */}
-      {loading && (
-        <div style={{ color: '#6b7280', padding: '2rem 0' }}>Loading clients...</div>
-      )}
-
-      {/* Grid */}
-      {!loading && clients.length === 0 && (
-        <div style={{ color: '#9ca3af', padding: '3rem', textAlign: 'center' }}>
-          No clients found. Create one to get started.
-        </div>
-      )}
-
-      {!loading && clients.length > 0 && (
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-            gap: '16px',
-          }}
-        >
-          {clients.map((client) => (
-            <div
-              key={client.id}
-              style={cardStyle}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLDivElement).style.boxShadow =
-                  '0 4px 16px rgba(0,0,0,0.08)';
-                (e.currentTarget as HTMLDivElement).style.borderColor = '#93c5fd';
+    <AppPage fullWidth>
+      <AppPageHeader
+        eyebrow="Client Workspaces"
+        title="Clients"
+        description="Manage client context, linked connections, and ownership details."
+        actions={
+          <>
+            <input
+              placeholder="Search clients..."
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                debouncedSetSearch(e.target.value);
               }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLDivElement).style.boxShadow = 'none';
-                (e.currentTarget as HTMLDivElement).style.borderColor = '#e5e7eb';
-              }}
-            >
-              {/* Top row: name + code badge */}
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'flex-start',
-                  marginBottom: '10px',
-                }}
-              >
-                <div>
-                  <div
-                    style={{
-                      fontSize: '1rem',
-                      fontWeight: 600,
-                      color: '#111827',
-                      marginBottom: '2px',
-                    }}
-                  >
-                    {client.name}
-                  </div>
-                  {client.description && (
-                    <div
-                      style={{
-                        fontSize: '0.78rem',
-                        color: '#6b7280',
-                        lineHeight: 1.3,
-                        maxWidth: '220px',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {client.description}
-                    </div>
-                  )}
-                </div>
-                <span style={badgeStyle('#e0e7ff', '#3730a3')}>{client.code}</span>
-              </div>
+              className="app-input"
+              style={{ width: 'min(100%, 280px)' }}
+            />
+            <button onClick={openNew} className="app-button app-button-primary">
+              + New Client
+            </button>
+          </>
+        }
+      />
+      <div className="app-stack">
+        {/* Loading */}
+        {loading && <AppEmptyState>Loading clients...</AppEmptyState>}
 
-              {/* Connection info */}
-              {client.connectionName && (
+        {/* Grid */}
+        {!loading && clients.length === 0 && (
+          <AppEmptyState>No clients found. Create one to get started.</AppEmptyState>
+        )}
+
+        {!loading && clients.length > 0 && (
+          <div
+            className="app-grid"
+            style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 320px), 1fr))' }}
+          >
+            {clients.map((client) => (
+              <AppCard key={client.id}>
+                {/* Top row: name + code badge */}
                 <div
                   style={{
-                    fontSize: '0.78rem',
-                    color: '#4b5563',
-                    marginBottom: '6px',
                     display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                  }}
-                >
-                  <span style={{ opacity: 0.7 }}>DB:</span> {client.connectionName}
-                </div>
-              )}
-
-              {/* Contact */}
-              {(client.contactName || client.contactEmail) && (
-                <div
-                  style={{
-                    fontSize: '0.75rem',
-                    color: '#6b7280',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
                     marginBottom: '10px',
                   }}
                 >
-                  {client.contactName && <span>{client.contactName}</span>}
-                  {client.contactName && client.contactEmail && <span> &middot; </span>}
-                  {client.contactEmail && (
-                    <span style={{ color: '#3b82f6' }}>{client.contactEmail}</span>
-                  )}
+                  <div>
+                    <div className="app-card-title">{client.name}</div>
+                    {client.description && (
+                      <div
+                        style={{
+                          fontSize: '0.78rem',
+                          color: 'var(--app-muted)',
+                          lineHeight: 1.3,
+                          maxWidth: '220px',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {client.description}
+                      </div>
+                    )}
+                  </div>
+                  <AppStatusPill tone="accent">{client.code}</AppStatusPill>
                 </div>
-              )}
 
-              {/* Footer: issue count + actions */}
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginTop: '8px',
-                  paddingTop: '10px',
-                  borderTop: '1px solid #f3f4f6',
-                }}
-              >
-                <span style={{ fontSize: '0.72rem', color: '#9ca3af' }}>
-                  {client.issueCount} issue{client.issueCount !== 1 ? 's' : ''}
-                </span>
-                <div style={{ display: 'flex', gap: '6px' }}>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      openEdit(client);
-                    }}
-                    style={btnSecondary}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeactivate(client.id);
-                    }}
+                {/* Connection info */}
+                {client.connectionName && (
+                  <div
                     style={{
-                      ...btnSecondary,
-                      color: '#dc2626',
-                      borderColor: '#fecaca',
+                      fontSize: '0.78rem',
+                      color: 'var(--app-muted)',
+                      marginBottom: '6px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
                     }}
                   >
-                    Delete
-                  </button>
+                    <span style={{ opacity: 0.7 }}>DB:</span> {client.connectionName}
+                  </div>
+                )}
+
+                {/* Contact */}
+                {(client.contactName || client.contactEmail) && (
+                  <div
+                    style={{
+                      fontSize: '0.75rem',
+                      color: 'var(--app-muted)',
+                      marginBottom: '10px',
+                    }}
+                  >
+                    {client.contactName && <span>{client.contactName}</span>}
+                    {client.contactName && client.contactEmail && <span> &middot; </span>}
+                    {client.contactEmail && (
+                      <span style={{ color: 'var(--app-accent-strong)' }}>
+                        {client.contactEmail}
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                {/* Footer: issue count + actions */}
+                <div
+                  className="app-toolbar"
+                  style={{
+                    justifyContent: 'space-between',
+                    marginTop: '12px',
+                    paddingTop: '12px',
+                    borderTop: '1px solid var(--app-border)',
+                  }}
+                >
+                  <span style={{ fontSize: '0.72rem', color: 'var(--app-muted)' }}>
+                    {client.issueCount} issue{client.issueCount !== 1 ? 's' : ''}
+                  </span>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openEdit(client);
+                      }}
+                      className="app-button"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeactivate(client.id);
+                      }}
+                      className="app-button"
+                      style={{ color: 'var(--app-danger)', borderColor: '#f4b4ae' }}
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </div>
+              </AppCard>
+            ))}
+          </div>
+        )}
+
+        {/* Modal */}
+        {modalOpen && (
+          <div className="app-modal-backdrop" onClick={() => setModalOpen(false)}>
+            <div className="app-modal" onClick={(e) => e.stopPropagation()}>
+              <h2 className="app-card-title" style={{ marginBottom: '18px' }}>
+                {editingId ? 'Edit Client' : 'New Client'}
+              </h2>
+
+              <div className="app-field">
+                <label className="app-label">Name *</label>
+                <input
+                  value={formName}
+                  onChange={(e) => setFormName(e.target.value)}
+                  className="app-input"
+                  placeholder="Acme Corp"
+                />
+              </div>
+
+              <div className="app-field">
+                <label className="app-label">Code *</label>
+                <input
+                  value={formCode}
+                  onChange={(e) => setFormCode(e.target.value.toUpperCase())}
+                  maxLength={6}
+                  className="app-input"
+                  style={{ fontFamily: 'monospace', textTransform: 'uppercase' }}
+                  placeholder="ACME"
+                />
+              </div>
+
+              <div className="app-field">
+                <label className="app-label">Description</label>
+                <textarea
+                  value={formDescription}
+                  onChange={(e) => setFormDescription(e.target.value)}
+                  rows={2}
+                  className="app-textarea"
+                  placeholder="Brief description..."
+                />
+              </div>
+
+              <div className="app-field">
+                <label className="app-label">Connection</label>
+                <select
+                  value={formConnectionId}
+                  onChange={(e) => setFormConnectionId(e.target.value)}
+                  className="app-select"
+                >
+                  <option value="">-- None --</option>
+                  {connections.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="app-field">
+                <label className="app-label">Contact Name</label>
+                <input
+                  value={formContactName}
+                  onChange={(e) => setFormContactName(e.target.value)}
+                  className="app-input"
+                  placeholder="Jane Doe"
+                />
+              </div>
+
+              <div className="app-field">
+                <label className="app-label">Contact Email</label>
+                <input
+                  value={formContactEmail}
+                  onChange={(e) => setFormContactEmail(e.target.value)}
+                  className="app-input"
+                  type="email"
+                  placeholder="jane@acme.com"
+                />
+              </div>
+
+              <div className="app-toolbar" style={{ justifyContent: 'flex-end', marginTop: '8px' }}>
+                <button onClick={() => setModalOpen(false)} className="app-button">
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSubmit}
+                  disabled={!formName.trim() || !formCode.trim()}
+                  className="app-button app-button-primary"
+                  style={{ opacity: !formName.trim() || !formCode.trim() ? 0.5 : 1 }}
+                >
+                  {editingId ? 'Save Changes' : 'Create Client'}
+                </button>
               </div>
             </div>
-          ))}
-        </div>
-      )}
-
-      {/* Modal */}
-      {modalOpen && (
-        <div style={overlayStyle} onClick={() => setModalOpen(false)}>
-          <div style={modalStyle} onClick={(e) => e.stopPropagation()}>
-            <h2
-              style={{
-                margin: '0 0 18px',
-                fontSize: '1.15rem',
-                fontWeight: 700,
-                color: '#111827',
-              }}
-            >
-              {editingId ? 'Edit Client' : 'New Client'}
-            </h2>
-
-            <div style={fieldStyle}>
-              <label style={labelStyle}>Name *</label>
-              <input
-                value={formName}
-                onChange={(e) => setFormName(e.target.value)}
-                style={inputStyle}
-                placeholder="Acme Corp"
-              />
-            </div>
-
-            <div style={fieldStyle}>
-              <label style={labelStyle}>Code *</label>
-              <input
-                value={formCode}
-                onChange={(e) => setFormCode(e.target.value.toUpperCase())}
-                maxLength={6}
-                style={{ ...inputStyle, fontFamily: 'monospace', textTransform: 'uppercase' }}
-                placeholder="ACME"
-              />
-            </div>
-
-            <div style={fieldStyle}>
-              <label style={labelStyle}>Description</label>
-              <textarea
-                value={formDescription}
-                onChange={(e) => setFormDescription(e.target.value)}
-                rows={2}
-                style={{ ...inputStyle, resize: 'vertical' }}
-                placeholder="Brief description..."
-              />
-            </div>
-
-            <div style={fieldStyle}>
-              <label style={labelStyle}>Connection</label>
-              <select
-                value={formConnectionId}
-                onChange={(e) => setFormConnectionId(e.target.value)}
-                style={inputStyle}
-              >
-                <option value="">-- None --</option>
-                {connections.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div style={fieldStyle}>
-              <label style={labelStyle}>Contact Name</label>
-              <input
-                value={formContactName}
-                onChange={(e) => setFormContactName(e.target.value)}
-                style={inputStyle}
-                placeholder="Jane Doe"
-              />
-            </div>
-
-            <div style={fieldStyle}>
-              <label style={labelStyle}>Contact Email</label>
-              <input
-                value={formContactEmail}
-                onChange={(e) => setFormContactEmail(e.target.value)}
-                style={inputStyle}
-                type="email"
-                placeholder="jane@acme.com"
-              />
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '8px' }}>
-              <button onClick={() => setModalOpen(false)} style={btnSecondary}>
-                Cancel
-              </button>
-              <button
-                onClick={handleSubmit}
-                disabled={!formName.trim() || !formCode.trim()}
-                style={{
-                  ...btnPrimary,
-                  opacity: !formName.trim() || !formCode.trim() ? 0.5 : 1,
-                  cursor: !formName.trim() || !formCode.trim() ? 'not-allowed' : 'pointer',
-                }}
-              >
-                {editingId ? 'Save Changes' : 'Create Client'}
-              </button>
-            </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+    </AppPage>
   );
 }
