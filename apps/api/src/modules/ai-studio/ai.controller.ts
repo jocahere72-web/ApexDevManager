@@ -80,7 +80,7 @@ aiRouter.post(
       }
 
       // Rate limit
-      await checkRateLimit(req.tenantId!, req.userId!);
+      await checkRateLimit(req.tenantId!, req.userId!, req.dbClient);
 
       // Sanitize the code input
       const sanitized = sanitizeInput(parsed.data.code);

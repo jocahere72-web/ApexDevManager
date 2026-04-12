@@ -2,7 +2,7 @@
 
 Fecha: 2026-04-12
 
-Ultima actualizacion: 2026-04-12T04:24:43Z
+Ultima actualizacion: 2026-04-12T04:30:19Z
 
 Esta revision revalida los hallazgos reportados contra el estado actual del backend. No se ejecutaron tests ni typecheck porque `node` no esta disponible en el PATH de esta sesion.
 
@@ -13,6 +13,7 @@ Corregidos o mitigados en la revision actual:
 - Los consumidores principales ya no hacen `SELECT id, tenant_id, type, config, encrypted_credentials FROM connections`; ahora usan `getConnectionForTenant()`.
 - `dashboard.service.ts` ya consulta `last_check_at`, `last_latency_ms` y `last_error` en lugar de `last_tested_at`, `response_time_ms` y `error_message`.
 - `usage-intelligence` y `dashboards` ya cambiaron las consultas revisadas de `pool.query()` a `tenantQuery(client, ...)`, y sus controladores pasan `req.dbClient`.
+- Revalidado nuevamente: el finding de RLS parcial en `usage-intelligence` es falso positivo en el estado actual; las lineas 40, 50, 58, 66, 227 y 240 de `usage.service.ts` usan `tenantQuery(client, ...)`.
 - El script de test de API ya apunta a `test/**/*.test.ts`.
 - `users.service.ts` ya usa `hashPassword()` compartido.
 - `usage-intelligence` ya valida `granularity` y usa `GRANULARITY_MAP`.
