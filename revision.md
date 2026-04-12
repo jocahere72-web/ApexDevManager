@@ -2,7 +2,7 @@
 
 Fecha: 2026-04-12
 
-Ultima actualizacion: 2026-04-12T05:21:25Z
+Ultima actualizacion: 2026-04-12T05:35:31Z
 
 Esta revision revalida los hallazgos reportados contra el estado actual del backend y agrega una revision de construccion frontend. No se ejecutaron tests ni typecheck porque `node` no esta disponible en el PATH de esta sesion.
 
@@ -280,3 +280,45 @@ Mejor solucion:
 - Unificar paleta, tipografia, espaciados y radios.
 - Reemplazar el dashboard raiz con una home operativa que use los mismos widgets reales o redirigir a `/dashboards` si esa es la experiencia canonica.
 - Agregar revision visual con Playwright cuando Node este disponible.
+
+## 10. Resultados de pruebas frontend y revision visual con Playwright
+
+Severidad: P1
+
+Ejecucion:
+
+- Servidor local Vite: `http://127.0.0.1:5173/`
+- Viewports probados: desktop `1440x900`, tablet `768x1024`, mobile `390x844`
+- Rutas capturadas: `/`, `/connections`, `/explorer`, `/ai-studio`, `/dashboards`, `/usage`, `/editor`
+- Evidencia generada: `/tmp/apexdev-ui-review/` y `/tmp/apexdev-ui-review-mocked/`
+
+Comandos ejecutados:
+
+```bash
+PATH=/opt/homebrew/bin:$PATH pnpm --filter @apex-dev-manager/web test
+PATH=/opt/homebrew/bin:$PATH pnpm --filter @apex-dev-manager/web typecheck
+PATH=/opt/homebrew/bin:$PATH pnpm --filter @apex-dev-manager/web build
+```
+
+Resultado:
+
+- `typecheck`: paso.
+- `test`: inicialmente fallo porque faltaba `jsdom`; se agrego `jsdom` como devDependency y luego paso `1 test`.
+- `build`: paso, `223 modules transformed`.
+- Playwright: paso con Chromium headless fuera del sandbox.
+
+Hallazgos visuales confirmados:
+
+- En mobile `390px`, el sidebar conserva aproximadamente `257px` y deja el area principal en aproximadamente `117px`. Esto confirma que el shell no es usable en mobile aunque no siempre aparezca overflow horizontal medido por el documento.
+- En tablet `768px`, el main queda en aproximadamente `495px`, muy estrecho para workspaces como AI Studio, Explorer, Editor y Dashboards.
+- La navegacion mantiene 20 items visibles en todos los viewports, sin agrupacion ni modo drawer.
+- `/connections`, `/explorer` y `/ai-studio` redirigen al login en la corrida sin backend mockeado porque las llamadas API iniciales reciben 401 y el interceptor global limpia sesion. Con API mockeada renderizan, pero siguen mostrando la misma limitacion de layout.
+- `/dashboards`, `/usage` y `/connections` en mobile muestran contenido recortado visualmente por falta de reorganizacion responsive.
+
+Mejor solucion:
+
+- Convertir el shell en responsive antes de seguir puliendo paginas individuales.
+- Agregar una suite Playwright versionada en el repo con screenshots o assertions de layout para desktop, tablet y mobile.
+- Mockear API en pruebas visuales para validar interfaz sin depender del backend.
+- Agregar `jsdom` de forma permanente para que Vitest no falle por entorno faltante.
+- Revisar el interceptor de 401 para distinguir expiracion de token, permisos insuficientes y errores de endpoints opcionales.

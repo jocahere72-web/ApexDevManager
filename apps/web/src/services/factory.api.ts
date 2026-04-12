@@ -9,7 +9,7 @@ import type {
   GenerateBatchRequest,
 } from '@apex-dev-manager/shared-types';
 
-const BASE = '/api/v1/factory';
+const BASE = '/factory';
 
 /**
  * Generate code from a spec.

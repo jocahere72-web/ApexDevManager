@@ -8,7 +8,7 @@ import type {
   KnowledgeCategory,
 } from '@apex-dev-manager/shared-types';
 
-const BASE = '/api/v1/knowledge';
+const BASE = '/knowledge';
 
 /**
  * Search the knowledge base.

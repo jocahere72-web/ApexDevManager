@@ -9,7 +9,7 @@ import type {
   MarketplaceSearchParams,
 } from '@apex-dev-manager/shared-types';
 
-const BASE = '/api/v1/marketplace';
+const BASE = '/marketplace';
 
 /**
  * List/search marketplace items.

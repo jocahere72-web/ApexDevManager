@@ -1,375 +1,184 @@
 import { useState, useCallback, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import type { EditorTab, ComponentType, LockStatus } from '@apex-dev-manager/shared-types';
+import { apiClient } from '@/lib/api-client';
 import MonacoEditorWrapper from './components/MonacoEditorWrapper';
-import EditorTabs from './components/EditorTabs';
-import ChangeLogPanel from './components/ChangeLogPanel';
-import DiffViewer from './components/DiffViewer';
-import {
-  useComponentSource,
-  useChangeLog,
-  useOpenSession,
-  useSaveDraft,
-  useApplyCode,
-  useFormatCode,
-  useReleaseSession,
-} from './hooks/useEditor';
 
-// ---------------------------------------------------------------------------
-// Editor Page
-// ---------------------------------------------------------------------------
+interface ConnectionOption {
+  id: string;
+  name: string;
+  connection_type: string;
+}
 
 export default function EditorPage() {
-  const [searchParams] = useSearchParams();
-
-  // URL-driven initial component
-  const initialConnectionId = searchParams.get('connectionId') ?? '';
-  const initialComponentType = (searchParams.get('componentType') ?? 'package_body') as ComponentType;
-  const initialComponentId = searchParams.get('componentId') ?? '';
-
-  // ── Tab state ─────────────────────────────────────────────────────────
-
-  const [tabs, setTabs] = useState<EditorTab[]>([]);
-  const [activeTabId, setActiveTabId] = useState<string | null>(null);
-  const [showChangeLog, setShowChangeLog] = useState(true);
-  const [showDiff, setShowDiff] = useState(false);
-  const [changeLogPage, setChangeLogPage] = useState(0);
-
-  const activeTab = tabs.find((t) => t.id === activeTabId) ?? null;
-
-  // ── Queries & mutations ───────────────────────────────────────────────
-
-  const sourceQuery = useComponentSource(
-    activeTab?.connectionId ?? initialConnectionId,
-    activeTab?.componentType ?? initialComponentType,
-    activeTab?.componentId ?? initialComponentId,
-  );
-
-  const changeLogQuery = useChangeLog(
-    activeTab?.connectionId ?? initialConnectionId,
-    activeTab?.componentType ?? initialComponentType,
-    activeTab?.componentId ?? initialComponentId,
-    20,
-    changeLogPage * 20,
-  );
-
-  const openSessionMutation = useOpenSession();
-  const saveDraftMutation = useSaveDraft();
-  const applyCodeMutation = useApplyCode();
-  const formatCodeMutation = useFormatCode();
-  const releaseSessionMutation = useReleaseSession();
-
-  // ── Lock status derived from session ──────────────────────────────────
-
-  const lockStatus: LockStatus = activeTab?.sessionId
-    ? { isLocked: true, lockedBy: null, lockedByName: null, sessionId: activeTab.sessionId, expiresAt: null }
-    : { isLocked: false, lockedBy: null, lockedByName: null, sessionId: null, expiresAt: null };
-
-  // ── Open initial tab from URL params ──────────────────────────────────
+  const [connections, setConnections] = useState<ConnectionOption[]>([]);
+  const [selectedConnId, setSelectedConnId] = useState('');
+  const [componentType, setComponentType] = useState('plsql_package');
+  const [componentId, setComponentId] = useState('');
+  const [content, setContent] = useState('');
+  const [originalContent, setOriginalContent] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [status, setStatus] = useState<string | null>(null);
 
   useEffect(() => {
-    if (initialConnectionId && initialComponentId && tabs.length === 0 && sourceQuery.data) {
-      const tab: EditorTab = {
-        id: `${initialConnectionId}:${initialComponentType}:${initialComponentId}`,
-        sessionId: null,
-        connectionId: initialConnectionId,
-        componentType: initialComponentType,
-        componentId: initialComponentId,
-        componentName: sourceQuery.data.componentName,
-        mode: 'view',
-        content: sourceQuery.data.source,
-        originalContent: sourceQuery.data.source,
-        isDirty: false,
-        cursorLine: 1,
-        cursorColumn: 1,
-      };
-
-      setTabs([tab]);
-      setActiveTabId(tab.id);
-    }
-  }, [initialConnectionId, initialComponentId, initialComponentType, sourceQuery.data, tabs.length]);
-
-  // ── Tab handlers ──────────────────────────────────────────────────────
-
-  const handleSelectTab = useCallback((tabId: string) => {
-    setActiveTabId(tabId);
-    setChangeLogPage(0);
+    apiClient.get('/connections').then(res => {
+      setConnections(res.data.data || []);
+    }).catch(() => {});
   }, []);
 
-  const handleCloseTab = useCallback(
-    (tabId: string) => {
-      const tab = tabs.find((t) => t.id === tabId);
-      if (tab?.sessionId) {
-        releaseSessionMutation.mutate(tab.sessionId);
-      }
-
-      setTabs((prev) => {
-        const filtered = prev.filter((t) => t.id !== tabId);
-        if (activeTabId === tabId && filtered.length > 0) {
-          setActiveTabId(filtered[filtered.length - 1].id);
-        } else if (filtered.length === 0) {
-          setActiveTabId(null);
-        }
-        return filtered;
-      });
-    },
-    [tabs, activeTabId, releaseSessionMutation],
-  );
-
-  // ── Editor handlers ───────────────────────────────────────────────────
-
-  const handleContentChange = useCallback(
-    (newContent: string) => {
-      if (!activeTabId) return;
-      setTabs((prev) =>
-        prev.map((t) =>
-          t.id === activeTabId
-            ? { ...t, content: newContent, isDirty: newContent !== t.originalContent }
-            : t,
-        ),
-      );
-    },
-    [activeTabId],
-  );
-
-  const handleSave = useCallback(() => {
-    if (!activeTab?.sessionId || !activeTab.isDirty) return;
-
-    saveDraftMutation.mutate({
-      sessionId: activeTab.sessionId,
-      draftContent: activeTab.content,
-      cursorLine: activeTab.cursorLine,
-      cursorColumn: activeTab.cursorColumn,
-    });
-  }, [activeTab, saveDraftMutation]);
-
-  const handleFormat = useCallback(() => {
-    if (!activeTab) return;
-
-    formatCodeMutation.mutate(
-      { source: activeTab.content, language: 'plsql' },
-      {
-        onSuccess: (result) => {
-          if (result.changed) {
-            handleContentChange(result.formatted);
-          }
-        },
-      },
-    );
-  }, [activeTab, formatCodeMutation, handleContentChange]);
-
-  const handleApply = useCallback(() => {
-    if (!activeTab?.sessionId) return;
-
-    applyCodeMutation.mutate({
-      sessionId: activeTab.sessionId,
-      code: activeTab.content,
-      connectionId: activeTab.connectionId,
-      componentType: activeTab.componentType,
-      componentId: activeTab.componentId,
-      componentName: activeTab.componentName,
-      source: 'manual',
-    }, {
-      onSuccess: () => {
-        // Mark the tab as clean and update original content
-        setTabs((prev) =>
-          prev.map((t) =>
-            t.id === activeTabId
-              ? { ...t, originalContent: t.content, isDirty: false, sessionId: null, mode: 'view' as const }
-              : t,
-          ),
-        );
-      },
-    });
-  }, [activeTab, activeTabId, applyCodeMutation]);
-
-  const handleToggleEdit = useCallback(() => {
-    if (!activeTab) return;
-
-    if (activeTab.mode === 'view') {
-      // Open edit session
-      openSessionMutation.mutate(
-        {
-          connectionId: activeTab.connectionId,
-          componentType: activeTab.componentType,
-          componentId: activeTab.componentId,
-          mode: 'edit',
-        },
-        {
-          onSuccess: (session) => {
-            setTabs((prev) =>
-              prev.map((t) =>
-                t.id === activeTabId
-                  ? { ...t, mode: 'edit' as const, sessionId: session.id }
-                  : t,
-              ),
-            );
-          },
-        },
-      );
-    } else {
-      // Release lock and go to view
-      if (activeTab.sessionId) {
-        releaseSessionMutation.mutate(activeTab.sessionId);
-      }
-      setTabs((prev) =>
-        prev.map((t) =>
-          t.id === activeTabId
-            ? { ...t, mode: 'view' as const, sessionId: null }
-            : t,
-        ),
-      );
+  const handleLoad = async () => {
+    if (!selectedConnId || !componentId) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await apiClient.get(`/editor/source/${selectedConnId}/${componentType}/${componentId}`);
+      const src = res.data.data?.source || res.data.data || '';
+      setContent(typeof src === 'string' ? src : JSON.stringify(src, null, 2));
+      setOriginalContent(typeof src === 'string' ? src : JSON.stringify(src, null, 2));
+      setStatus('Source loaded');
+    } catch (err: any) {
+      setError(err.response?.data?.error?.message || 'Failed to load source');
+    } finally {
+      setLoading(false);
     }
-  }, [activeTab, activeTabId, openSessionMutation, releaseSessionMutation]);
+  };
 
-  // ── Render ────────────────────────────────────────────────────────────
+  const isDirty = content !== originalContent;
+
+  const sampleCode = `CREATE OR REPLACE PACKAGE BODY my_package AS
+
+  PROCEDURE process_data (
+    p_id    IN NUMBER,
+    p_name  IN VARCHAR2
+  ) IS
+    v_count NUMBER := 0;
+  BEGIN
+    SELECT COUNT(*)
+      INTO v_count
+      FROM my_table
+     WHERE id = p_id;
+
+    IF v_count > 0 THEN
+      UPDATE my_table
+         SET name = p_name,
+             updated_at = SYSDATE
+       WHERE id = p_id;
+
+      DBMS_OUTPUT.PUT_LINE('Updated: ' || p_name);
+    ELSE
+      INSERT INTO my_table (id, name, created_at)
+      VALUES (p_id, p_name, SYSDATE);
+
+      DBMS_OUTPUT.PUT_LINE('Inserted: ' || p_name);
+    END IF;
+
+    COMMIT;
+  EXCEPTION
+    WHEN OTHERS THEN
+      ROLLBACK;
+      RAISE;
+  END process_data;
+
+END my_package;
+/`;
 
   return (
-    <div className="flex h-full flex-col bg-neutral-950 text-white">
+    <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 3.5rem)' }}>
       {/* Toolbar */}
-      <div className="flex items-center gap-2 border-b border-neutral-700 bg-neutral-900 px-4 py-1.5">
-        <h1 className="mr-4 text-sm font-semibold text-neutral-300">Code Editor</h1>
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem',
+        borderBottom: '1px solid #e5e7eb', backgroundColor: '#f9fafb', flexWrap: 'wrap',
+      }}>
+        <h2 style={{ fontSize: '1rem', fontWeight: 700, margin: 0, marginRight: '1rem' }}>Code Editor</h2>
 
-        {/* Lock status indicator */}
-        <div className="flex items-center gap-1.5 text-xs">
-          {lockStatus.isLocked ? (
-            <span className="flex items-center gap-1 rounded bg-amber-700/30 px-2 py-0.5 text-amber-300">
-              <svg className="h-3 w-3" viewBox="0 0 16 16" fill="currentColor">
-                <path d="M8 1a3 3 0 0 0-3 3v2H4a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1h-1V4a3 3 0 0 0-3-3zm2 5V4a2 2 0 1 0-4 0v2h4z" />
-              </svg>
-              Editing
-            </span>
-          ) : (
-            <span className="flex items-center gap-1 rounded bg-neutral-700/50 px-2 py-0.5 text-neutral-400">
-              <svg className="h-3 w-3" viewBox="0 0 16 16" fill="currentColor">
-                <path d="M11 1a2 2 0 0 0-2 2v1H4a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1h-1V3a2 2 0 0 0-2-2z" />
-              </svg>
-              View Only
-            </span>
-          )}
-        </div>
-
-        <div className="flex-1" />
-
-        {/* Action buttons */}
-        <button
-          type="button"
-          className="rounded bg-neutral-700 px-3 py-1 text-xs font-medium text-neutral-200 transition-colors hover:bg-neutral-600 disabled:opacity-50"
-          onClick={handleToggleEdit}
-          disabled={!activeTab}
+        <select
+          value={selectedConnId}
+          onChange={e => setSelectedConnId(e.target.value)}
+          style={{ padding: '0.375rem 0.5rem', borderRadius: '0.375rem', border: '1px solid #d1d5db', fontSize: '0.8rem' }}
         >
-          {activeTab?.mode === 'edit' ? 'Switch to View' : 'Edit'}
-        </button>
+          <option value="">Select Connection</option>
+          {connections.map(c => (
+            <option key={c.id} value={c.id}>{c.name} ({c.connection_type})</option>
+          ))}
+        </select>
 
-        <button
-          type="button"
-          className="rounded bg-neutral-700 px-3 py-1 text-xs font-medium text-neutral-200 transition-colors hover:bg-neutral-600 disabled:opacity-50"
-          onClick={handleSave}
-          disabled={!activeTab?.isDirty || !activeTab?.sessionId}
+        <select
+          value={componentType}
+          onChange={e => setComponentType(e.target.value)}
+          style={{ padding: '0.375rem 0.5rem', borderRadius: '0.375rem', border: '1px solid #d1d5db', fontSize: '0.8rem' }}
         >
-          Save Draft
-        </button>
+          <option value="plsql_package">Package Body</option>
+          <option value="plsql_trigger">Trigger</option>
+          <option value="plsql_view">View</option>
+          <option value="page_process">Page Process</option>
+          <option value="dynamic_action">Dynamic Action</option>
+          <option value="computation">Computation</option>
+          <option value="validation">Validation</option>
+        </select>
+
+        <input
+          type="text"
+          placeholder="Component name..."
+          value={componentId}
+          onChange={e => setComponentId(e.target.value)}
+          style={{ padding: '0.375rem 0.5rem', borderRadius: '0.375rem', border: '1px solid #d1d5db', fontSize: '0.8rem', width: '12rem' }}
+        />
 
         <button
-          type="button"
-          className="rounded bg-neutral-700 px-3 py-1 text-xs font-medium text-neutral-200 transition-colors hover:bg-neutral-600 disabled:opacity-50"
-          onClick={handleFormat}
-          disabled={!activeTab}
+          onClick={handleLoad}
+          disabled={loading || !selectedConnId || !componentId}
+          style={{
+            padding: '0.375rem 0.75rem', backgroundColor: '#2563eb', color: '#fff',
+            border: 'none', borderRadius: '0.375rem', fontSize: '0.8rem', fontWeight: 600,
+            cursor: 'pointer', opacity: loading || !selectedConnId || !componentId ? 0.5 : 1,
+          }}
         >
-          Format
+          {loading ? 'Loading...' : 'Load'}
         </button>
+
+        <div style={{ flex: 1 }} />
+
+        <span style={{
+          padding: '0.25rem 0.5rem', borderRadius: '0.25rem', fontSize: '0.75rem', fontWeight: 600,
+          backgroundColor: isEditing ? '#fef3c7' : '#f3f4f6',
+          color: isEditing ? '#b45309' : '#6b7280',
+        }}>
+          {isEditing ? '✏️ Editing' : '👁️ View Only'}
+        </span>
 
         <button
-          type="button"
-          className="rounded bg-blue-600 px-3 py-1 text-xs font-medium text-white transition-colors hover:bg-blue-500 disabled:opacity-50"
-          onClick={handleApply}
-          disabled={!activeTab?.sessionId || !activeTab?.isDirty}
+          onClick={() => setIsEditing(!isEditing)}
+          style={{
+            padding: '0.375rem 0.75rem', backgroundColor: '#374151', color: '#fff',
+            border: 'none', borderRadius: '0.375rem', fontSize: '0.8rem', cursor: 'pointer',
+          }}
         >
-          Apply
+          {isEditing ? 'View Mode' : 'Edit Mode'}
         </button>
 
-        <div className="mx-2 h-5 w-px bg-neutral-700" />
-
-        <button
-          type="button"
-          className={`rounded px-3 py-1 text-xs font-medium transition-colors ${
-            showDiff
-              ? 'bg-purple-600/30 text-purple-300'
-              : 'bg-neutral-700 text-neutral-200 hover:bg-neutral-600'
-          }`}
-          onClick={() => setShowDiff(!showDiff)}
-          disabled={!activeTab}
-        >
-          View Diff
-        </button>
-
-        <button
-          type="button"
-          className={`rounded px-3 py-1 text-xs font-medium transition-colors ${
-            showChangeLog
-              ? 'bg-green-600/30 text-green-300'
-              : 'bg-neutral-700 text-neutral-200 hover:bg-neutral-600'
-          }`}
-          onClick={() => setShowChangeLog(!showChangeLog)}
-        >
-          History
-        </button>
+        {isDirty && (
+          <span style={{ fontSize: '0.75rem', color: '#2563eb', fontWeight: 600 }}>● Modified</span>
+        )}
       </div>
 
-      {/* Tabs */}
-      <EditorTabs
-        tabs={tabs}
-        activeTabId={activeTabId}
-        onSelectTab={handleSelectTab}
-        onCloseTab={handleCloseTab}
-      />
-
-      {/* Main content area */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Editor / Diff */}
-        <div className="flex flex-1 flex-col overflow-hidden">
-          {activeTab ? (
-            showDiff ? (
-              <DiffViewer
-                original={activeTab.originalContent}
-                modified={activeTab.content}
-              />
-            ) : (
-              <MonacoEditorWrapper
-                value={activeTab.content}
-                onChange={handleContentChange}
-                readOnly={activeTab.mode === 'view'}
-                onSave={handleSave}
-                onFormat={handleFormat}
-              />
-            )
-          ) : (
-            <div className="flex flex-1 items-center justify-center text-neutral-500">
-              <div className="text-center">
-                <p className="text-lg font-medium">No file open</p>
-                <p className="mt-1 text-sm">
-                  Open a component from the Explorer to start editing.
-                </p>
-              </div>
-            </div>
-          )}
+      {error && (
+        <div style={{ padding: '0.5rem 1rem', backgroundColor: '#fef2f2', color: '#dc2626', fontSize: '0.8rem' }}>
+          {error}
         </div>
+      )}
+      {status && !error && (
+        <div style={{ padding: '0.5rem 1rem', backgroundColor: '#f0fdf4', color: '#16a34a', fontSize: '0.8rem' }}>
+          {status}
+        </div>
+      )}
 
-        {/* Change log panel */}
-        {showChangeLog && activeTab && (
-          <div className="w-80 flex-shrink-0 border-l border-neutral-700 bg-neutral-900">
-            <ChangeLogPanel
-              entries={(changeLogQuery.data?.entries ?? []) as any}
-              total={changeLogQuery.data?.total ?? 0}
-              isLoading={changeLogQuery.isLoading}
-              hasMore={
-                (changeLogQuery.data?.entries.length ?? 0) <
-                (changeLogQuery.data?.total ?? 0)
-              }
-              onLoadMore={() => setChangeLogPage((p) => p + 1)}
-            />
-          </div>
-        )}
+      {/* Monaco Editor */}
+      <div style={{ flex: 1, overflow: 'hidden' }}>
+        <MonacoEditorWrapper
+          value={content || sampleCode}
+          onChange={setContent}
+          readOnly={!isEditing}
+        />
       </div>
     </div>
   );
