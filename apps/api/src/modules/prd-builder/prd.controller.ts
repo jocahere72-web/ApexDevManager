@@ -29,7 +29,7 @@ prdRouter.post(
         throw new ValidationError('Invalid session data', parsed.error.flatten().fieldErrors);
       }
 
-      const session = await prdService.createSession(parsed.data, req.userId!, req.tenantId!);
+      const session = await prdService.createSession(parsed.data, req.userId!, req.tenantId!, req.dbClient);
 
       res.status(201).json({ success: true, data: session });
     } catch (err) {
@@ -58,6 +58,7 @@ prdRouter.get(
         limit,
         status,
         appId,
+        req.dbClient,
       );
       const totalPages = Math.ceil(total / limit);
 
@@ -87,7 +88,7 @@ prdRouter.get(
   '/sessions/:id',
   async (req: Request, res: Response<ApiResponse<PRDSession>>, next: NextFunction) => {
     try {
-      const session = await prdService.getSession(req.params.id, req.tenantId!);
+      const session = await prdService.getSession(req.params.id, req.tenantId!, req.dbClient);
 
       res.json({ success: true, data: session });
     } catch (err) {
@@ -109,7 +110,7 @@ prdRouter.post(
         throw new ValidationError('Invalid source data', parsed.error.flatten().fieldErrors);
       }
 
-      const source = await prdService.uploadSource(req.params.id, parsed.data, req.tenantId!);
+      const source = await prdService.uploadSource(req.params.id, parsed.data, req.tenantId!, req.dbClient);
 
       res.status(201).json({ success: true, data: source });
     } catch (err) {
@@ -135,6 +136,7 @@ prdRouter.post(
         req.params.id,
         parsed.data,
         req.tenantId!,
+        req.dbClient,
       );
 
       res.json({ success: true, data: extraction });
@@ -161,6 +163,7 @@ prdRouter.post(
         req.params.id,
         parsed.data,
         req.tenantId!,
+        req.dbClient,
       );
 
       res.json({ success: true, data: sections });
@@ -183,7 +186,7 @@ prdRouter.post(
         throw new ValidationError('Invalid validation options', parsed.error.flatten().fieldErrors);
       }
 
-      const result = await prdService.validatePRD(req.params.id, parsed.data, req.tenantId!);
+      const result = await prdService.validatePRD(req.params.id, parsed.data, req.tenantId!, req.dbClient);
 
       res.json({ success: true, data: result });
     } catch (err) {
@@ -205,7 +208,7 @@ prdRouter.post(
         throw new ValidationError('Invalid export options', parsed.error.flatten().fieldErrors);
       }
 
-      const result = await prdService.exportPRD(req.params.id, parsed.data, req.tenantId!);
+      const result = await prdService.exportPRD(req.params.id, parsed.data, req.tenantId!, req.dbClient);
 
       res.json({ success: true, data: result });
     } catch (err) {
@@ -227,7 +230,7 @@ prdRouter.put(
         throw new ValidationError('Invalid section data', parsed.error.flatten().fieldErrors);
       }
 
-      const section = await prdService.updateSection(req.params.id, parsed.data, req.tenantId!);
+      const section = await prdService.updateSection(req.params.id, parsed.data, req.tenantId!, req.dbClient);
 
       res.json({ success: true, data: section });
     } catch (err) {

@@ -36,6 +36,7 @@ knowledgeRouter.get(
       const results = await knowledgeService.search(
         { query, category: category as any, tags, limit },
         req.tenantId!,
+        req.dbClient,
       );
 
       res.json({ success: true, data: results });
@@ -63,6 +64,7 @@ knowledgeRouter.post(
       const article = await knowledgeService.ingestDoc(
         { title, content, category, tags, sourceUrl, version },
         req.tenantId!,
+        req.dbClient,
       );
 
       res.status(201).json({ success: true, data: article });
@@ -83,6 +85,7 @@ knowledgeRouter.get(
       const help = await knowledgeService.getContextualHelp(
         req.params.componentType,
         req.tenantId!,
+        req.dbClient,
       );
       res.json({ success: true, data: help });
     } catch (err) {
@@ -104,7 +107,7 @@ knowledgeRouter.get(
         throw new ValidationError('Query parameter "role" is required');
       }
 
-      const paths = await knowledgeService.getLearningPath(role, req.tenantId!, req.userId!);
+      const paths = await knowledgeService.getLearningPath(role, req.tenantId!, req.userId!, req.dbClient);
       res.json({ success: true, data: paths });
     } catch (err) {
       next(err);

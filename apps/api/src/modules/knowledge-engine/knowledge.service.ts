@@ -3,6 +3,8 @@
 // ---------------------------------------------------------------------------
 
 import { pool } from '../../config/database.js';
+import { tenantQuery } from '../../lib/tenant-db.js';
+import type { PoolClient } from 'pg';
 import { logger } from '../../lib/logger.js';
 import { NotFoundError } from '../../lib/errors.js';
 import { claudeClient } from '../ai-studio/claude.client.js';
@@ -78,6 +80,7 @@ async function generateEmbedding(text: string): Promise<number[]> {
 export async function search(
   request: KnowledgeSearchRequest,
   tenantId: string,
+  client?: PoolClient,
 ): Promise<KnowledgeSearchResult[]> {
   logger.info({ query: request.query, tenantId }, 'Knowledge search');
 
@@ -103,7 +106,7 @@ export async function search(
 
   const where = conditions.join(' AND ');
 
-  const result = await pool.query(
+  const result = await tenantQuery(client,
     `SELECT *,
        1 - (embedding <=> $1::vector) AS similarity
      FROM knowledge_articles
@@ -152,13 +155,14 @@ export async function search(
 export async function ingestDoc(
   request: IngestDocRequest,
   tenantId: string,
+  client?: PoolClient,
 ): Promise<KnowledgeArticle> {
   logger.info({ title: request.title, category: request.category, tenantId }, 'Ingesting document');
 
   // Generate embedding for the content
   const embedding = await generateEmbedding(request.content);
 
-  const result = await pool.query(
+  const result = await tenantQuery(client,
     `INSERT INTO knowledge_articles (tenant_id, title, content, category, tags, source_url, version, embedding)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8::vector)
      RETURNING *`,
@@ -188,11 +192,13 @@ export async function ingestDoc(
 export async function getContextualHelp(
   componentType: string,
   tenantId: string,
+  client?: PoolClient,
 ): Promise<ContextualHelp> {
   // Search for related articles
   const articles = await search(
     { query: `Oracle APEX ${componentType} best practices common issues`, limit: 5 },
     tenantId,
+    client,
   );
 
   // Use AI to generate contextual help
@@ -243,8 +249,9 @@ export async function getLearningPath(
   role: string,
   tenantId: string,
   userId: string,
+  client?: PoolClient,
 ): Promise<LearningPath[]> {
-  const result = await pool.query(
+  const result = await tenantQuery(client,
     `SELECT * FROM learning_paths WHERE tenant_id = $1 AND role = $2 ORDER BY level`,
     [tenantId, role],
   );
@@ -256,7 +263,7 @@ export async function getLearningPath(
 
   const paths: LearningPath[] = [];
   for (const row of result.rows) {
-    const resourcesResult = await pool.query(
+    const resourcesResult = await tenantQuery(client,
       `SELECT lr.*, CASE WHEN ulp.completed THEN true ELSE false END AS completed
        FROM learning_resources lr
        LEFT JOIN user_learning_progress ulp ON ulp.resource_id = lr.id AND ulp.user_id = $1

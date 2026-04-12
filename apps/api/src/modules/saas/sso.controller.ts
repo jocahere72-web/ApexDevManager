@@ -31,6 +31,7 @@ ssoRouter.post(
       const config = await ssoService.configureSAML(
         req.tenantId!,
         { issuer, ssoUrl, certificate, entityId, nameIdFormat, attributeMapping, allowIdpInitiated, signRequests },
+        req.dbClient,
       );
 
       res.json({ success: true, data: config });
@@ -57,6 +58,7 @@ ssoRouter.post(
       const config = await ssoService.configureSCIM(
         req.tenantId!,
         { enabled, syncUsers, syncGroups, defaultRole },
+        req.dbClient,
       );
 
       res.json({ success: true, data: config });
@@ -74,7 +76,7 @@ ssoRouter.get(
   '/sso/config',
   async (req: Request, res: Response<ApiResponse<{ sso: SSOConfig | null; scim: SCIMConfig | null }>>, next: NextFunction) => {
     try {
-      const config = await ssoService.getSSOConfig(req.tenantId!);
+      const config = await ssoService.getSSOConfig(req.tenantId!, req.dbClient);
       res.json({ success: true, data: config });
     } catch (err) {
       next(err);
@@ -90,7 +92,7 @@ ssoRouter.post(
   '/sso/test',
   async (req: Request, res: Response<ApiResponse<SSOTestResult>>, next: NextFunction) => {
     try {
-      const result = await ssoService.testSSOConnection(req.tenantId!);
+      const result = await ssoService.testSSOConnection(req.tenantId!, req.dbClient);
       res.json({ success: true, data: result });
     } catch (err) {
       next(err);

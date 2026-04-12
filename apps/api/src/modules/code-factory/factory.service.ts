@@ -3,6 +3,8 @@
 // ---------------------------------------------------------------------------
 
 import { pool } from '../../config/database.js';
+import { tenantQuery } from '../../lib/tenant-db.js';
+import type { PoolClient } from 'pg';
 import { logger } from '../../lib/logger.js';
 import { NotFoundError, ValidationError } from '../../lib/errors.js';
 import { claudeClient } from '../ai-studio/claude.client.js';
@@ -81,11 +83,12 @@ export async function generateFromSpec(
   spec: FactorySpec,
   tenantId: string,
   userId: string,
+  client?: PoolClient,
 ): Promise<FactoryJob> {
   logger.info({ spec: spec.name, componentType: spec.componentType, tenantId }, 'Starting code generation from spec');
 
   // Create the job record
-  const jobResult = await pool.query(
+  const jobResult = await tenantQuery(client,
     `INSERT INTO factory_jobs (tenant_id, user_id, status, spec, started_at)
      VALUES ($1, $2, 'processing', $3, NOW())
      RETURNING *`,
@@ -99,13 +102,13 @@ export async function generateFromSpec(
     // Load template if specified
     let templateContent = '';
     if (spec.templateId) {
-      const templateResult = await pool.query(
+      const templateResult = await tenantQuery(client,
         `SELECT template_content FROM factory_templates WHERE id = $1 AND tenant_id = $2`,
         [spec.templateId, tenantId],
       );
       if (templateResult.rowCount) {
         templateContent = `\n\nUse this template as a base:\n${templateResult.rows[0].template_content}`;
-        await pool.query(
+        await tenantQuery(client,
           `UPDATE factory_templates SET usage_count = usage_count + 1 WHERE id = $1`,
           [spec.templateId],
         );
@@ -159,7 +162,7 @@ Return ONLY the JSON array.`;
     const outputs: GeneratedOutput[] = [];
     for (const file of generatedFiles) {
       const lineCount = file.content.split('\n').length;
-      const outputResult = await pool.query(
+      const outputResult = await tenantQuery(client,
         `INSERT INTO factory_outputs (job_id, tenant_id, filename, language, content, component_type, description, line_count)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
          RETURNING *`,
@@ -172,7 +175,7 @@ Return ONLY the JSON array.`;
     const tokensUsed = (response.inputTokens ?? 0) + (response.outputTokens ?? 0);
 
     // Update job as completed
-    await pool.query(
+    await tenantQuery(client,
       `UPDATE factory_jobs
        SET status = 'completed', completed_at = NOW(), execution_time_ms = $1, tokens_used = $2
        WHERE id = $3`,
@@ -181,11 +184,11 @@ Return ONLY the JSON array.`;
 
     logger.info({ jobId, outputCount: outputs.length, executionTimeMs }, 'Code generation completed');
 
-    const updatedJob = await pool.query(`SELECT * FROM factory_jobs WHERE id = $1`, [jobId]);
+    const updatedJob = await tenantQuery(client,`SELECT * FROM factory_jobs WHERE id = $1`, [jobId]);
     return rowToJob(updatedJob.rows[0], outputs);
   } catch (err) {
     // Update job as failed
-    await pool.query(
+    await tenantQuery(client,
       `UPDATE factory_jobs
        SET status = 'failed', error_message = $1, completed_at = NOW(), execution_time_ms = $2
        WHERE id = $3`,
@@ -207,13 +210,14 @@ export async function generateBatch(
   connectionId: string,
   tenantId: string,
   userId: string,
+  client?: PoolClient,
 ): Promise<FactoryJob[]> {
   logger.info({ count: specs.length, tenantId }, 'Starting batch code generation');
 
   const jobs: FactoryJob[] = [];
   for (const spec of specs) {
     const enrichedSpec = { ...spec, connectionId: spec.connectionId || connectionId };
-    const job = await generateFromSpec(enrichedSpec, tenantId, userId);
+    const job = await generateFromSpec(enrichedSpec, tenantId, userId, client);
     jobs.push(job);
   }
 
@@ -230,6 +234,7 @@ export async function generateBatch(
 export async function getTemplates(
   tenantId: string,
   componentType?: FactoryComponentType,
+  client?: PoolClient,
 ): Promise<FactoryTemplate[]> {
   const conditions = ['tenant_id = $1'];
   const params: unknown[] = [tenantId];
@@ -239,7 +244,7 @@ export async function getTemplates(
     params.push(componentType);
   }
 
-  const result = await pool.query(
+  const result = await tenantQuery(client,
     `SELECT * FROM factory_templates WHERE ${conditions.join(' AND ')} ORDER BY usage_count DESC, name`,
     params,
   );
@@ -254,8 +259,9 @@ export async function createTemplate(
   request: CreateTemplateRequest,
   tenantId: string,
   userId: string,
+  client?: PoolClient,
 ): Promise<FactoryTemplate> {
-  const result = await pool.query(
+  const result = await tenantQuery(client,
     `INSERT INTO factory_templates (tenant_id, name, description, component_type, template_content, variables, tags, created_by)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
      RETURNING *`,
@@ -281,8 +287,9 @@ export async function createTemplate(
 export async function deleteTemplate(
   id: string,
   tenantId: string,
+  client?: PoolClient,
 ): Promise<void> {
-  const result = await pool.query(
+  const result = await tenantQuery(client,
     `DELETE FROM factory_templates WHERE id = $1 AND tenant_id = $2 RETURNING id`,
     [id, tenantId],
   );
@@ -302,6 +309,7 @@ export async function deleteTemplate(
 export async function listJobs(
   tenantId: string,
   status?: FactoryJobStatus,
+  client?: PoolClient,
 ): Promise<FactoryJob[]> {
   const conditions = ['tenant_id = $1'];
   const params: unknown[] = [tenantId];
@@ -311,14 +319,14 @@ export async function listJobs(
     params.push(status);
   }
 
-  const result = await pool.query(
+  const result = await tenantQuery(client,
     `SELECT * FROM factory_jobs WHERE ${conditions.join(' AND ')} ORDER BY created_at DESC LIMIT 50`,
     params,
   );
 
   const jobs: FactoryJob[] = [];
   for (const row of result.rows) {
-    const outputsResult = await pool.query(
+    const outputsResult = await tenantQuery(client,
       `SELECT * FROM factory_outputs WHERE job_id = $1 ORDER BY filename`,
       [row.id],
     );
@@ -334,8 +342,9 @@ export async function listJobs(
 export async function getJob(
   jobId: string,
   tenantId: string,
+  client?: PoolClient,
 ): Promise<FactoryJob> {
-  const result = await pool.query(
+  const result = await tenantQuery(client,
     `SELECT * FROM factory_jobs WHERE id = $1 AND tenant_id = $2`,
     [jobId, tenantId],
   );
@@ -344,7 +353,7 @@ export async function getJob(
     throw new NotFoundError('Job not found');
   }
 
-  const outputsResult = await pool.query(
+  const outputsResult = await tenantQuery(client,
     `SELECT * FROM factory_outputs WHERE job_id = $1 ORDER BY filename`,
     [jobId],
   );

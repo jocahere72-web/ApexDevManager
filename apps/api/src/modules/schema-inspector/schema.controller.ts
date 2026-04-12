@@ -15,7 +15,7 @@ schemaInspectorRouter.get(
   '/schema/:connectionId',
   async (req: Request, res: Response<ApiResponse<{ tables: SchemaTable[]; views: SchemaTable[] }>>, next: NextFunction) => {
     try {
-      const schema = await schemaService.getSchema(req.tenantId!, req.params.connectionId);
+      const schema = await schemaService.getSchema(req.tenantId!, req.params.connectionId, req.dbClient);
       res.json({ success: true, data: schema });
     } catch (err) {
       next(err);
@@ -32,6 +32,7 @@ schemaInspectorRouter.get(
         req.tenantId!,
         req.params.connectionId,
         req.params.tableName,
+        req.dbClient,
       );
       res.json({ success: true, data: table });
     } catch (err) {
@@ -49,6 +50,7 @@ schemaInspectorRouter.get(
         req.tenantId!,
         req.params.connectionId,
         req.params.tableName,
+        req.dbClient,
       );
       res.json({ success: true, data: ddl });
     } catch (err) {
@@ -110,7 +112,7 @@ schemaInspectorRouter.get(
   '/erd/:connectionId',
   async (req: Request, res: Response<ApiResponse<{ erd: string }>>, next: NextFunction) => {
     try {
-      const erd = await schemaService.generateERD(req.tenantId!, req.params.connectionId);
+      const erd = await schemaService.generateERD(req.tenantId!, req.params.connectionId, req.dbClient);
       res.json({ success: true, data: { erd } });
     } catch (err) {
       next(err);

@@ -3,6 +3,8 @@
 // ---------------------------------------------------------------------------
 
 import { pool } from '../../config/database.js';
+import { tenantQuery } from '../../lib/tenant-db.js';
+import type { PoolClient } from 'pg';
 import { logger } from '../../lib/logger.js';
 import { NotFoundError, ValidationError } from '../../lib/errors.js';
 import type {
@@ -72,6 +74,7 @@ function rowToSCIMConfig(row: Record<string, unknown>): SCIMConfig {
 export async function configureSAML(
   tenantId: string,
   request: ConfigureSAMLRequest,
+  client?: PoolClient,
 ): Promise<SSOConfig> {
   logger.info({ tenantId }, 'Configuring SAML SSO');
 
@@ -81,7 +84,7 @@ export async function configureSAML(
   }
 
   // Upsert SSO config
-  const result = await pool.query(
+  const result = await tenantQuery(client,
     `INSERT INTO sso_configs (tenant_id, protocol, enabled, issuer, sso_url, certificate, entity_id, name_id_format, attribute_mapping, allow_idp_initiated, sign_requests)
      VALUES ($1, 'saml', true, $2, $3, $4, $5, $6, $7, $8, $9)
      ON CONFLICT (tenant_id)
@@ -112,7 +115,7 @@ export async function configureSAML(
   );
 
   // Update tenant SSO flag
-  await pool.query(
+  await tenantQuery(client,
     `UPDATE tenants SET sso_configured = true, updated_at = NOW() WHERE id = $1`,
     [tenantId],
   );
@@ -131,6 +134,7 @@ export async function configureSAML(
 export async function configureSCIM(
   tenantId: string,
   request: ConfigureSCIMRequest,
+  client?: PoolClient,
 ): Promise<SCIMConfig> {
   logger.info({ tenantId, enabled: request.enabled }, 'Configuring SCIM');
 
@@ -138,7 +142,7 @@ export async function configureSCIM(
   const endpoint = `/api/v1/scim/${tenantId}`;
   const bearerToken = generateSCIMToken();
 
-  const result = await pool.query(
+  const result = await tenantQuery(client,
     `INSERT INTO scim_configs (tenant_id, enabled, status, endpoint, bearer_token, sync_users, sync_groups, default_role)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
      ON CONFLICT (tenant_id)
@@ -163,7 +167,7 @@ export async function configureSCIM(
   );
 
   // Update tenant SCIM flag
-  await pool.query(
+  await tenantQuery(client,
     `UPDATE tenants SET scim_configured = $1, updated_at = NOW() WHERE id = $2`,
     [request.enabled, tenantId],
   );
@@ -181,10 +185,11 @@ export async function configureSCIM(
  */
 export async function getSSOConfig(
   tenantId: string,
+  client?: PoolClient,
 ): Promise<{ sso: SSOConfig | null; scim: SCIMConfig | null }> {
   const [ssoResult, scimResult] = await Promise.all([
-    pool.query(`SELECT * FROM sso_configs WHERE tenant_id = $1`, [tenantId]),
-    pool.query(`SELECT * FROM scim_configs WHERE tenant_id = $1`, [tenantId]),
+    tenantQuery(client,`SELECT * FROM sso_configs WHERE tenant_id = $1`, [tenantId]),
+    tenantQuery(client,`SELECT * FROM scim_configs WHERE tenant_id = $1`, [tenantId]),
   ]);
 
   return {
@@ -202,10 +207,11 @@ export async function getSSOConfig(
  */
 export async function testSSOConnection(
   tenantId: string,
+  client?: PoolClient,
 ): Promise<SSOTestResult> {
   logger.info({ tenantId }, 'Testing SSO connection');
 
-  const ssoResult = await pool.query(
+  const ssoResult = await tenantQuery(client,
     `SELECT * FROM sso_configs WHERE tenant_id = $1`,
     [tenantId],
   );
@@ -226,7 +232,7 @@ export async function testSSOConnection(
     const success = response.ok || response.status === 405; // Some IdPs return 405 for HEAD
 
     // Update test result
-    await pool.query(
+    await tenantQuery(client,
       `UPDATE sso_configs
        SET last_tested_at = NOW(), test_result = $1, test_error = $2, updated_at = NOW()
        WHERE tenant_id = $3`,
@@ -252,7 +258,7 @@ export async function testSSOConnection(
   } catch (err) {
     const errorMessage = (err as Error).message;
 
-    await pool.query(
+    await tenantQuery(client,
       `UPDATE sso_configs
        SET last_tested_at = NOW(), test_result = 'failure', test_error = $1, updated_at = NOW()
        WHERE tenant_id = $2`,

@@ -100,6 +100,7 @@ async function executeSqlViaOrds(
 export async function getSchema(
   tenantId: string,
   connectionId: string,
+  client?: PoolClient,
 ): Promise<{ tables: SchemaTable[]; views: SchemaTable[] }> {
   logger.info({ connectionId }, 'Fetching schema');
 
@@ -109,14 +110,14 @@ export async function getSchema(
     FROM all_tables
     WHERE owner = SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA')
     ORDER BY table_name
-  `);
+  `, client);
 
   const tables: SchemaTable[] = [];
   for (const row of tableRows) {
     const tableName = row.table_name as string;
     const schema = row.owner as string;
-    const columns = await getTableColumns(tenantId, connectionId, schema, tableName);
-    const indexes = await getTableIndexes(tenantId, connectionId, schema, tableName);
+    const columns = await getTableColumns(tenantId, connectionId, schema, tableName, client);
+    const indexes = await getTableIndexes(tenantId, connectionId, schema, tableName, client);
     tables.push({ name: tableName, schema, columns, indexes });
   }
 
@@ -126,7 +127,7 @@ export async function getSchema(
     FROM all_views
     WHERE owner = SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA')
     ORDER BY view_name
-  `);
+  `, client);
 
   const views: SchemaTable[] = viewRows.map((row) => ({
     name: row.view_name as string,
@@ -143,6 +144,7 @@ async function getTableColumns(
   connectionId: string,
   schema: string | undefined,
   tableName: string,
+  client?: PoolClient,
 ): Promise<SchemaColumn[]> {
   const schemaFilter = schema
     ? `owner = '${assertOracleIdentifier(schema)}'`
@@ -152,7 +154,7 @@ async function getTableColumns(
     FROM all_tab_columns
     WHERE ${schemaFilter} AND table_name = '${assertOracleIdentifier(tableName)}'
     ORDER BY column_id
-  `);
+  `, client);
 
   return rows.map((row) => ({
     name: row.column_name as string,
@@ -169,6 +171,7 @@ async function getTableIndexes(
   connectionId: string,
   schema: string | undefined,
   tableName: string,
+  client?: PoolClient,
 ): Promise<SchemaIndex[]> {
   const schemaFilter = schema
     ? `i.table_owner = '${assertOracleIdentifier(schema)}'`
@@ -180,7 +183,7 @@ async function getTableIndexes(
     JOIN all_ind_columns ic ON i.index_name = ic.index_name AND i.owner = ic.index_owner
     WHERE ${schemaFilter} AND i.table_name = '${assertOracleIdentifier(tableName)}'
     GROUP BY i.index_name, i.uniqueness, i.index_type
-  `);
+  `, client);
 
   return rows.map((row) => ({
     name: row.index_name as string,
@@ -194,9 +197,10 @@ export async function getTable(
   tenantId: string,
   connectionId: string,
   tableName: string,
+  client?: PoolClient,
 ): Promise<SchemaTable> {
-  const columns = await getTableColumns(tenantId, connectionId, undefined, tableName);
-  const indexes = await getTableIndexes(tenantId, connectionId, undefined, tableName);
+  const columns = await getTableColumns(tenantId, connectionId, undefined, tableName, client);
+  const indexes = await getTableIndexes(tenantId, connectionId, undefined, tableName, client);
 
   return { name: tableName, schema: '', columns, indexes };
 }
@@ -205,10 +209,11 @@ export async function getTableDDL(
   tenantId: string,
   connectionId: string,
   tableName: string,
+  client?: PoolClient,
 ): Promise<DDLScript> {
   const rows = await executeSqlViaOrds(tenantId, connectionId, `
     SELECT DBMS_METADATA.GET_DDL('TABLE', '${assertOracleIdentifier(tableName)}') AS ddl FROM DUAL
-  `);
+  `, client);
 
   return {
     objectType: 'TABLE',
@@ -306,7 +311,7 @@ export async function createSnapshot(
   createdBy: string,
   client?: PoolClient,
 ): Promise<SchemaSnapshot> {
-  const schema = await getSchema(tenantId, connectionId);
+  const schema = await getSchema(tenantId, connectionId, client);
 
   const tablesCount = schema.tables.length;
   const viewsCount = schema.views.length;
@@ -370,8 +375,9 @@ export async function listSnapshots(
 export async function generateERD(
   tenantId: string,
   connectionId: string,
+  client?: PoolClient,
 ): Promise<string> {
-  const schema = await getSchema(tenantId, connectionId);
+  const schema = await getSchema(tenantId, connectionId, client);
 
   // Generate Mermaid ERD
   const lines: string[] = ['erDiagram'];

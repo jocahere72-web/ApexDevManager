@@ -16,6 +16,7 @@ releaseManagerRouter.post(
         connectionId,
         version,
         changeSetIds ?? [],
+        req.dbClient,
       );
       res.status(201).json({ success: true, data: release });
     } catch (err) {
@@ -36,6 +37,7 @@ releaseManagerRouter.get(
         status as any,
         limit ? parseInt(limit as string, 10) : undefined,
         offset ? parseInt(offset as string, 10) : undefined,
+        req.dbClient,
       );
       res.json({ success: true, data: result });
     } catch (err) {
@@ -49,7 +51,7 @@ releaseManagerRouter.get(
   '/:id',
   async (req: Request, res: Response<ApiResponse<Release>>, next: NextFunction) => {
     try {
-      const release = await releaseService.getRelease(req.tenantId!, req.params.id);
+      const release = await releaseService.getRelease(req.tenantId!, req.params.id, req.dbClient);
       res.json({ success: true, data: release });
     } catch (err) {
       next(err);
@@ -62,7 +64,7 @@ releaseManagerRouter.get(
   '/:id/pipeline',
   async (req: Request, res: Response<ApiResponse<Pipeline>>, next: NextFunction) => {
     try {
-      const pipeline = await releaseService.getPipelineStatus(req.tenantId!, req.params.id);
+      const pipeline = await releaseService.getPipelineStatus(req.tenantId!, req.params.id, req.dbClient);
       res.json({ success: true, data: pipeline });
     } catch (err) {
       next(err);
@@ -75,7 +77,7 @@ releaseManagerRouter.post(
   '/:id/build',
   async (req: Request, res: Response<ApiResponse<Release>>, next: NextFunction) => {
     try {
-      const release = await releaseService.buildRelease(req.tenantId!, req.params.id);
+      const release = await releaseService.buildRelease(req.tenantId!, req.params.id, req.dbClient);
       res.json({ success: true, data: release });
     } catch (err) {
       next(err);
@@ -88,7 +90,7 @@ releaseManagerRouter.post(
   '/:id/promote',
   async (req: Request, res: Response<ApiResponse<Release>>, next: NextFunction) => {
     try {
-      const release = await releaseService.promoteToStaging(req.tenantId!, req.params.id);
+      const release = await releaseService.promoteToStaging(req.tenantId!, req.params.id, req.dbClient);
       res.json({ success: true, data: release });
     } catch (err) {
       next(err);
@@ -105,6 +107,7 @@ releaseManagerRouter.post(
         req.tenantId!,
         req.params.id,
         req.userId!,
+        req.dbClient,
       );
       res.json({ success: true, data: release });
     } catch (err) {
@@ -119,7 +122,7 @@ releaseManagerRouter.post(
   async (req: Request, res: Response<ApiResponse<Release>>, next: NextFunction) => {
     try {
       const { reason } = req.body;
-      const release = await releaseService.rollback(req.tenantId!, req.params.id, reason);
+      const release = await releaseService.rollback(req.tenantId!, req.params.id, reason, req.dbClient);
       res.json({ success: true, data: release });
     } catch (err) {
       next(err);

@@ -45,7 +45,7 @@ pageGenRouter.post(
         throw new ValidationError('Invalid generation request', parsed.error.flatten().fieldErrors);
       }
 
-      const job = await pageGenService.generatePage(parsed.data, req.userId!, req.tenantId!);
+      const job = await pageGenService.generatePage(parsed.data, req.userId!, req.tenantId!, req.dbClient);
 
       res.status(201).json({ success: true, data: job });
     } catch (err) {
@@ -68,7 +68,7 @@ pageGenRouter.get(
       }
 
       const { page, limit, status } = parsed.data;
-      const { jobs, total } = await pageGenService.listJobs(req.tenantId!, page, limit, status);
+      const { jobs, total } = await pageGenService.listJobs(req.tenantId!, page, limit, status, req.dbClient);
       const totalPages = Math.ceil(total / limit);
 
       res.json({
@@ -97,7 +97,7 @@ pageGenRouter.get(
   '/jobs/:id',
   async (req: Request, res: Response<ApiResponse<PageGenerationJob>>, next: NextFunction) => {
     try {
-      const job = await pageGenService.getJob(req.params.id, req.tenantId!);
+      const job = await pageGenService.getJob(req.params.id, req.tenantId!, req.dbClient);
 
       res.json({ success: true, data: job });
     } catch (err) {
@@ -114,7 +114,7 @@ pageGenRouter.post(
   '/jobs/:id/apply',
   async (req: Request, res: Response<ApiResponse<PageGenerationJob>>, next: NextFunction) => {
     try {
-      const job = await pageGenService.applyPage(req.params.id, req.tenantId!, req.userId!);
+      const job = await pageGenService.applyPage(req.params.id, req.tenantId!, req.userId!, req.dbClient);
 
       res.json({ success: true, data: job });
     } catch (err) {

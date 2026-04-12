@@ -1,4 +1,6 @@
 import { pool, getClient } from '../../config/database.js';
+import { tenantQuery } from '../../lib/tenant-db.js';
+import type { PoolClient } from 'pg';
 import { logger } from '../../lib/logger.js';
 import { NotFoundError, ValidationError } from '../../lib/errors.js';
 import { claudeClient } from '../ai-studio/claude.client.js';
@@ -49,9 +51,10 @@ export async function generatePage(
   },
   userId: string,
   tenantId: string,
+  client?: PoolClient,
 ): Promise<PageGenerationJob> {
   // Create the job record
-  const jobResult = await pool.query(
+  const jobResult = await tenantQuery(client,
     `INSERT INTO page_generation_jobs
        (tenant_id, prd_session_id, connection_id, app_id, input_type, input_content, status, created_by)
      VALUES ($1, $2, $3, $4, $5, $6, 'generating', $7)
@@ -85,6 +88,7 @@ async function generatePageAsync(
   inputContent: string,
   inputType: PageGenInputType,
   tenantId: string,
+  client?: PoolClient,
 ): Promise<void> {
   try {
     const contextLabel =
@@ -140,7 +144,7 @@ ${inputContent}`;
     }
 
     // Update job with result
-    await pool.query(
+    await tenantQuery(client,
       `UPDATE page_generation_jobs
        SET status = 'preview', page_definition = $1, updated_at = NOW()
        WHERE id = $2 AND tenant_id = $3`,
@@ -150,7 +154,7 @@ ${inputContent}`;
     logger.info({ jobId }, 'Page definition generated');
   } catch (err) {
     // Mark job as error
-    await pool.query(
+    await tenantQuery(client,
       `UPDATE page_generation_jobs
        SET status = 'error', error_message = $1, updated_at = NOW()
        WHERE id = $2`,
@@ -171,8 +175,9 @@ ${inputContent}`;
 export async function previewPage(
   jobId: string,
   tenantId: string,
+  client?: PoolClient,
 ): Promise<PageGenerationJob> {
-  const result = await pool.query(
+  const result = await tenantQuery(client,
     `SELECT * FROM page_generation_jobs WHERE id = $1 AND tenant_id = $2`,
     [jobId, tenantId],
   );
@@ -196,13 +201,14 @@ export async function applyPage(
   jobId: string,
   tenantId: string,
   userId: string,
+  client?: PoolClient,
 ): Promise<PageGenerationJob> {
-  const client = await getClient();
+  const txClient = await getClient();
 
   try {
-    await client.query('BEGIN');
+    await txClient.query('BEGIN');
 
-    const jobResult = await client.query(
+    const jobResult = await txClient.query(
       `SELECT * FROM page_generation_jobs WHERE id = $1 AND tenant_id = $2`,
       [jobId, tenantId],
     );
@@ -228,12 +234,12 @@ export async function applyPage(
     }
 
     // Update status to applying
-    await client.query(
+    await txClient.query(
       `UPDATE page_generation_jobs SET status = 'applying', updated_at = NOW() WHERE id = $1`,
       [jobId],
     );
 
-    await client.query('COMMIT');
+    await txClient.query('COMMIT');
 
     // In production: Call APEX ORDS API or MCP to create the page
     // For now, simulate page creation
@@ -242,7 +248,7 @@ export async function applyPage(
     // TODO: Replace with actual APEX API call
     // const pageId = await apexClient.createPage(job.connectionId, job.appId, job.pageDefinition);
 
-    await pool.query(
+    await tenantQuery(client,
       `UPDATE page_generation_jobs
        SET status = 'applied', applied_page_id = $1, updated_at = NOW()
        WHERE id = $2 AND tenant_id = $3`,
@@ -255,12 +261,12 @@ export async function applyPage(
     );
 
     // Return updated job
-    return await previewPage(jobId, tenantId);
+    return await previewPage(jobId, tenantId, client);
   } catch (err) {
-    await client.query('ROLLBACK').catch(() => {});
+    await txClient.query('ROLLBACK').catch(() => {});
 
     // Mark as error if not already
-    await pool.query(
+    await tenantQuery(client,
       `UPDATE page_generation_jobs
        SET status = 'error', error_message = $1, updated_at = NOW()
        WHERE id = $2 AND status = 'applying'`,
@@ -269,7 +275,7 @@ export async function applyPage(
 
     throw err;
   } finally {
-    client.release();
+    txClient.release();
   }
 }
 
@@ -283,8 +289,9 @@ export async function applyPage(
 export async function getJob(
   jobId: string,
   tenantId: string,
+  client?: PoolClient,
 ): Promise<PageGenerationJob> {
-  const result = await pool.query(
+  const result = await tenantQuery(client,
     `SELECT * FROM page_generation_jobs WHERE id = $1 AND tenant_id = $2`,
     [jobId, tenantId],
   );
@@ -308,6 +315,7 @@ export async function listJobs(
   page = 1,
   limit = 20,
   status?: string,
+  client?: PoolClient,
 ): Promise<{ jobs: PageGenerationJob[]; total: number }> {
   const conditions = ['tenant_id = $1'];
   const params: unknown[] = [tenantId];
@@ -323,14 +331,14 @@ export async function listJobs(
   const offset = (page - 1) * limit;
 
   const [dataResult, countResult] = await Promise.all([
-    pool.query(
+    tenantQuery(client,
       `SELECT * FROM page_generation_jobs
        WHERE ${where}
        ORDER BY created_at DESC
        LIMIT $${paramIdx} OFFSET $${paramIdx + 1}`,
       [...params, limit, offset],
     ),
-    pool.query(
+    tenantQuery(client,
       `SELECT COUNT(*)::int AS total FROM page_generation_jobs WHERE ${where}`,
       params,
     ),
