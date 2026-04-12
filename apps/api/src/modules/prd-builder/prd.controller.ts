@@ -10,11 +10,15 @@ import {
   GenerateSectionsSchema,
 } from './prd.validation.js';
 import * as prdService from './prd.service.js';
+import { prdConfigRouter } from './prd-config.controller.js';
 import { ValidationError } from '../../lib/errors.js';
 import type { ApiResponse, PaginatedResponse } from '../../types/index.js';
 import type { PRDSession, PRDSource, PRDSection, ExtractionData, ValidationResult } from '@apex-dev-manager/shared-types';
 
 export const prdRouter = Router();
+
+// Mount config sub-router at /configs
+prdRouter.use('/configs', prdConfigRouter);
 
 // ---------------------------------------------------------------------------
 // POST /sessions - Create a new PRD session

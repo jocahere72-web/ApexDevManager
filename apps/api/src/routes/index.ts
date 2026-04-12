@@ -25,6 +25,7 @@ import { clientsRouter } from '../modules/clients/index.js';
 import { issuesRouter } from '../modules/issues/index.js';
 import { llmProvidersRouter } from '../modules/llm-providers/index.js';
 import { promptTemplatesRouter } from '../modules/prompt-templates/index.js';
+import { processParamsRouter } from '../modules/process-params/index.js';
 import { authenticate } from '../modules/auth/auth.middleware.js';
 import { tenantResolver } from '../middleware/tenant-resolver.js';
 
@@ -60,3 +61,4 @@ router.use('/api/v1/clients', authenticate(), tenantResolver(), clientsRouter);
 router.use('/api/v1/issues', authenticate(), tenantResolver(), issuesRouter);
 router.use('/api/v1/llm-providers', authenticate(), tenantResolver(), llmProvidersRouter);
 router.use('/api/v1/prompt-templates', authenticate(), tenantResolver(), promptTemplatesRouter);
+router.use('/api/v1/process-params', authenticate(), tenantResolver(), processParamsRouter);

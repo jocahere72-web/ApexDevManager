@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { AppPage, AppPageHeader, AppCard, AppEmptyState, AppStatusPill } from '@/components/ui/AppTemplate';
 import { apiClient } from '@/lib/api-client';
 import { fetchIssues, type IssueSummary } from '@/services/issues.api';
+import { fetchConfigs, type PRDConfig } from '@/services/prd-config.api';
+import PRDConfigPage from './components/PRDConfig';
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -18,7 +20,7 @@ interface PRDSection {
   id: string; sectionNumber: number; title: string; content: string; isCurrent: boolean;
 }
 
-type View = 'list' | 'workspace';
+type View = 'list' | 'workspace' | 'configs';
 
 const STAGES = ['Draft', 'Upload', 'Extract', 'Generate', 'Validate', 'Export'];
 
@@ -45,6 +47,8 @@ export default function PRDBuilderPage() {
   const [selectedIssueId, setSelectedIssueId] = useState('');
   const [issueOptions, setIssueOptions] = useState<IssueSummary[]>([]);
   const [textInput, setTextInput] = useState('');
+  const [configOptions, setConfigOptions] = useState<PRDConfig[]>([]);
+  const [selectedConfigId, setSelectedConfigId] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
 
   // ── Load sessions ───────────────────────────────────────────────────────
@@ -86,6 +90,17 @@ export default function PRDBuilderPage() {
     } catch { /* ignore - selector will just be empty */ }
   }, []);
 
+  // ── Load configs for selector ──────────────────────────────────────────
+  const loadConfigsForSelector = useCallback(async () => {
+    try {
+      const data = await fetchConfigs();
+      setConfigOptions(data);
+      // Auto-select the default config
+      const defaultCfg = data.find(c => c.isDefault);
+      if (defaultCfg) setSelectedConfigId(defaultCfg.id);
+    } catch { /* ignore - selector will just be empty */ }
+  }, []);
+
   // ── Create session ──────────────────────────────────────────────────────
   const handleCreate = async () => {
     if (!newTitle.trim()) return;
@@ -93,9 +108,11 @@ export default function PRDBuilderPage() {
     try {
       const body: Record<string, unknown> = { title: newTitle.trim() };
       if (selectedIssueId) body.issueId = selectedIssueId;
+      if (selectedConfigId) body.configId = selectedConfigId;
       const res = await apiClient.post('/prd/sessions', body);
       setNewTitle('');
       setSelectedIssueId('');
+      setSelectedConfigId('');
       setShowCreate(false);
       openSession(res.data.data);
       loadSessions();
@@ -206,7 +223,12 @@ export default function PRDBuilderPage() {
       <AppPage>
         <AppPageHeader eyebrow={t('prd.eyebrow')} title={t('prd.title')}
           description={t('prd.description')}
-          actions={<button onClick={() => { setShowCreate(true); loadIssuesForSelector(); }} className="app-button app-button-primary">+ {t('prd.newSession')}</button>}
+          actions={
+            <div className="app-toolbar" style={{ gap: 8 }}>
+              <button onClick={() => setView('configs')} className="app-button">PRD Configs</button>
+              <button onClick={() => { setShowCreate(true); loadIssuesForSelector(); loadConfigsForSelector(); }} className="app-button app-button-primary">+ {t('prd.newSession')}</button>
+            </div>
+          }
         />
         {error && <div className="app-alert app-alert-danger" style={{ marginBottom: 12 }}>{error}</div>}
         {loading ? <AppEmptyState>Loading...</AppEmptyState> :
@@ -242,14 +264,39 @@ export default function PRDBuilderPage() {
                   <option key={issue.id} value={issue.id}>{issue.code}: {issue.title}</option>
                 ))}
               </select>
+              <label className="app-label" style={{ fontSize: '0.8rem', marginBottom: 4 }}>PRD Config (optional)</label>
+              <select
+                value={selectedConfigId}
+                onChange={e => setSelectedConfigId(e.target.value)}
+                className="app-select"
+                style={{ marginBottom: 12, width: '100%' }}
+              >
+                <option value="">Use default</option>
+                {configOptions.map(cfg => (
+                  <option key={cfg.id} value={cfg.id}>{cfg.name}{cfg.isDefault ? ' (default)' : ''}</option>
+                ))}
+              </select>
               <div className="app-toolbar" style={{ justifyContent: 'flex-end' }}>
-                <button onClick={() => { setShowCreate(false); setNewTitle(''); setSelectedIssueId(''); }} className="app-button">Cancel</button>
+                <button onClick={() => { setShowCreate(false); setNewTitle(''); setSelectedIssueId(''); setSelectedConfigId(''); }} className="app-button">Cancel</button>
                 <button onClick={handleCreate} disabled={!!actionLoading || !newTitle.trim()} className="app-button app-button-primary">{actionLoading === 'create' ? 'Creating...' : 'Create'}</button>
               </div>
             </div>
           </div>
         )}
       </AppPage>
+    );
+  }
+
+  // ── Render: Configs ───────────────────────────────────────────────────
+
+  if (view === 'configs') {
+    return (
+      <div>
+        <div style={{ marginBottom: 12 }}>
+          <button onClick={() => setView('list')} className="app-button">← Back to Sessions</button>
+        </div>
+        <PRDConfigPage />
+      </div>
     );
   }
 

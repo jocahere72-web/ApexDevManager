@@ -1012,3 +1012,47 @@ escribelo en auditor_front.md"
 **Context**: Frontend audit documentation.
 
 ---
+
+## Frontend PRD Document Upload Review
+**Timestamp**: 2026-04-12T19:16:43Z
+**User Input**: "revisa el cargue de documentos en generacion de prd"
+**AI Response**: "Reviewed PRD Builder document upload flow across frontend page, PRD API service, hooks, backend controller, validation, service parsing logic, migration, and package dependencies. Reported blocking contract issues and UX/runtime risks without modifying application code."
+**Context**: Frontend/backend code review for PRD document ingestion.
+
+---
+
+## Frontend PRD Document Upload Re-Review
+**Timestamp**: 2026-04-12T19:26:51Z
+**User Input**: "# Review findings:
+
+## Finding 1 (apps/web/src/features/prd-builder/index.tsx:111-136) [added]
+[P1] El upload desde la UI no cumple el contrato backend
+
+El endpoint valida `fileSize` y `storageKey` como obligatorios, pero el flujo de texto solo envía `filename`, `mimeType` y `content`, y el flujo de archivo envía `fileSize` pero tampoco `storageKey`. En la práctica, ambos uploads pueden fallar con `Invalid source data` antes de llegar al parser. La solución es unificar el contrato: o permitir `content` inline con `fileSize/storageKey` opcionales para texto, o implementar upload real a storage/multipart y siempre enviar la clave generada.
+
+## Finding 2 (apps/web/src/features/prd-builder/index.tsx:129-136) [added]
+[P1] PDF/DOCX/imágenes se leen como texto y saltan el parser
+
+El selector acepta `.pdf`, `.docx` e imágenes, pero `file.text()` convierte el binario a string y lo manda como `content`. Como el backend trata cualquier `content` como `parsed_text` y marca `parse_status='parsed'`, nunca ejecuta `pdf-parse`, `mammoth` ni un flujo de visión; los PRD se generarían con contenido corrupto o inútil para esos formatos. Debe usarse `FormData`/storage para archivos binarios y reservar `content` solo para texto/markdown.
+
+## Finding 3 (apps/api/src/modules/prd-builder/prd.service.ts:579-593) [added]
+[P0] Variable fuera de scope rompe la extracción con AI
+
+`extractTemplate` se declara dentro del bloque `else`, pero luego se referencia fuera de ese bloque para `modelOverride`, `temperature` y `maxTokens`. Con TypeScript esto rompe el build justo en el flujo de extracción de requisitos; hay que declarar `let extractTemplate` antes del `if` y asignarlo cuando se consulte el template.
+
+## Finding 4 (apps/api/src/modules/prd-builder/prd.service.ts:414-420) [added]
+[P1] La ruta metadata/storage no tiene storage real
+
+El flujo alterno sin `content` inserta `storageKey` y llama a `parseSourceAsync`, pero el parser solo intenta leer `storageKey` como archivo local y no hay middleware multipart ni cliente de object storage que guarde el archivo. Cualquier consumidor del hook `useUploadSource` o del componente `PRDWorkspace` puede crear fuentes `pending/parsing` que terminan con placeholders o errores, no con contenido real.
+
+## Finding 5 (apps/web/src/features/prd-builder/index.tsx:323-327) [added]
+[P2] La UI permite extraer antes de que las fuentes estén parseadas
+
+El botón de extracción se habilita solo con `sources.length > 0`, pero el backend exige fuentes con `parse_status='parsed'`. Si el upload va por parsing async o queda en `pending/error`, el usuario puede pulsar Extract y recibir `No parsed sources available`. Debe habilitarse solo cuando exista al menos una fuente parseada y mostrar estados claros para pending/parsing/error.
+
+## My request for Codex:
+revisa de nuevo"
+**AI Response**: "Re-reviewed the PRD document upload flow. Confirmed the `extractTemplate` scope issue is now fixed, while the upload contract, binary file handling, missing storage/multipart path, and extract button readiness issues remain."
+**Context**: PRD document upload code review refresh.
+
+---

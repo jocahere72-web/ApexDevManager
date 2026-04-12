@@ -4,6 +4,7 @@ import { logger } from '../../lib/logger.js';
 import { NotFoundError, ValidationError } from '../../lib/errors.js';
 import { claudeClient } from '../ai-studio/claude.client.js';
 import { getTemplateBySlug, DEFAULT_PRD_EXTRACT_PROMPT, DEFAULT_PRD_GENERATE_PROMPT } from '../prompt-templates/prompt-templates.service.js';
+import { getConfig as getPrdConfig, getDefaultConfig as getDefaultPrdConfig, type PRDConfig } from './prd-config.service.js';
 import type {
   PRDSession,
   PRDSource,
@@ -88,6 +89,7 @@ function rowToSession(row: Record<string, unknown>): PRDSession {
     tenantId: row.tenant_id as string,
     appId: (row.app_id as number) ?? undefined,
     issueId: (row.issue_id as string) ?? undefined,
+    configId: (row.config_id as string) ?? undefined,
     title: row.title as string,
     status: row.status as PRDSession['status'],
     currentStage: row.current_stage as PRDStage,
@@ -186,10 +188,10 @@ export async function createSession(
   client?: PoolClient,
 ): Promise<PRDSession> {
   const result = await tenantQuery(client,
-    `INSERT INTO prd_sessions (tenant_id, app_id, title, issue_id, created_by)
-     VALUES ($1, $2, $3, $4, $5)
+    `INSERT INTO prd_sessions (tenant_id, app_id, title, issue_id, config_id, created_by)
+     VALUES ($1, $2, $3, $4, $5, $6)
      RETURNING *`,
-    [tenantId, input.appId ?? null, input.title, input.issueId ?? null, userId],
+    [tenantId, input.appId ?? null, input.title, input.issueId ?? null, input.configId ?? null, userId],
   );
 
   const sessionId = result.rows[0].id as string;
@@ -486,6 +488,32 @@ async function parseSourceAsync(sourceId: string, tenantId: string, client?: Poo
 }
 
 // ---------------------------------------------------------------------------
+// PRD Config resolution helper
+// ---------------------------------------------------------------------------
+
+/**
+ * Resolve the PRD config for a session. Priority:
+ * 1. Session's explicit config_id
+ * 2. Tenant's default config
+ * 3. null (use hardcoded defaults - backward compatible)
+ */
+async function resolveSessionConfig(
+  sessionRow: Record<string, unknown>,
+  tenantId: string,
+  client?: PoolClient,
+): Promise<PRDConfig | null> {
+  const configId = sessionRow.config_id as string | undefined;
+  if (configId) {
+    try {
+      return await getPrdConfig(tenantId, configId, client);
+    } catch {
+      logger.warn({ configId, tenantId }, 'Session config_id not found, falling back to default');
+    }
+  }
+  return getDefaultPrdConfig(tenantId, client);
+}
+
+// ---------------------------------------------------------------------------
 // AI: Extract Requirements
 // ---------------------------------------------------------------------------
 
@@ -540,9 +568,17 @@ export async function extractRequirements(
     let extractionData: ExtractionData;
 
     if (isAIAvailable()) {
-      // Resolve prompt template (tenant-customisable) with fallback to default
+      // Resolve PRD config for this session (parametrizable prompts)
+      const prdConfig = await resolveSessionConfig(sessionResult.rows[0], tenantId, client);
+
+      // Resolve prompt: PRD config extraction_prompt > prompt template > hardcoded default
       const extractTemplate = await getTemplateBySlug(tenantId, 'prd-extract', client);
-      const systemPrompt = extractTemplate ? extractTemplate.promptText : DEFAULT_PRD_EXTRACT_PROMPT;
+      let systemPrompt: string;
+      if (prdConfig?.extractionPrompt) {
+        systemPrompt = prdConfig.extractionPrompt;
+      } else {
+        systemPrompt = extractTemplate ? extractTemplate.promptText : DEFAULT_PRD_EXTRACT_PROMPT;
+      }
 
       const userPrompt = `Extract structured APEX/Genesys domain requirements from the following source documents:${focusAreasPrompt}
 
@@ -634,6 +670,9 @@ export async function generateSections(
     throw new ValidationError('Extract requirements before generating sections.');
   }
 
+  // Resolve PRD config for this session (parametrizable prompts & example document)
+  const prdConfig = await resolveSessionConfig(sessionResult.rows[0], tenantId, client);
+
   // Update status
   await tenantQuery(client,
     `UPDATE prd_sessions SET status = 'generating', current_stage = 3, updated_at = NOW()
@@ -677,11 +716,21 @@ export async function generateSections(
       let sectionContent: string;
 
       if (isAIAvailable()) {
-        // Resolve prompt template (tenant-customisable) with fallback to default
+        // Resolve prompt: PRD config generation_prompt > prompt template > hardcoded default
         const genTemplate = await getTemplateBySlug(tenantId, 'prd-generate', client);
-        const systemPrompt = genTemplate ? genTemplate.promptText : DEFAULT_PRD_GENERATE_PROMPT;
+        let systemPrompt: string;
+        if (prdConfig?.generationPrompt) {
+          systemPrompt = prdConfig.generationPrompt;
+        } else {
+          systemPrompt = genTemplate ? genTemplate.promptText : DEFAULT_PRD_GENERATE_PROMPT;
+        }
 
-        const userPrompt = `Write the "${sectionTitle}" section for a PRD.
+        // Build user prompt, including reference document from config if available
+        const referenceSection = prdConfig?.exampleDocument
+          ? `\n\nReference format example:\n${prdConfig.exampleDocument}\n`
+          : '';
+
+        const userPrompt = `Write the "${sectionTitle}" section for a PRD.${referenceSection}
 
 Extraction data:
 ${JSON.stringify(session.extractionData, null, 2)}
@@ -834,6 +883,15 @@ export async function validatePRD(
     throw new ValidationError('No sections to validate. Generate sections first.');
   }
 
+  // Resolve PRD config for possible AI-based validation
+  const sessionResult = await tenantQuery(client,
+    `SELECT * FROM prd_sessions WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL`,
+    [sessionId, tenantId],
+  );
+  const prdConfig = sessionResult.rowCount! > 0
+    ? await resolveSessionConfig(sessionResult.rows[0], tenantId, client)
+    : null;
+
   // Update status
   await tenantQuery(client,
     `UPDATE prd_sessions SET status = 'validating', current_stage = 4, updated_at = NOW()
@@ -841,8 +899,31 @@ export async function validatePRD(
     [sessionId],
   );
 
-  // Run the 10 domain-specific validation checks
+  // Run the 10 domain-specific validation checks (always)
   const checks = runDomainValidationChecks(session);
+
+  // If a validation_prompt is configured and AI is available, run AI validation as extra checks
+  if (prdConfig?.validationPrompt && isAIAvailable()) {
+    try {
+      const sectionsSummary = (session.sections || [])
+        .map((s) => `## ${s.sectionNumber}. ${s.title}\n${s.content}`)
+        .join('\n\n');
+
+      const response = await claudeClient.chat(
+        [{ role: 'user', content: `Validate this PRD:\n\n${sectionsSummary}` }],
+        { systemPrompt: prdConfig.validationPrompt },
+      );
+
+      try {
+        const aiChecks = JSON.parse(response.content) as ValidationCheck[];
+        checks.push(...aiChecks);
+      } catch {
+        logger.warn({ sessionId }, 'Failed to parse AI validation response');
+      }
+    } catch (err) {
+      logger.warn({ sessionId, err }, 'AI validation failed, using deterministic checks only');
+    }
+  }
 
   const passed = checks.filter((c) => c.passed).length;
   const total = checks.length;
