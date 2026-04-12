@@ -3,6 +3,7 @@ import type { PoolClient } from 'pg';
 import { logger } from '../../lib/logger.js';
 import { NotFoundError, ValidationError } from '../../lib/errors.js';
 import { claudeClient } from '../ai-studio/claude.client.js';
+import { getTemplateBySlug, DEFAULT_PRD_EXTRACT_PROMPT, DEFAULT_PRD_GENERATE_PROMPT } from '../prompt-templates/prompt-templates.service.js';
 import type {
   PRDSession,
   PRDSource,
@@ -521,27 +522,26 @@ export async function extractRequirements(
     let extractionData: ExtractionData;
 
     if (isAIAvailable()) {
-      const systemPrompt = `You are a PRD requirements extraction specialist for Oracle APEX and Genesys applications. Analyze the provided source documents and extract structured requirements data for the APEX/GENESYS domain.
-Return a JSON object with this exact structure:
-{
-  "actors": [{"name": "string", "role": "string", "description": "string"}],
-  "flows": [{"name": "string", "steps": ["string array"], "triggerEvent": "string"}],
-  "businessRules": [{"id": "BR-01", "description": "string", "priority": "must|should|could"}],
-  "apexPages": [{"name": "string", "type": "form|report|dashboard|wizard", "description": "string", "components": ["string array"]}],
-  "genesysTables": [{"name": "string", "description": "string", "columns": ["string array"]}],
-  "constraints": ["string array of constraints"],
-  "assumptions": ["string array of assumptions"],
-  "rawNotes": "any additional notes"
-}
-Respond ONLY with the JSON object, no markdown fences or extra text.`;
+      // Resolve prompt template (tenant-customisable) with fallback to default
+      const extractTemplate = await getTemplateBySlug(tenantId, 'prd-extract', client);
+      const systemPrompt = extractTemplate ? extractTemplate.promptText : DEFAULT_PRD_EXTRACT_PROMPT;
 
       const userPrompt = `Extract structured APEX/Genesys domain requirements from the following source documents:${focusAreasPrompt}
 
 ${sourceTexts}`;
 
+      const chatOptions: Parameters<typeof claudeClient.chat>[1] = { systemPrompt };
+      if (extractTemplate?.modelOverride) {
+        chatOptions.model = extractTemplate.modelOverride;
+      }
+      if (extractTemplate) {
+        chatOptions.temperature = extractTemplate.temperature;
+        chatOptions.maxTokens = extractTemplate.maxTokens;
+      }
+
       const response = await claudeClient.chat(
         [{ role: 'user', content: userPrompt }],
-        { systemPrompt },
+        chatOptions,
       );
 
       // Parse AI response
@@ -659,10 +659,9 @@ export async function generateSections(
       let sectionContent: string;
 
       if (isAIAvailable()) {
-        const systemPrompt = `You are a technical writer creating a PRD section for an Oracle APEX / Genesys application.
-Write professional, clear, detailed content for the specified section in Spanish.
-Use the extraction data provided for context and requirements.
-Output ONLY the section content as formatted markdown (no title heading, just the body content).`;
+        // Resolve prompt template (tenant-customisable) with fallback to default
+        const genTemplate = await getTemplateBySlug(tenantId, 'prd-generate', client);
+        const systemPrompt = genTemplate ? genTemplate.promptText : DEFAULT_PRD_GENERATE_PROMPT;
 
         const userPrompt = `Write the "${sectionTitle}" section for a PRD.
 
@@ -674,9 +673,18 @@ Section title: ${sectionTitle}
 
 Write comprehensive content for this section.`;
 
+        const chatOptions: Parameters<typeof claudeClient.chat>[1] = { systemPrompt };
+        if (genTemplate?.modelOverride) {
+          chatOptions.model = genTemplate.modelOverride;
+        }
+        if (genTemplate) {
+          chatOptions.temperature = genTemplate.temperature;
+          chatOptions.maxTokens = genTemplate.maxTokens;
+        }
+
         const response = await claudeClient.chat(
           [{ role: 'user', content: userPrompt }],
-          { systemPrompt },
+          chatOptions,
         );
         sectionContent = response.content;
       } else {
