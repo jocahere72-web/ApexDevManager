@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { apiClient } from '@/lib/api-client';
 
 // ── Types ───────────────────────────────────────────────────────────────────
@@ -51,6 +52,7 @@ function getAppInitials(name: string): string {
 // ── Explorer Page ───────────────────────────────────────────────────────────
 
 export default function ExplorerPage() {
+  const { t } = useTranslation();
   const [connections, setConnections] = useState<Connection[]>([]);
   const [selectedConnId, setSelectedConnId] = useState('');
   const [view, setView] = useState<View>('apps');
@@ -183,7 +185,7 @@ export default function ExplorerPage() {
             borderRadius: 4, padding: '4px 8px', fontSize: '0.85rem',
           }}
         >
-          <option value="">Select Connection</option>
+          <option value="">{t('explorer.selectConnection')}</option>
           {connections.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
 
@@ -224,7 +226,7 @@ export default function ExplorerPage() {
         <div style={{ position: 'relative' }}>
           <input
             type="text"
-            placeholder="Search..."
+            placeholder={t('explorer.search')}
             value={search}
             onChange={e => setSearch(e.target.value)}
             style={{
@@ -299,12 +301,12 @@ export default function ExplorerPage() {
                   {app.applicationName}
                 </div>
                 <div style={{ fontSize: '0.7rem', color: 'var(--app-muted)' }}>
-                  {app.applicationId} · {app.pagesCount ?? '?'} pages
+                  {app.applicationId} · {app.pagesCount ?? '?'} {t('explorer.pages')}
                 </div>
               </div>
             ))}
             {filteredApps.length === 0 && !loading && selectedConnId && (
-              <p style={{ color: 'var(--app-muted)', gridColumn: '1 / -1' }}>No applications match your search.</p>
+              <p style={{ color: 'var(--app-muted)', gridColumn: '1 / -1' }}>{t('explorer.noApps')}</p>
             )}
           </div>
         )}
@@ -344,7 +346,7 @@ export default function ExplorerPage() {
               </div>
             ))}
             {filteredPages.length === 0 && !loading && (
-              <p style={{ color: 'var(--app-muted)', gridColumn: '1 / -1' }}>No pages match your search.</p>
+              <p style={{ color: 'var(--app-muted)', gridColumn: '1 / -1' }}>{t('explorer.noPages')}</p>
             )}
           </div>
         )}
@@ -353,7 +355,7 @@ export default function ExplorerPage() {
         {view === 'components' && !loading && (
           <div style={{ display: 'grid', gap: 8 }}>
             {groupedRegions.length === 0 && (
-              <p style={{ color: 'var(--app-muted)' }}>No components found for this page.</p>
+              <p style={{ color: 'var(--app-muted)' }}>{t('explorer.noComponents')}</p>
             )}
             {groupedRegions.map(({ region, items }) => (
               <div key={region.componentId} style={{
@@ -413,8 +415,8 @@ export default function ExplorerPage() {
             minHeight: 300, color: 'var(--app-muted)', textAlign: 'center',
           }}>
             <div style={{ fontSize: '3rem', marginBottom: 12 }}>⚡</div>
-            <h2 style={{ margin: '0 0 8px', color: 'var(--app-text)', fontWeight: 700 }}>APEX Explorer</h2>
-            <p style={{ fontSize: '0.9rem' }}>Select a connection to browse your APEX applications.</p>
+            <h2 style={{ margin: '0 0 8px', color: 'var(--app-text)', fontWeight: 700 }}>{t('explorer.title')}</h2>
+            <p style={{ fontSize: '0.9rem' }}>{t('explorer.selectConnectionHint')}</p>
           </div>
         )}
       </div>

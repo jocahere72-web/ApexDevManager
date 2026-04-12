@@ -1,4 +1,5 @@
 import { Routes, Route } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { AppPage, AppPageHeader } from '@/components/ui/AppTemplate';
 import ReleaseList from './components/ReleaseList';
 import ReleasePipeline from './components/ReleasePipeline';
@@ -11,12 +12,13 @@ import ReleasePipeline from './components/ReleasePipeline';
  *   /releases/:id      - View release pipeline detail
  */
 export default function ReleaseManagerPage() {
+  const { t } = useTranslation();
   return (
     <AppPage fullWidth>
       <AppPageHeader
-        eyebrow="Release Manager"
-        title="Releases"
-        description="Coordinate packaging, approvals, and release pipeline progress."
+        eyebrow={t('releases.eyebrow')}
+        title={t('releases.title')}
+        description={t('releases.description')}
       />
       <Routes>
         <Route index element={<ReleaseList />} />

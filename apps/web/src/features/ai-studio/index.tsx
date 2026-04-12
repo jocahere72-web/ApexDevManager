@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import type {
   Conversation,
   ConversationMessage,
@@ -22,6 +23,7 @@ type RightPanelView = 'quick-actions' | 'usage';
 // ---------------------------------------------------------------------------
 
 export function AIStudioPage() {
+  const { t } = useTranslation();
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [selectedCode, setSelectedCode] = useState('');
   const [rightView, setRightView] = useState<RightPanelView>('quick-actions');
@@ -63,9 +65,9 @@ export function AIStudioPage() {
   return (
     <AppPage fullWidth>
       <AppPageHeader
-        eyebrow="AI Studio"
-        title="AI-assisted APEX development"
-        description="Keep conversations, code context, quick actions and usage insights in one focused workspace."
+        eyebrow={t('aiStudio.eyebrow')}
+        title={t('aiStudio.title')}
+        description={t('aiStudio.description')}
       />
       <div className="app-workspace">
         {/* Left sidebar: conversation list */}
@@ -95,14 +97,14 @@ export function AIStudioPage() {
               className={`app-tab${rightView === 'quick-actions' ? ' app-tab-active' : ''}`}
               onClick={() => setRightView('quick-actions')}
             >
-              Quick Actions
+              {t('aiStudio.quickActions')}
             </button>
             <button
               type="button"
               className={`app-tab${rightView === 'usage' ? ' app-tab-active' : ''}`}
               onClick={() => setRightView('usage')}
             >
-              Usage
+              {t('aiStudio.usage')}
             </button>
           </div>
 

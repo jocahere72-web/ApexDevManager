@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { AppPage, AppPageHeader } from '@/components/ui/AppTemplate';
 import { PageGenerator } from './components/PageGenerator';
 
@@ -6,12 +7,14 @@ import { PageGenerator } from './components/PageGenerator';
 // ---------------------------------------------------------------------------
 
 export function PRDToPagePage() {
+  const { t } = useTranslation();
+
   return (
     <AppPage fullWidth>
       <AppPageHeader
-        eyebrow="PRD to Page"
-        title="Page Generator"
-        description="Turn approved requirements into APEX page structure and implementation notes."
+        eyebrow={t('pageGen.eyebrow')}
+        title={t('pageGen.title')}
+        description={t('pageGen.description')}
       />
       <PageGenerator />
     </AppPage>

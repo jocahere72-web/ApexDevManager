@@ -1,4 +1,5 @@
 import { Routes, Route } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import ConnectionList from './components/ConnectionList';
 import ConnectionDetail from './components/ConnectionDetail';
 import ConnectionForm from './components/ConnectionForm';
@@ -13,6 +14,7 @@ import ConnectionForm from './components/ConnectionForm';
  *   /connections/:id/edit - Edit an existing connection
  */
 export default function ConnectionsPage() {
+  const { t } = useTranslation();
   return (
     <Routes>
       <Route index element={<ConnectionList />} />

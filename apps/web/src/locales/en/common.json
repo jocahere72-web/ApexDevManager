@@ -41,7 +41,15 @@
     "allPriorities": "All Priorities",
     "noIssues": "No issues", "noIssuesDesc": "Create one to get started.",
     "advance": "Advance →", "linkedArtifacts": "Linked Artifacts",
-    "activity": "Activity", "noActivity": "No activity recorded"
+    "activity": "Activity", "noActivity": "No activity recorded",
+    "eyebrow": "Delivery",
+    "description": "Plan, prioritize, and move work through the delivery pipeline.",
+    "createIssue": "Create Issue", "newIssueTitle": "New Issue",
+    "client": "Client", "issueTitle": "Issue title",
+    "describeIssue": "Describe the issue...", "selectClient": "Select client...",
+    "noIssuesFound": "No issues found.",
+    "loading": "Loading issues...",
+    "code": "Code", "assigned": "Assigned", "updated": "Updated"
   },
   "issueStatus": {
     "intake": "Intake", "prd": "PRD", "design": "Design", "build": "Build",
@@ -54,27 +62,50 @@
     "name": "Name", "code": "Code", "description": "Description",
     "connection": "Connection", "contactName": "Contact Name", "contactEmail": "Contact Email",
     "noClients": "No clients", "active": "Active", "inactive": "Inactive",
-    "edit": "Edit", "deactivate": "Deactivate", "search": "Search clients..."
+    "edit": "Edit", "deactivate": "Deactivate", "search": "Search clients...",
+    "eyebrow": "Client Workspaces",
+    "clientDescription": "Manage client context, linked connections, and ownership details.",
+    "loading": "Loading clients...",
+    "noClientsFound": "No clients found. Create one to get started.",
+    "editClient": "Edit Client", "saveChanges": "Save Changes",
+    "createClient": "Create Client", "deleteClient": "Delete"
   },
   "connections": {
     "title": "Connections", "newConnection": "New Connection", "create": "Create",
     "name": "Name", "type": "Type", "environment": "Environment", "status": "Status",
     "test": "Test", "edit": "Edit", "delete": "Delete",
     "allEnvironments": "All Environments", "allStatuses": "All Statuses",
-    "noConnections": "No connections", "search": "Search connections..."
+    "noConnections": "No connections", "search": "Search connections...",
+    "eyebrow": "APEX Connectivity",
+    "description": "Manage ORDS and database endpoints used by Explorer, Editor, automation and release workflows.",
+    "noConnectionsDesc": "No connections found.",
+    "lastCheck": "Last Check", "loading": "Loading connections...",
+    "page": "Page", "of": "of", "total": "total",
+    "previous": "Previous", "next": "Next"
   },
   "explorer": {
     "title": "Application Explorer", "selectConnection": "Select Connection...",
     "search": "Search...", "noApps": "No applications found",
     "pages": "pages", "runApp": "Run Application", "refresh": "Refresh",
     "runPage": "Run Page", "regions": "Regions", "items": "Items",
-    "noComponents": "No components found"
+    "noComponents": "No components found",
+    "eyebrow": "APEX Explorer",
+    "description": "Browse applications, pages, regions and items from your APEX instance.",
+    "selectConnectionDesc": "Select a connection to browse your APEX applications.",
+    "applications": "Applications", "supportingObjects": "Supporting Objects",
+    "sharedComponents": "Shared Components", "utilities": "Utilities",
+    "noMatch": "No applications match your search.", "loading": "Loading..."
   },
   "editor": {
     "title": "Code Editor", "selectConnection": "Select Connection",
     "componentName": "Component name...", "load": "Load", "loading": "Loading...",
     "editing": "Editing", "viewOnly": "View Only", "editMode": "Edit Mode",
-    "viewMode": "View Mode", "modified": "Modified", "sourceLoaded": "Source loaded"
+    "viewMode": "View Mode", "modified": "Modified", "sourceLoaded": "Source loaded",
+    "eyebrow": "Source Control",
+    "description": "Load, review, and edit APEX and database source with a focused workspace.",
+    "noFileOpen": "No file open",
+    "noFileOpenDesc": "Open a component from the Explorer to start editing.",
+    "selectComponent": "Select a component"
   },
   "prd": {
     "title": "PRD Builder", "eyebrow": "Product Requirements",
@@ -91,12 +122,14 @@
     "extractionResults": "Extraction Results", "sections": "PRD Sections",
     "noContent": "No content yet", "noContentDesc": "Upload sources, then extract and generate to build the PRD.",
     "linkToIssue": "Link to Issue (optional)", "none": "None",
-    "chunks": "chunks", "uploading": "Uploading...", "creating": "Creating..."
+    "chunks": "chunks", "uploading": "Uploading...", "creating": "Creating...",
+    "description": "Create, refine and export Product Requirements Documents."
   },
   "admin": {
     "title": "Admin Console", "eyebrow": "Administration",
     "tenants": "Tenant Management", "sso": "SSO & Identity",
-    "llmProviders": "LLM Providers", "promptTemplates": "Prompt Templates"
+    "llmProviders": "LLM Providers", "promptTemplates": "Prompt Templates",
+    "description": "Manage tenants, identity, and access controls from one workspace."
   },
   "llm": {
     "addProvider": "Add Provider", "editProvider": "Edit Provider",

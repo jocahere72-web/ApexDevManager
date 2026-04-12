@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { AppPage, AppPageHeader } from '@/components/ui/AppTemplate';
 import {
   fetchIssues,
@@ -54,6 +55,7 @@ const STATUS_COL_COLORS: Record<IssueStatus, string> = {
 // ---------------------------------------------------------------------------
 
 export default function IssuesPage() {
+  const { t } = useTranslation();
   const [issues, setIssues] = useState<IssueSummary[]>([]);
   const [clients, setClients] = useState<ClientSummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -159,9 +161,9 @@ export default function IssuesPage() {
   return (
     <AppPage fullWidth>
       <AppPageHeader
-        eyebrow="Delivery"
-        title="Issues"
-        description="Plan, prioritize, and move work through the delivery pipeline."
+        eyebrow={t('issues.eyebrow')}
+        title={t('issues.title')}
+        description={t('issues.description')}
         actions={
           <>
             <div className="app-tabs" style={{ marginBottom: 0, padding: 3 }}>
@@ -169,17 +171,17 @@ export default function IssuesPage() {
                 onClick={() => setView('kanban')}
                 className={`app-tab${view === 'kanban' ? ' app-tab-active' : ''}`}
               >
-                Kanban
+                {t('issues.kanban')}
               </button>
               <button
                 onClick={() => setView('list')}
                 className={`app-tab${view === 'list' ? ' app-tab-active' : ''}`}
               >
-                List
+                {t('issues.list')}
               </button>
             </div>
             <button onClick={openNewIssue} className="app-button app-button-primary">
-              + New Issue
+              + {t('issues.newIssue')}
             </button>
           </>
         }
@@ -200,7 +202,7 @@ export default function IssuesPage() {
             }}
           >
             <input
-              placeholder="Search issues..."
+              placeholder={t('issues.search')}
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
@@ -215,7 +217,7 @@ export default function IssuesPage() {
               className="app-select"
               style={{ width: 'min(100%, 180px)' }}
             >
-              <option value="">All Clients</option>
+              <option value="">{t('issues.allClients')}</option>
               {clients.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
@@ -228,7 +230,7 @@ export default function IssuesPage() {
               className="app-select"
               style={{ width: 'min(100%, 180px)' }}
             >
-              <option value="">All Statuses</option>
+              <option value="">{t('issues.allStatuses')}</option>
               {ISSUE_STATUSES.map((s) => (
                 <option key={s} value={s}>
                   {STATUS_LABELS[s]}
@@ -241,7 +243,7 @@ export default function IssuesPage() {
               className="app-select"
               style={{ width: 'min(100%, 180px)' }}
             >
-              <option value="">All Priorities</option>
+              <option value="">{t('issues.allPriorities')}</option>
               {PRIORITY_OPTIONS.map((p) => (
                 <option key={p} value={p}>
                   {p.charAt(0).toUpperCase() + p.slice(1)}
@@ -330,7 +332,7 @@ export default function IssuesPage() {
                             padding: '1.5rem 0',
                           }}
                         >
-                          No issues
+                          {t('issues.noIssues')}
                         </div>
                       )}
                       {col.map((issue) => (
@@ -375,7 +377,7 @@ export default function IssuesPage() {
                         colSpan={8}
                         style={{ padding: '2rem', textAlign: 'center', color: 'var(--app-muted)' }}
                       >
-                        No issues found.
+                        {t('issues.noIssues')}
                       </td>
                     </tr>
                   )}
@@ -529,9 +531,9 @@ export default function IssuesPage() {
                     onChange={(e) => setFormType(e.target.value as IssueType)}
                     className="app-select"
                   >
-                    {TYPE_OPTIONS.map((t) => (
-                      <option key={t} value={t}>
-                        {t.charAt(0).toUpperCase() + t.slice(1)}
+                    {TYPE_OPTIONS.map((tp) => (
+                      <option key={tp} value={tp}>
+                        {tp.charAt(0).toUpperCase() + tp.slice(1)}
                       </option>
                     ))}
                   </select>
