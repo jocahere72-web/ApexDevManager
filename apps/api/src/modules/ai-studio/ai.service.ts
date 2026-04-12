@@ -81,7 +81,7 @@ export async function chat(
   client?: PoolClient,
 ): Promise<{ conversation: Conversation; message: ConversationMessage }> {
   // Rate limit check
-  await checkRateLimit(tenantId, userId);
+  await checkRateLimit(tenantId, userId, client);
 
   // Sanitize input
   const sanitized = sanitizeInput(request.message);
@@ -219,7 +219,7 @@ export async function* streamChat(
   client?: PoolClient,
 ): AsyncGenerator<AIStreamEvent> {
   // Rate limit check
-  await checkRateLimit(tenantId, userId);
+  await checkRateLimit(tenantId, userId, client);
 
   // Sanitize input
   const sanitized = sanitizeInput(request.message);

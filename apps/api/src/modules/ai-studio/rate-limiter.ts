@@ -1,6 +1,7 @@
-import { pool } from '../../config/database.js';
 import { logger } from '../../lib/logger.js';
 import { RateLimitError } from '../../lib/errors.js';
+import { tenantQuery } from '../../lib/tenant-db.js';
+import type { PoolClient } from 'pg';
 
 // ---------------------------------------------------------------------------
 // Configuration
@@ -42,6 +43,7 @@ export interface RateLimitResult {
 export async function checkRateLimit(
   tenantId: string,
   userId: string,
+  client?: PoolClient,
 ): Promise<RateLimitResult> {
   // ── Per-user RPM check (in-memory) ──────────────────────────────────
   const now = Date.now();
@@ -65,9 +67,9 @@ export async function checkRateLimit(
   }
 
   // ── Tenant monthly token budget ─────────────────────────────────────
-  const tenantBudget = await getTenantMonthlyBudget(tenantId);
+  const tenantBudget = await getTenantMonthlyBudget(tenantId, client);
 
-  const tenantUsageResult = await pool.query(
+  const tenantUsageResult = await tenantQuery(client,
     `SELECT COALESCE(SUM(total_tokens), 0)::int AS total
      FROM ai_token_usage
      WHERE tenant_id = $1
@@ -87,7 +89,7 @@ export async function checkRateLimit(
   }
 
   // ── Per-user daily token limit ──────────────────────────────────────
-  const userUsageResult = await pool.query(
+  const userUsageResult = await tenantQuery(client,
     `SELECT COALESCE(SUM(total_tokens), 0)::int AS total
      FROM ai_token_usage
      WHERE tenant_id = $1
@@ -116,9 +118,9 @@ export async function checkRateLimit(
  * Retrieve the tenant's monthly AI token budget from tenant settings.
  * Falls back to the default budget if not configured.
  */
-async function getTenantMonthlyBudget(tenantId: string): Promise<number> {
+async function getTenantMonthlyBudget(tenantId: string, client?: PoolClient): Promise<number> {
   try {
-    const result = await pool.query(
+    const result = await tenantQuery(client,
       `SELECT settings->>'aiCreditsMonthly' AS budget
        FROM tenants
        WHERE id = $1`,

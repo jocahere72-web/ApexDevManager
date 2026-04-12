@@ -2,6 +2,22 @@
 
 ---
 
+## User Request — Recheck Usage RLS Finding
+**Timestamp**: 2026-04-12T04:30:19Z
+**User Input**: "# Review findings:
+
+## Finding 1 (apps/api/src/modules/usage-intelligence/usage.service.ts:37-43) [added]
+[P1] RLS sigue aplicado parcialmente
+
+Este servicio sigue consultando con `pool.query()` directo. Como el tenant resolver setea `app.current_tenant` sobre `req.dbClient`, estas queries no garantizan usar el cliente tenant-scoped; dashboards y otros servicios tienen el mismo problema.
+
+## My request for Codex:
+revisa de nuevo "
+**AI Response**: "Revalide nuevamente `usage-intelligence` y dashboards. `usage.service.ts` usa `tenantQuery(client, ...)` en las lineas revisadas y el controller pasa `req.dbClient`; no hay `pool.query()` en esos modulos. Actualice `revision.md` para marcar este finding como falso positivo repetido."
+**Context**: Code Review - Repeated usage RLS finding verification.
+
+---
+
 ## User Request — Recheck Rate Limiter Finding
 **Timestamp**: 2026-04-12T04:24:43Z
 **User Input**: "# Review findings:
