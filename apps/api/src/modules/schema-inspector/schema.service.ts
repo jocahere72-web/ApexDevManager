@@ -157,13 +157,16 @@ export async function getSchema(
 async function getTableColumns(
   tenantId: string,
   connectionId: string,
-  schema: string,
+  schema: string | undefined,
   tableName: string,
 ): Promise<SchemaColumn[]> {
+  const schemaFilter = schema
+    ? `owner = '${assertOracleIdentifier(schema)}'`
+    : `owner = SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA')`;
   const rows = await executeSqlViaOrds(tenantId, connectionId, `
     SELECT column_name, data_type, nullable, data_default, column_id
     FROM all_tab_columns
-    WHERE owner = '${assertOracleIdentifier(schema)}' AND table_name = '${assertOracleIdentifier(tableName)}'
+    WHERE ${schemaFilter} AND table_name = '${assertOracleIdentifier(tableName)}'
     ORDER BY column_id
   `);
 
@@ -180,15 +183,18 @@ async function getTableColumns(
 async function getTableIndexes(
   tenantId: string,
   connectionId: string,
-  schema: string,
+  schema: string | undefined,
   tableName: string,
 ): Promise<SchemaIndex[]> {
+  const schemaFilter = schema
+    ? `i.table_owner = '${assertOracleIdentifier(schema)}'`
+    : `i.table_owner = SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA')`;
   const rows = await executeSqlViaOrds(tenantId, connectionId, `
     SELECT i.index_name, i.uniqueness, i.index_type,
            LISTAGG(ic.column_name, ',') WITHIN GROUP (ORDER BY ic.column_position) as columns
     FROM all_indexes i
     JOIN all_ind_columns ic ON i.index_name = ic.index_name AND i.owner = ic.index_owner
-    WHERE i.table_owner = '${assertOracleIdentifier(schema)}' AND i.table_name = '${assertOracleIdentifier(tableName)}'
+    WHERE ${schemaFilter} AND i.table_name = '${assertOracleIdentifier(tableName)}'
     GROUP BY i.index_name, i.uniqueness, i.index_type
   `);
 
@@ -205,8 +211,8 @@ export async function getTable(
   connectionId: string,
   tableName: string,
 ): Promise<SchemaTable> {
-  const columns = await getTableColumns(tenantId, connectionId, '', tableName);
-  const indexes = await getTableIndexes(tenantId, connectionId, '', tableName);
+  const columns = await getTableColumns(tenantId, connectionId, undefined, tableName);
+  const indexes = await getTableIndexes(tenantId, connectionId, undefined, tableName);
 
   return { name: tableName, schema: '', columns, indexes };
 }

@@ -2,6 +2,55 @@
 
 ---
 
+## User Request — Rewrite Revision Report
+**Timestamp**: 2026-04-12T03:40:44Z
+**User Input**: "# Review findings:
+
+## Finding 1 (apps/api/src/app.ts:20) [added]
+[P1] CORS inseguro con credenciales
+
+La configuración permite `origin: '*'` cuando no hay `CORS_ORIGIN`, pero también habilita `credentials: true`. Es inválido para navegadores y no cumple la baseline de seguridad para endpoints autenticados; debe usar allowlist explícita por ambiente.
+
+## Finding 2 (apps/api/src/modules/users/users.service.ts:48) [added]
+[P1] tenantResolver no protege las queries reales
+
+Aunque ya montaron `tenantResolver()`, los servicios siguen usando `pool.query()` directo. El middleware setea `app.current_tenant` en `req.dbClient`, pero ese cliente no se usa aqui, asi que RLS sigue sin aplicarse a la mayoria de consultas.
+
+## Finding 3 (apps/api/src/modules/usage-intelligence/usage.service.ts:47) [added]
+[P1] Reportes siguen leyendo audit_log inexistente
+
+Auth/users/connections ya escriben en `audit_events`, pero dashboard/usage siguen consultando `audit_log`. Si no existe una vista/tabla con ese nombre, estas pantallas van a fallar en runtime.
+
+## Finding 4 (apps/api/src/modules/explorer/explorer.service.ts:66) [added]
+[P1] Modulos consumidores siguen usando schema viejo de connections
+
+`connections.service` ya fue alineado a `connection_type`/`last_check_at`, pero otros modulos todavia seleccionan `type, config, encrypted_credentials` desde `connections`. Eso rompe explorer/editor/schema/dependencies/docs contra la tabla migrada.
+
+## Finding 5 (apps/api/src/integrations/mcp/mcp-client.ts:132) [added]
+[P1] Pool MCP aun mezcla tenants/conexiones
+
+La clave del pool MCP sigue basada solo en `baseUrl` y `username`. Dos tenants o conexiones con el mismo endpoint/usuario pueden reutilizar sesion.
+
+## Finding 6 (apps/api/src/modules/schema-inspector/schema.service.ts:192) [added]
+[P1] Table detail falla con schema vacio
+
+`getTable` llama `getTableColumns` con schema vacio, pero el helper nuevo `assertOracleIdentifier` rechaza strings vacios. La ruta de detalle de tabla va a fallar incluso con un `tableName` valido.
+
+## My request for Codex:
+muestrame los errores en un nuevo archivo revision.md"
+**AI Response**: Rewriting `revision.md` with the current open review findings and recommended fixes.
+**Context**: Code Review - Current findings report regeneration.
+
+---
+
+## User Request — Re-review Current State
+**Timestamp**: 2026-04-12T03:38:29Z
+**User Input**: "revisa de nuevo"
+**AI Response**: Revalidated the current repository state after fixes. Confirmed corrections for duplicate source files, shared-types dependency in web, API test script path, root test:web filter, auth password hashing, routes mounting tenantResolver, CORS env naming, and main connections service schema alignment. Remaining issues identified: services still use pool.query instead of req.dbClient, so tenantResolver does not actually activate RLS for most queries; dashboard and usage services still read from nonexistent audit_log; explorer/editor/schema/dependency/auto-docs still query old connections columns; MCP pool key still lacks tenant/connection isolation; schema-inspector table detail now validates an empty schema and will fail; executable verification remains blocked because node is not available in PATH."
+**Context**: Code Review - Current-state revalidation.
+
+---
+
 ## User Request — Backend Re-review
 **Timestamp**: 2026-04-12T03:20:21Z
 **User Input**: "# Review findings:

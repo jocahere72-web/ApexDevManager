@@ -20,7 +20,7 @@ usersRouter.post(
         throw new ValidationError('Invalid user data', parsed.error.flatten().fieldErrors);
       }
 
-      const user = await usersService.createUser(req.tenantId!, parsed.data, req.userId!);
+      const user = await usersService.createUser(req.tenantId!, parsed.data, req.userId!, req.dbClient);
 
       res.status(201).json({ success: true, data: user });
     } catch (err) {
@@ -40,7 +40,7 @@ usersRouter.get(
         throw new ValidationError('Invalid query parameters', parsed.error.flatten().fieldErrors);
       }
 
-      const { users, total } = await usersService.listUsers(req.tenantId!, parsed.data);
+      const { users, total } = await usersService.listUsers(req.tenantId!, parsed.data, req.dbClient);
       const { page, limit } = parsed.data;
       const totalPages = Math.ceil(total / limit);
 
@@ -75,7 +75,7 @@ usersRouter.get(
         throw new AuthorizationError('You can only view your own profile or must be an admin');
       }
 
-      const user = await usersService.getUserById(req.tenantId!, id);
+      const user = await usersService.getUserById(req.tenantId!, id, req.dbClient);
 
       res.json({ success: true, data: user });
     } catch (err) {
@@ -100,6 +100,7 @@ usersRouter.patch(
         req.params.id,
         parsed.data,
         req.userId!,
+        req.dbClient,
       );
 
       res.json({ success: true, data: user });
@@ -115,7 +116,7 @@ usersRouter.delete(
   authorize(['admin']),
   async (req: Request, res: Response<ApiResponse>, next: NextFunction) => {
     try {
-      await usersService.softDeleteUser(req.tenantId!, req.params.id, req.userId!);
+      await usersService.softDeleteUser(req.tenantId!, req.params.id, req.userId!, req.dbClient);
 
       res.json({ success: true, data: { message: 'User deleted successfully' } });
     } catch (err) {
@@ -130,7 +131,7 @@ usersRouter.post(
   authorize(['admin']),
   async (req: Request, res: Response<ApiResponse>, next: NextFunction) => {
     try {
-      await usersService.unlockUser(req.tenantId!, req.params.id, req.userId!);
+      await usersService.unlockUser(req.tenantId!, req.params.id, req.userId!, req.dbClient);
 
       res.json({ success: true, data: { message: 'User account unlocked successfully' } });
     } catch (err) {

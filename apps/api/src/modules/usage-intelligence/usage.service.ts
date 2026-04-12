@@ -46,7 +46,7 @@ export async function getUsageMetrics(
   // API call counts
   const apiResult = await pool.query(
     `SELECT COUNT(*)::int AS total_calls
-     FROM audit_log
+     FROM audit_events
      WHERE tenant_id = $1 AND created_at BETWEEN $2 AND $3`,
     [tenantId, start, end],
   );
@@ -54,7 +54,7 @@ export async function getUsageMetrics(
   // Active users
   const usersResult = await pool.query(
     `SELECT COUNT(DISTINCT user_id)::int AS active_users
-     FROM audit_log
+     FROM audit_events
      WHERE tenant_id = $1 AND created_at BETWEEN $2 AND $3`,
     [tenantId, start, end],
   );
@@ -236,7 +236,7 @@ export async function getUsageTrends(
        ${truncFn.replace('created_at', 'a.created_at')} AS date,
        COUNT(*)::int AS api_calls,
        COUNT(DISTINCT a.user_id)::int AS active_users
-     FROM audit_log a
+     FROM audit_events a
      WHERE a.tenant_id = $1 AND a.created_at >= $2
      GROUP BY ${truncFn.replace('created_at', 'a.created_at')}
      ORDER BY ${truncFn.replace('created_at', 'a.created_at')}`,

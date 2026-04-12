@@ -1,5 +1,5 @@
-import { pool } from '../../config/database.js';
 import { logger } from '../../lib/logger.js';
+import { tenantQuery } from '../../lib/tenant-db.js';
 import { NotFoundError, ConflictError } from '../../lib/errors.js';
 import { encryptCredentials, decryptCredentials } from './encryption.service.js';
 import { testOrdsConnection } from './ords.client.js';
@@ -11,6 +11,7 @@ import type {
   TestResult,
   ConnectionStatus,
 } from './connections.validation.js';
+import type { PoolClient } from 'pg';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 export interface ConnectionProfile {
@@ -46,9 +47,11 @@ async function logAudit(
   action: string,
   targetId: string,
   details?: Record<string, unknown>,
+  client?: PoolClient,
 ): Promise<void> {
   try {
-    await pool.query(
+    await tenantQuery(
+      client,
       `INSERT INTO audit_events (tenant_id, user_id, event_type, action, entity_type, entity_id, event_payload, created_at)
        VALUES ($1, $2, 'connection_management', $3, 'connection', $4, $5, NOW())`,
       [tenantId, actorId, action, targetId, details ? JSON.stringify(details) : null],
@@ -90,9 +93,11 @@ export async function createConnection(
   tenantId: string,
   data: CreateConnectionInput,
   actorId: string,
+  client?: PoolClient,
 ): Promise<ConnectionProfile> {
   // Check for duplicate name within tenant
-  const existing = await pool.query(
+  const existing = await tenantQuery(
+    client,
     `SELECT id FROM connections WHERE tenant_id = $1 AND name = $2 AND deleted_at IS NULL`,
     [tenantId, data.name],
   );
@@ -127,7 +132,8 @@ export async function createConnection(
 
   const initialStatus: ConnectionStatus = testResult.success ? 'connected' : 'disconnected';
 
-  const result = await pool.query(
+  const result = await tenantQuery(
+    client,
     `INSERT INTO connections (
        tenant_id, name, connection_type, environment, ords_url, db_host, service_name,
        encrypted_credentials, status, tags, labels, is_active, consecutive_failures,
@@ -168,7 +174,7 @@ export async function createConnection(
     type: data.type,
     environment: data.environment,
     testSuccess: testResult.success,
-  });
+  }, client);
 
   logger.info(
     { tenantId, connectionId: connection.id, type: data.type, status: initialStatus },
@@ -182,6 +188,7 @@ export async function createConnection(
 export async function listConnections(
   tenantId: string,
   query: ListConnectionsQuery,
+  client?: PoolClient,
 ): Promise<{ connections: ConnectionProfile[]; total: number }> {
   const conditions: string[] = ['tenant_id = $1', 'deleted_at IS NULL'];
   const params: unknown[] = [tenantId];
@@ -209,7 +216,8 @@ export async function listConnections(
   const offset = (query.page - 1) * query.limit;
 
   const [dataResult, countResult] = await Promise.all([
-    pool.query(
+    tenantQuery(
+      client,
       `SELECT id, tenant_id, name, connection_type, environment, ords_url, db_host, service_name,
               status, tags, labels, is_active, last_check_at, last_latency_ms,
               consecutive_failures, created_at, updated_at
@@ -219,7 +227,7 @@ export async function listConnections(
        LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
       [...params, query.limit, offset],
     ),
-    pool.query(`SELECT COUNT(*)::int AS total FROM connections WHERE ${whereClause}`, params),
+    tenantQuery(client, `SELECT COUNT(*)::int AS total FROM connections WHERE ${whereClause}`, params),
   ]);
 
   return {
@@ -232,8 +240,10 @@ export async function listConnections(
 export async function getConnectionById(
   tenantId: string,
   id: string,
+  client?: PoolClient,
 ): Promise<ConnectionProfile> {
-  const result = await pool.query(
+  const result = await tenantQuery(
+    client,
     `SELECT id, tenant_id, name, connection_type, environment, ords_url, db_host, service_name,
             status, tags, labels, is_active, last_check_at, last_latency_ms,
             consecutive_failures, created_at, updated_at
@@ -255,6 +265,7 @@ export async function updateConnection(
   id: string,
   data: UpdateConnectionInput,
   actorId: string,
+  client?: PoolClient,
 ): Promise<ConnectionProfile> {
   const setClauses: string[] = ['updated_at = NOW()'];
   const params: unknown[] = [tenantId, id];
@@ -262,7 +273,8 @@ export async function updateConnection(
 
   if (data.name !== undefined) {
     // Check for duplicate name
-    const existing = await pool.query(
+    const existing = await tenantQuery(
+      client,
       `SELECT id FROM connections WHERE tenant_id = $1 AND name = $2 AND id != $3 AND deleted_at IS NULL`,
       [tenantId, data.name, id],
     );
@@ -309,7 +321,8 @@ export async function updateConnection(
   );
   paramIndex++;
 
-  const result = await pool.query(
+  const result = await tenantQuery(
+    client,
     `UPDATE connections SET ${setClauses.join(', ')}
      WHERE tenant_id = $1 AND id = $2 AND deleted_at IS NULL
      RETURNING id, tenant_id, name, connection_type, environment, ords_url, db_host, service_name,
@@ -324,7 +337,7 @@ export async function updateConnection(
 
   const connection = rowToProfile(result.rows[0]);
 
-  await logAudit(tenantId, actorId, 'connection.updated', id, data as Record<string, unknown>);
+  await logAudit(tenantId, actorId, 'connection.updated', id, data as Record<string, unknown>, client);
 
   logger.info({ tenantId, connectionId: id }, 'Connection updated');
 
@@ -336,8 +349,10 @@ export async function softDeleteConnection(
   tenantId: string,
   id: string,
   actorId: string,
+  client?: PoolClient,
 ): Promise<void> {
-  const result = await pool.query(
+  const result = await tenantQuery(
+    client,
     `UPDATE connections SET deleted_at = NOW(), updated_at = NOW()
      WHERE tenant_id = $1 AND id = $2 AND deleted_at IS NULL
      RETURNING id`,
@@ -348,7 +363,7 @@ export async function softDeleteConnection(
     throw new NotFoundError('Connection not found');
   }
 
-  await logAudit(tenantId, actorId, 'connection.deleted', id);
+  await logAudit(tenantId, actorId, 'connection.deleted', id, undefined, client);
 
   logger.info({ tenantId, connectionId: id }, 'Connection soft-deleted');
 }
@@ -357,8 +372,10 @@ export async function softDeleteConnection(
 export async function testConnection(
   tenantId: string,
   id: string,
+  client?: PoolClient,
 ): Promise<TestResult> {
-  const result = await pool.query(
+  const result = await tenantQuery(
+    client,
     `SELECT connection_type, ords_url, db_host, service_name, encrypted_credentials
      FROM connections
      WHERE tenant_id = $1 AND id = $2 AND deleted_at IS NULL`,
@@ -406,7 +423,8 @@ export async function testConnection(
     newStatus = 'disconnected';
   }
 
-  await pool.query(
+  await tenantQuery(
+    client,
     `UPDATE connections
      SET status = $1, last_check_at = NOW(), last_latency_ms = $2,
          consecutive_failures = CASE WHEN $3 THEN 0 ELSE consecutive_failures + 1 END,
@@ -422,8 +440,10 @@ export async function testConnection(
 export async function getHealthStatus(
   tenantId: string,
   id: string,
+  client?: PoolClient,
 ): Promise<ConnectionHealth> {
-  const result = await pool.query(
+  const result = await tenantQuery(
+    client,
     `SELECT id, status, last_check_at, last_latency_ms, consecutive_failures
      FROM connections
      WHERE tenant_id = $1 AND id = $2 AND deleted_at IS NULL`,
