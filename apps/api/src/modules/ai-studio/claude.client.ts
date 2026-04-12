@@ -18,12 +18,12 @@ interface ClaudeConfig {
 }
 
 function loadConfig(): ClaudeConfig {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
+  const apiKey = process.env.ANTHROPIC_API_KEY ?? '';
+  if (!apiKey && process.env.NODE_ENV !== 'test') {
     throw new Error('ANTHROPIC_API_KEY environment variable is required');
   }
   return {
-    apiKey,
+    apiKey: apiKey || 'test-placeholder-key',
     model: process.env.ANTHROPIC_MODEL ?? DEFAULT_MODEL,
     maxTokens: parseInt(process.env.ANTHROPIC_MAX_TOKENS ?? '4096', 10),
   };
