@@ -12,6 +12,10 @@ export interface MCPConnectionConfig {
   password: string;
   /** Optional Oracle schema to set as current */
   schema?: string;
+  /** Tenant ID for pool isolation */
+  tenantId?: string;
+  /** Connection ID for pool isolation */
+  connectionId?: string;
 }
 
 export interface MCPQueryResult {
@@ -129,7 +133,9 @@ export class MCPClient {
   constructor(connectionConfig: MCPConnectionConfig) {
     this.config = connectionConfig;
     this.baseUrl = connectionConfig.baseUrl.replace(/\/+$/, '');
-    this.poolKey = `${this.baseUrl}:${connectionConfig.username}`;
+    const tenantId = connectionConfig.tenantId ?? '_';
+    const connectionId = connectionConfig.connectionId ?? '_';
+    this.poolKey = `${tenantId}:${connectionId}:${this.baseUrl}:${connectionConfig.username}`;
   }
 
   // ── Lifecycle ────────────────────────────────────────────────────────────

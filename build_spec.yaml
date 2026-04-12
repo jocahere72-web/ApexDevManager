@@ -49,19 +49,21 @@ steps:
     name: 'Build API Docker Image'
     command: |
       docker build \
+        -f apps/api/Dockerfile \
         --build-arg BUILD_HASH=${BUILD_HASH} \
         --build-arg BUILD_TIMESTAMP=${BUILD_TIMESTAMP} \
         -t apex-api:${OCI_BUILD_RUN_ID} \
-        apps/api
+        .
 
   - type: Command
     name: 'Build Web Docker Image'
     command: |
       docker build \
+        -f apps/web/Dockerfile \
         --build-arg BUILD_HASH=${BUILD_HASH} \
         --build-arg BUILD_TIMESTAMP=${BUILD_TIMESTAMP} \
         -t apex-web:${OCI_BUILD_RUN_ID} \
-        apps/web
+        .
 
 outputArtifacts:
   - name: apex-api-image

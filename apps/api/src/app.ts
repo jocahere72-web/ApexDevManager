@@ -16,9 +16,10 @@ export function createApp(): express.Express {
   app.use(helmet());
 
   // CORS
+  const allowedOrigins = process.env.CORS_ORIGINS?.split(',').map(s => s.trim()).filter(Boolean);
   app.use(
     cors({
-      origin: process.env.CORS_ORIGIN ?? '*',
+      origin: allowedOrigins && allowedOrigins.length > 0 ? allowedOrigins : false,
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization', CORRELATION_ID_HEADER],
       exposedHeaders: [CORRELATION_ID_HEADER],

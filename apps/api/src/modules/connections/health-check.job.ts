@@ -14,9 +14,11 @@ interface HealthCheckPayload {
 interface ConnectionRow {
   id: string;
   tenant_id: string;
-  type: 'ords' | 'jdbc';
+  connection_type: 'ords' | 'jdbc';
   encrypted_credentials: Record<string, unknown>;
-  config: Record<string, unknown>;
+  ords_url: string | null;
+  db_host: string | null;
+  service_name: string | null;
   status: ConnectionStatus;
   consecutive_failures: number;
 }
@@ -103,7 +105,7 @@ async function processHealthCheck(job: Job<HealthCheckPayload>): Promise<void> {
 
   // Fetch all active connections
   const result = await pool.query<ConnectionRow>(
-    `SELECT id, tenant_id, type, encrypted_credentials, config, status, consecutive_failures
+    `SELECT id, tenant_id, connection_type, encrypted_credentials, ords_url, db_host, service_name, status, consecutive_failures
      FROM connections
      WHERE deleted_at IS NULL AND is_active = true`,
   );
@@ -145,19 +147,17 @@ async function checkSingleConnection(conn: ConnectionRow): Promise<void> {
 
     let testResult;
 
-    if (conn.type === 'ords') {
-      const ordsConfig = conn.config as { ordsBaseUrl: string };
+    if (conn.connection_type === 'ords') {
       testResult = await testOrdsConnection({
-        ordsBaseUrl: ordsConfig.ordsBaseUrl,
+        ordsBaseUrl: conn.ords_url as string,
         username: creds.username,
         password: creds.password,
       });
     } else {
-      const jdbcConfig = conn.config as { host: string; port: number; serviceName: string };
       testResult = await testJdbcConnection({
-        host: jdbcConfig.host,
-        port: jdbcConfig.port,
-        serviceName: jdbcConfig.serviceName,
+        host: conn.db_host as string,
+        port: 1521,
+        serviceName: conn.service_name as string,
         username: creds.username,
         password: creds.password,
       });
@@ -180,7 +180,7 @@ async function checkSingleConnection(conn: ConnectionRow): Promise<void> {
       `UPDATE connections
        SET status = $1,
            consecutive_failures = $2,
-           last_health_check = NOW(),
+           last_check_at = NOW(),
            last_latency_ms = $3,
            updated_at = NOW()
        WHERE id = $4`,
@@ -190,7 +190,7 @@ async function checkSingleConnection(conn: ConnectionRow): Promise<void> {
     logger.debug(
       {
         connectionId: conn.id,
-        type: conn.type,
+        type: conn.connection_type,
         oldStatus: conn.status,
         newStatus,
         latencyMs: testResult.latencyMs,
@@ -210,7 +210,7 @@ async function checkSingleConnection(conn: ConnectionRow): Promise<void> {
       `UPDATE connections
        SET status = $1,
            consecutive_failures = $2,
-           last_health_check = NOW(),
+           last_check_at = NOW(),
            updated_at = NOW()
        WHERE id = $3`,
       [newStatus, newFailures, conn.id],

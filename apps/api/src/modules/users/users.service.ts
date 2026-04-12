@@ -1,33 +1,9 @@
-import crypto from 'node:crypto';
 import { pool } from '../../config/database.js';
 import { logger } from '../../lib/logger.js';
 import { NotFoundError, ConflictError, ValidationError } from '../../lib/errors.js';
+import { hashPassword } from '../auth/password.service.js';
 import type { CreateUserInput, UpdateUserInput, ListUsersQuery } from './users.validation.js';
 import type { UserProfile, Role } from '../auth/auth.types.js';
-
-// ── Password Hashing ────────────────────────────────────────────────────────
-const SALT_LENGTH = 32;
-const KEY_LENGTH = 64;
-const SCRYPT_COST = 16384;
-const BLOCK_SIZE = 8;
-const PARALLELISM = 1;
-
-async function hashPassword(password: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const salt = crypto.randomBytes(SALT_LENGTH);
-    crypto.scrypt(
-      password,
-      salt,
-      KEY_LENGTH,
-      { N: SCRYPT_COST, r: BLOCK_SIZE, p: PARALLELISM },
-      (err, derivedKey) => {
-        if (err) return reject(err);
-        const params = `${SCRYPT_COST}:${BLOCK_SIZE}:${PARALLELISM}`;
-        resolve(`scrypt:${params}:${salt.toString('hex')}:${derivedKey.toString('hex')}`);
-      },
-    );
-  });
-}
 
 // ── Audit Logging ────────────────────────────────────────────────────────────
 async function logAudit(
@@ -39,8 +15,8 @@ async function logAudit(
 ): Promise<void> {
   try {
     await pool.query(
-      `INSERT INTO audit_logs (tenant_id, actor_id, action, target_type, target_id, details, created_at)
-       VALUES ($1, $2, $3, 'user', $4, $5, NOW())`,
+      `INSERT INTO audit_events (tenant_id, user_id, event_type, action, entity_type, entity_id, event_payload, created_at)
+       VALUES ($1, $2, 'user_management', $3, 'user', $4, $5, NOW())`,
       [tenantId, actorId, action, targetId, details ? JSON.stringify(details) : null],
     );
   } catch (err) {

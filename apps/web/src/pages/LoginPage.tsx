@@ -1,13 +1,25 @@
 import { type FormEvent, useState } from 'react';
+import { useAuth } from '../hooks/useAuth';
 
 function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const { login } = useAuth();
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // TODO: Integrate with auth hook
-    console.log('Login submitted', { email });
+    setError(null);
+    setLoading(true);
+    try {
+      await login({ email, password });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Login failed. Please try again.';
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -92,21 +104,37 @@ function LoginPage() {
           />
         </div>
 
+        {error && (
+          <div
+            style={{
+              marginBottom: '1rem',
+              padding: '0.5rem 0.75rem',
+              backgroundColor: '#fef2f2',
+              color: '#dc2626',
+              borderRadius: '0.375rem',
+              fontSize: '0.875rem',
+            }}
+          >
+            {error}
+          </div>
+        )}
+
         <button
           type="submit"
+          disabled={loading}
           style={{
             width: '100%',
             padding: '0.625rem',
-            backgroundColor: '#2563eb',
+            backgroundColor: loading ? '#93c5fd' : '#2563eb',
             color: '#ffffff',
             fontWeight: 600,
             border: 'none',
             borderRadius: '0.375rem',
             fontSize: '1rem',
-            cursor: 'pointer',
+            cursor: loading ? 'not-allowed' : 'pointer',
           }}
         >
-          Sign In
+          {loading ? 'Signing In...' : 'Sign In'}
         </button>
       </form>
     </div>

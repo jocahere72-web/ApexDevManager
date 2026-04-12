@@ -24,7 +24,7 @@ echo "============================================"
 echo ""
 echo "[1/2] Running database migrations..."
 
-if ! timeout "${MIGRATION_TIMEOUT}" pnpm --filter @apex/api db:migrate 2>&1; then
+if ! timeout "${MIGRATION_TIMEOUT}" pnpm --filter @apex-dev/api migrate 2>&1; then
   echo "ERROR: Database migration failed or timed out after ${MIGRATION_TIMEOUT}s"
   echo "Aborting deployment."
   exit 1

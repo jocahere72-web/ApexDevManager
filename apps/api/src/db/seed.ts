@@ -90,9 +90,9 @@ async function seed(): Promise<void> {
     const adminPasswordHash = await hashPassword('Admin123!');
 
     const adminResult = await pool.query(
-      `INSERT INTO users (tenant_id, name, email, password_hash, role, status, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, 'ACTIVE', NOW(), NOW())
-       ON CONFLICT (email) DO NOTHING
+      `INSERT INTO users (tenant_id, name, email, password_hash, role, is_active, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, true, NOW(), NOW())
+       ON CONFLICT (tenant_id, email) DO NOTHING
        RETURNING id`,
       [tenantId, 'APEX Administrator', 'admin@apex.local', adminPasswordHash, 'admin'],
     );
@@ -112,9 +112,9 @@ async function seed(): Promise<void> {
 
     for (const user of users) {
       const result = await pool.query(
-        `INSERT INTO users (tenant_id, name, email, password_hash, role, status, created_at, updated_at)
-         VALUES ($1, $2, $3, $4, $5, 'ACTIVE', NOW(), NOW())
-         ON CONFLICT (email) DO NOTHING
+        `INSERT INTO users (tenant_id, name, email, password_hash, role, is_active, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, true, NOW(), NOW())
+         ON CONFLICT (tenant_id, email) DO NOTHING
          RETURNING id`,
         [tenantId, user.name, user.email, demoPasswordHash, user.role],
       );
@@ -132,11 +132,11 @@ async function seed(): Promise<void> {
     console.log('\n[4/4] Seeding sample connection and environment...');
 
     const connResult = await pool.query(
-      `INSERT INTO connections (tenant_id, name, type, host, port, database_name, status, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, 'ACTIVE', NOW(), NOW())
+      `INSERT INTO connections (tenant_id, name, connection_type, db_host, service_name, health_status, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, 'UNKNOWN', NOW(), NOW())
        ON CONFLICT (tenant_id, name) DO NOTHING
        RETURNING id`,
-      [tenantId, 'Demo Oracle DB', 'ORACLE', 'demo-db.apex.local', 1521, 'ORCL'],
+      [tenantId, 'Demo Oracle DB', 'jdbc', 'demo-db.apex.local', 'ORCL'],
     );
 
     let connectionId: string | undefined;

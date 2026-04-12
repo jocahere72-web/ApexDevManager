@@ -382,3 +382,49 @@ coloca todos esos findins en el audit
     - **Finding**: Los Dockerfiles usan `pnpm@latest`/tags no fijados y NGINX no presenta una política CSP/HSTS clara. Esto incumple controles esperados de reproducibilidad y hardening web.
 
 ---
+
+## User Request — Generate Revision Report
+**Timestamp**: 2026-04-12T03:26:05Z
+**User Input**: "# Review findings:
+
+## Finding 1 (apps/api/src/modules/users/users.service.ts:15) [added]
+[P0] Usuarios nuevos no podrán autenticarse
+
+`createUser` guarda passwords con un hash `scrypt:...`, pero el flujo de login llama `verifyPassword`, que usa `bcrypt.compare`. Cualquier usuario creado desde este servicio quedará con un hash que auth no puede verificar.
+
+## Finding 2 (apps/api/src/modules/connections/connections.service.ts:130) [added]
+[P0] Connections sigue usando columnas inexistentes
+
+El servicio todavía inserta/lee `type` y `last_health_check`, pero las migraciones crean `connection_type` y luego `last_check_at`. Esto sigue rompiendo create/list/test/health de conexiones contra la DB real.
+
+## Finding 3 (apps/api/src/routes/index.ts:33) [added]
+[P1] Rutas protegidas siguen sin tenantResolver
+
+Las rutas autenticadas siguen montando solo `authenticate()`. Aunque `tenantResolver()` existe y adjunta `req.dbClient`, no se usa aquí, así que el contexto RLS `app.current_tenant` no queda activado para las rutas protegidas.
+
+## Finding 4 (apps/api/src/modules/auth/auth.service.ts:38) [added]
+[P1] Auditoría sigue apuntando a audit_logs
+
+Auth, users y connections siguen insertando en `audit_logs`, pero las migraciones crean/extienden `audit_events`. La auditoría funcional sigue perdiéndose en runtime.
+
+## Finding 5 (apps/api/src/modules/dependency-analyzer/dependency.service.ts:167) [added]
+[P1] SQL con input de ruta sin bind params
+
+`objectType` y `objectId` vienen de params del request y se interpolan directo en SQL enviado al backend Oracle/MCP. Debe validarse con allowlist/identificadores seguros o usar binds donde aplique.
+
+## Finding 6 (apps/api/src/modules/usage-intelligence/usage.service.ts:209) [added]
+[P1] SQL injection en usage granularity
+
+`granularity` viene de querystring, se castea con `as any` y termina dentro de `date_trunc('${granularity}', ...)`. Un usuario admin/tech_lead puede inyectar SQL en consultas locales de uso.
+
+## Finding 7 (apps/api/package.json:11) [added]
+[P1] Tests API siguen sin ejecutarse
+
+El script de test sigue buscando `src/**/*.test.ts`, mientras los tests reales están en `apps/api/test`. La suite backend todavía puede dar una señal falsa.
+
+## My request for Codex:
+revisa el codigo de nuevo y me generas un archivo revision.md con todos los problemas encontrados y su mejor solucion"
+**AI Response**: Created `revision.md` at the repository root with a consolidated list of discovered issues, current remediation status, impact, best recommended fixes, and verification commands. Validated it as plain Markdown with no Mermaid or ASCII art; executable validation remains blocked because `node` is not available in PATH.
+**Context**: Code Review - Consolidated revision report generation completed.
+
+---
