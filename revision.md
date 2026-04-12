@@ -2,27 +2,30 @@
 
 Fecha: 2026-04-12
 
-Esta revision revalida los hallazgos anteriores contra el estado actual del codigo. No se ejecutaron tests ni typecheck porque `node` no esta disponible en el PATH de esta sesion.
+Ultima actualizacion: 2026-04-12T04:08:25Z
+
+Esta revision revalida los hallazgos reportados contra el estado actual del backend. No se ejecutaron tests ni typecheck porque `node` no esta disponible en el PATH de esta sesion.
 
 ## Estado de hallazgos anteriores
 
-Corregidos o mitigados:
+Corregidos o mitigados en la revision actual:
 
-- CORS ya no muestra `CORS_ORIGINS: '*'` en `deploy/helm/apex-api/values-dev.yaml`, y `apps/api/src/app.ts` filtra `*` fuera de la allowlist efectiva.
+- Los consumidores principales ya no hacen `SELECT id, tenant_id, type, config, encrypted_credentials FROM connections`; ahora usan `getConnectionForTenant()`.
+- `dashboard.service.ts` ya consulta `last_check_at`, `last_latency_ms` y `last_error` en lugar de `last_tested_at`, `response_time_ms` y `error_message`.
+- `usage-intelligence` y `dashboards` ya cambiaron las consultas revisadas de `pool.query()` a `tenantQuery(client, ...)`, y sus controladores pasan `req.dbClient`.
 - El script de test de API ya apunta a `test/**/*.test.ts`.
-- `users.service.ts` ya usa `hashPassword()` compartido y no genera hashes `scrypt` incompatibles con login.
-- `users.service.ts`, `connections.service.ts` y `usage.service.ts` ya escriben/leen `audit_events` en vez de `audit_logs`/`audit_log`.
-- `usage-intelligence` ya valida `granularity` antes de llamar al servicio y el servicio usa `GRANULARITY_MAP`.
-- `schema-inspector.getTable()` ya evita pasar schema vacio a `assertOracleIdentifier`.
+- `users.service.ts` ya usa `hashPassword()` compartido.
+- `usage-intelligence` ya valida `granularity` y usa `GRANULARITY_MAP`.
 - La clave de pool MCP ya incluye `tenantId` y `connectionId`.
-- `connections.service.ts` ya fue alineado a `connection_type`, `last_check_at`, `last_latency_ms` y `last_error`.
+- `@apex-dev-manager/shared-types` ya esta declarado en `apps/api/package.json` y `apps/web/package.json` como `workspace:^`.
 
-## 1. Consumidores de `connections` siguen usando columnas inexistentes
+## 1. Repositorio de conexiones se llama sin `req.dbClient`
 
 Severidad: P1
 
 Archivos:
 
+- `apps/api/src/modules/connections/connections.repository.ts`
 - `apps/api/src/modules/explorer/explorer.service.ts`
 - `apps/api/src/modules/editor/editor.service.ts`
 - `apps/api/src/modules/schema-inspector/schema.service.ts`
@@ -31,84 +34,59 @@ Archivos:
 
 Problema:
 
-Aunque `connections.service.ts` ya fue corregido, varios modulos siguen consultando:
+`getConnectionForTenant()` acepta un `PoolClient` opcional y usa `tenantQuery(client, ...)`, pero los consumidores MCP/Oracle lo llaman sin pasar el cliente tenant-scoped. Por ejemplo:
 
-```sql
-SELECT id, tenant_id, type, config, encrypted_credentials
-FROM connections
+```ts
+const conn = await getConnectionForTenant(tenantId, connectionId);
 ```
 
-Las migraciones canonicas crean `connection_type`, `ords_url`, `db_host`, `service_name`, `schema_name`, `workspace_name` y `encrypted_credentials`; no crean `type` ni `config`.
+Esto hace que `tenantQuery()` caiga al fallback de `pool.query()`. Aunque el query filtra `tenant_id = $1`, no usa el mismo cliente donde `tenantResolver()` aplico `app.current_tenant`.
 
 Impacto:
 
-Explorer, editor, schema-inspector, dependency-analyzer y auto-docs pueden fallar al resolver una conexion aunque el CRUD principal de conexiones funcione.
+La migracion elimino columnas inexistentes, pero RLS sigue incompleto en la resolucion de conexiones para Explorer, Editor, Schema Inspector, Dependency Analyzer y Auto Docs. En una DB con RLS activo, esas rutas pueden comportarse distinto a users/connections/dashboard/usage, o fallar si la politica depende de `current_setting('app.current_tenant')`.
 
 Mejor solucion:
 
-- Crear un helper/repositorio compartido para conexiones, por ejemplo `apps/api/src/modules/connections/connections.repository.ts`.
-- Centralizar ahi el query con columnas reales y un mapper de compatibilidad:
-  - `connection_type` -> `type`
-  - `ords_url` -> `config.ordsBaseUrl`
-  - `db_host` -> `config.host`
-  - `service_name` -> `config.serviceName`
-  - `schema_name` -> `config.schema`
-  - `workspace_name` -> `config.workspaceName`
-- Reemplazar las consultas duplicadas de los consumidores por ese helper.
-- Agregar tests de cada consumidor usando una DB migrada o un mock estricto de columnas reales.
+- Cambiar `getConnectionDetails()` en esos servicios para aceptar `client?: PoolClient`.
+- Propagar `client` desde las funciones exportadas hasta `getConnectionForTenant(tenantId, connectionId, client)`.
+- Pasar `req.dbClient` desde los controladores que todavia no lo hacen, como Explorer, Dependency Analyzer y Auto Docs.
+- Considerar que `tenantQuery()` no haga fallback silencioso a `pool.query()` en modulos tenant-scoped.
+- Agregar tests que verifiquen que la resolucion de conexiones usa el client del request.
 
-## 2. Dashboard usa nombres viejos para health de conexiones
-
-Severidad: P1
-
-Archivo:
-
-- `apps/api/src/modules/dashboards/dashboard.service.ts`
-
-Problema:
-
-`getDashboardData()` consulta `last_tested_at`, `response_time_ms` y `error_message` desde `connections`, pero las migraciones y el servicio actual usan `last_check_at`, `last_latency_ms` y `last_error`.
-
-Impacto:
-
-El dashboard puede fallar en runtime con `column does not exist` al cargar la seccion de salud de conexiones.
-
-Mejor solucion:
-
-- Cambiar el SELECT a `status, last_check_at, last_latency_ms, last_error`.
-- Mapear esos campos al contrato `ConnectionHealth`:
-  - `last_check_at` -> `lastCheckedAt` / `lastCheckAt`
-  - `last_latency_ms` -> `responseTimeMs` / `lastLatencyMs`
-  - `last_error` -> `errorMessage`
-- Agregar un test de `getDashboardData()` contra el esquema migrado.
-
-## 3. RLS sigue aplicado solo parcialmente
+## 2. Explorer convierte `workspaceName` a `WORKSPACE_ID`
 
 Severidad: P1
 
 Archivos:
 
-- `apps/api/src/lib/tenant-db.ts`
-- `apps/api/src/modules/usage-intelligence/usage.service.ts`
-- `apps/api/src/modules/dashboards/dashboard.service.ts`
-- Otros servicios bajo `apps/api/src/modules/**`
+- `apps/api/src/modules/connections/connections.repository.ts`
+- `apps/api/src/modules/explorer/explorer.service.ts`
+- `apps/api/src/integrations/mcp/mcp-apex-adapter.ts`
+- `apps/api/src/integrations/mcp/ords-fallback.ts`
 
 Problema:
 
-`tenantResolver()` ya existe y algunos controladores ya pasan `req.dbClient` a `users` y `connections`. Sin embargo, `usage-intelligence` y `dashboards` todavia usan `pool.query()` directo, igual que otros modulos. Esas queries no garantizan usar el cliente donde se seteo `app.current_tenant`, por lo que el aislamiento RLS puede quedar incompleto o fallar segun la politica de cada tabla.
+El repositorio mapea `workspace_name` a `config.workspaceName`, pero Explorer calcula:
+
+```ts
+return Number(conn.config.workspaceName ?? 0);
+```
+
+Luego pasa ese valor como `workspaceId` a consultas que filtran `WORKSPACE_ID`. Si `workspace_name` contiene un nombre real de workspace, `Number('MI_WORKSPACE')` produce `NaN`, y las consultas a `APEX_APPLICATIONS` no encontraran aplicaciones.
 
 Impacto:
 
-El sistema puede comportarse distinto por modulo: unas rutas usan el contexto tenant del request y otras saltan a queries directas del pool.
+Explorer puede quedar vacio o fallar para conexiones validas, especialmente en el listado de aplicaciones y rutas que dependen de `listApplications()`.
 
 Mejor solucion:
 
-- Estandarizar todos los servicios tenant-scoped para recibir `PoolClient` o una abstraccion `TenantDb`.
-- Evitar el fallback silencioso a `pool.query()` en rutas protegidas; si el modulo requiere tenant, debe fallar cuando no haya client tenant-scoped.
-- Migrar primero dashboards, usage, explorer, editor, schema-inspector, dependency-analyzer y auto-docs.
-- Agregar tests que verifiquen que los servicios tenant-scoped llaman al cliente del request.
+- Persistir o resolver un `workspace_id` numerico real, no derivarlo desde `workspace_name`.
+- Extender el modelo de conexiones con `workspace_id` si el producto necesita filtrar por ID.
+- Si solo se tiene nombre, cambiar las consultas de Explorer/ORDS/MCP para filtrar por `WORKSPACE = :workspace_name` o resolver primero el ID desde Oracle/APEX.
+- Validar el valor antes de consultar: si no hay ID numerico, responder 400/422 con un error de configuracion claro.
 
-## 4. Validacion ejecutable pendiente
+## 3. Validacion ejecutable pendiente
 
 Severidad: P2
 

@@ -1,4 +1,5 @@
 import { pool } from '../../config/database.js';
+import { PoolClient } from 'pg';
 import { logger } from '../../lib/logger.js';
 import { NotFoundError, AppError } from '../../lib/errors.js';
 import { MCPClient, type MCPConnectionConfig } from '../../integrations/mcp/mcp-client.js';
@@ -29,8 +30,9 @@ function assertOracleType(type: string): string {
 async function getConnectionDetails(
   tenantId: string,
   connectionId: string,
+  client?: PoolClient,
 ): Promise<ResolvedConnection> {
-  const conn = await getConnectionForTenant(tenantId, connectionId);
+  const conn = await getConnectionForTenant(tenantId, connectionId, client);
   if (!conn) throw new NotFoundError('Connection not found or inactive');
   return conn;
 }
@@ -39,8 +41,9 @@ async function executeSql(
   tenantId: string,
   connectionId: string,
   sql: string,
+  client?: PoolClient,
 ): Promise<Record<string, unknown>[]> {
-  const conn = await getConnectionDetails(tenantId, connectionId);
+  const conn = await getConnectionDetails(tenantId, connectionId, client);
   const creds = decryptCredentials(conn.encryptedCredentials, conn.tenantId);
   const mcpConfig: MCPConnectionConfig = {
     baseUrl: (conn.config.ordsBaseUrl ?? '') as string,
@@ -69,6 +72,7 @@ export async function generateDocs(
   tenantId: string,
   userId: string,
   request: DocGenRequest,
+  client?: PoolClient,
 ): Promise<GeneratedDoc> {
   logger.info(
     { connectionId: request.connectionId, objectType: request.objectType, objectName: request.objectName },
@@ -81,7 +85,7 @@ export async function generateDocs(
     const rows = await executeSql(tenantId, request.connectionId, `
       SELECT DBMS_METADATA.GET_DDL('${assertOracleType(request.objectType)}', '${assertOracleIdentifier(request.objectName)}') AS ddl
       FROM DUAL
-    `);
+    `, client);
     sourceCode = (rows[0]?.ddl as string) ?? '';
   } catch (err) {
     logger.warn({ err }, 'Failed to fetch DDL, attempting source fetch');
@@ -92,7 +96,7 @@ export async function generateDocs(
         AND name = '${assertOracleIdentifier(request.objectName)}'
         AND type = '${assertOracleType(request.objectType)}'
       ORDER BY line
-    `);
+    `, client);
     sourceCode = rows.map((r) => r.text as string).join('');
   }
 
@@ -160,6 +164,7 @@ export async function generateAPIDoc(
   tenantId: string,
   userId: string,
   connectionId: string,
+  client?: PoolClient,
 ): Promise<GeneratedDoc> {
   logger.info({ connectionId }, 'Generating API documentation from ORDS endpoints');
 
@@ -171,7 +176,7 @@ export async function generateAPIDoc(
     LEFT JOIN user_ords_templates t ON m.id = t.module_id
     LEFT JOIN user_ords_handlers h ON t.id = h.template_id
     ORDER BY m.name, t.uri_template
-  `);
+  `, client);
 
   const lines: string[] = [
     '# ORDS API Documentation',

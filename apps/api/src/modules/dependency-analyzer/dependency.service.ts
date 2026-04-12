@@ -1,4 +1,5 @@
 import { pool } from '../../config/database.js';
+import { PoolClient } from 'pg';
 import { logger } from '../../lib/logger.js';
 import { NotFoundError, AppError } from '../../lib/errors.js';
 import { MCPClient, type MCPConnectionConfig } from '../../integrations/mcp/mcp-client.js';
@@ -30,8 +31,9 @@ function assertOracleType(type: string): string {
 async function getConnectionDetails(
   tenantId: string,
   connectionId: string,
+  client?: PoolClient,
 ): Promise<ResolvedConnection> {
-  const conn = await getConnectionForTenant(tenantId, connectionId);
+  const conn = await getConnectionForTenant(tenantId, connectionId, client);
   if (!conn) throw new NotFoundError('Connection not found or inactive');
   return conn;
 }
@@ -40,8 +42,9 @@ async function executeSql(
   tenantId: string,
   connectionId: string,
   sql: string,
+  client?: PoolClient,
 ): Promise<Record<string, unknown>[]> {
-  const conn = await getConnectionDetails(tenantId, connectionId);
+  const conn = await getConnectionDetails(tenantId, connectionId, client);
   const creds = decryptCredentials(conn.encryptedCredentials, conn.tenantId);
   const mcpConfig: MCPConnectionConfig = {
     baseUrl: (conn.config.ordsBaseUrl ?? '') as string,
@@ -66,6 +69,7 @@ async function executeSql(
 export async function analyzeDependencies(
   tenantId: string,
   connectionId: string,
+  client?: PoolClient,
 ): Promise<DependencyGraph> {
   logger.info({ connectionId }, 'Analyzing dependencies');
 
@@ -81,7 +85,7 @@ export async function analyzeDependencies(
     WHERE d.owner = SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA')
       AND d.referenced_owner = SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA')
     ORDER BY d.name, d.referenced_name
-  `);
+  `, client);
 
   const nodeMap = new Map<string, DependencyNode>();
   const edges: DependencyEdge[] = [];
@@ -146,6 +150,7 @@ export async function getDependencyGraph(
   connectionId: string,
   objectType: string,
   objectId: string,
+  client?: PoolClient,
 ): Promise<DependencyGraph> {
   logger.info({ connectionId, objectType, objectId }, 'Fetching dependency graph');
 
@@ -163,7 +168,7 @@ export async function getDependencyGraph(
         (d.name = '${assertOracleIdentifier(objectId)}' AND d.type = '${assertOracleType(objectType)}')
         OR (d.referenced_name = '${assertOracleIdentifier(objectId)}' AND d.referenced_type = '${assertOracleType(objectType)}')
       )
-  `);
+  `, client);
 
   const nodeMap = new Map<string, DependencyNode>();
   const edges: DependencyEdge[] = [];
@@ -228,10 +233,11 @@ export async function getImpactAssessment(
   connectionId: string,
   objectType: string,
   objectId: string,
+  client?: PoolClient,
 ): Promise<ImpactAssessment> {
   logger.info({ connectionId, objectType, objectId }, 'Assessing impact');
 
-  const graph = await getDependencyGraph(tenantId, connectionId, objectType, objectId);
+  const graph = await getDependencyGraph(tenantId, connectionId, objectType, objectId, client);
   const rootKey = `${objectType.toUpperCase()}:${objectId.toUpperCase()}`;
   const rootNode = graph.nodes.find((n) => n.id === rootKey);
 

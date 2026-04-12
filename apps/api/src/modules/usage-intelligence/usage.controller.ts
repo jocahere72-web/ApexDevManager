@@ -96,9 +96,9 @@ usageRouter.get(
         days,
         req.dbClient,
       );
-      res.json({ success: true, data: trends });
+      return res.json({ success: true, data: trends });
     } catch (err) {
-      next(err);
+      return next(err);
     }
   },
 );

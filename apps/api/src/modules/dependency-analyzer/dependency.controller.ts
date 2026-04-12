@@ -15,6 +15,7 @@ dependencyRouter.get(
         req.params.connectionId,
         req.params.objectType,
         req.params.objectId,
+        req.dbClient,
       );
       res.json({ success: true, data: graph });
     } catch (err) {
@@ -33,6 +34,7 @@ dependencyRouter.get(
         req.params.connectionId,
         req.params.objectType,
         req.params.objectId,
+        req.dbClient,
       );
       res.json({ success: true, data: assessment });
     } catch (err) {
@@ -49,6 +51,7 @@ dependencyRouter.post(
       const graph = await dependencyService.analyzeDependencies(
         req.tenantId!,
         req.params.connectionId,
+        req.dbClient,
       );
       res.json({ success: true, data: graph });
     } catch (err) {
