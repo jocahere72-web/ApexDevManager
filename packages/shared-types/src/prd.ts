@@ -85,13 +85,23 @@ export interface PRDSection {
 // ---------------------------------------------------------------------------
 
 export interface ExtractionData {
-  goals: string[];
-  features: ExtractionFeature[];
-  userPersonas: string[];
-  constraints: string[];
-  assumptions: string[];
-  outOfScope: string[];
+  /** @deprecated Use domain-specific fields instead */
+  goals?: string[];
+  /** @deprecated Use domain-specific fields instead */
+  features?: ExtractionFeature[];
+  /** @deprecated Use domain-specific fields instead */
+  userPersonas?: string[];
+  constraints?: string[];
+  assumptions?: string[];
+  outOfScope?: string[];
   rawNotes?: string;
+
+  // Domain-specific extraction fields (APEX/GENESYS)
+  actors?: ExtractionActor[];
+  flows?: ExtractionFlow[];
+  businessRules?: ExtractionBusinessRule[];
+  apexPages?: ExtractionApexPage[];
+  genesysTables?: ExtractionGenesysTable[];
 }
 
 export interface ExtractionFeature {
@@ -101,10 +111,43 @@ export interface ExtractionFeature {
   acceptanceCriteria: string[];
 }
 
+export interface ExtractionActor {
+  name: string;
+  role: string;
+  description: string;
+}
+
+export interface ExtractionFlow {
+  name: string;
+  steps: string[];
+  triggerEvent: string;
+}
+
+export interface ExtractionBusinessRule {
+  id: string;
+  description: string;
+  priority: 'must' | 'should' | 'could';
+}
+
+export interface ExtractionApexPage {
+  name: string;
+  type: string;
+  description: string;
+  components: string[];
+}
+
+export interface ExtractionGenesysTable {
+  name: string;
+  description: string;
+  columns: string[];
+}
+
 export interface ValidationCheck {
   id: string;
+  checkId?: string;
   category: 'completeness' | 'consistency' | 'clarity' | 'feasibility' | 'testability';
   severity: 'blocker' | 'warning' | 'info';
+  passed?: boolean;
   message: string;
   sectionNumber?: number;
   suggestion?: string;

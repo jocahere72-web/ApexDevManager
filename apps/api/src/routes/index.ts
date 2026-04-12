@@ -23,6 +23,7 @@ import { marketplaceRouter } from '../modules/marketplace/index.js';
 import { tenantOnboardingRouter, ssoRouter } from '../modules/saas/index.js';
 import { clientsRouter } from '../modules/clients/index.js';
 import { issuesRouter } from '../modules/issues/index.js';
+import { llmProvidersRouter } from '../modules/llm-providers/index.js';
 import { authenticate } from '../modules/auth/auth.middleware.js';
 import { tenantResolver } from '../middleware/tenant-resolver.js';
 
@@ -56,3 +57,4 @@ router.use('/api/v1/admin', authenticate(), tenantResolver(), tenantOnboardingRo
 router.use('/api/v1/admin', authenticate(), tenantResolver(), ssoRouter);
 router.use('/api/v1/clients', authenticate(), tenantResolver(), clientsRouter);
 router.use('/api/v1/issues', authenticate(), tenantResolver(), issuesRouter);
+router.use('/api/v1/llm-providers', authenticate(), tenantResolver(), llmProvidersRouter);

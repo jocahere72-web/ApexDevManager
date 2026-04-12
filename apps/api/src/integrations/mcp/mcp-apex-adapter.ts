@@ -33,6 +33,7 @@ export interface ApexComponent {
   componentId: number;
   componentName: string;
   componentType: string;
+  regionId?: number | unknown;
   pageId: number;
   applicationId: number;
   displaySequence: number | null;

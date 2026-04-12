@@ -212,7 +212,8 @@ export async function listComponents(
   tenantId: string,
   connectionId: string,
   pageId: number,
-  type: ApexComponentType = 'regions',
+  type?: ApexComponentType,
+  appId?: number,
   client?: PoolClient,
 ): Promise<ApexComponent[]> {
   // Check cache
@@ -226,8 +227,8 @@ export async function listComponents(
 
   const components = await withMcpFallback(
     conn,
-    (client) => mcpAdapter.listComponents(client, pageId, type),
-    (ordsConn) => ordsFallback.listComponents(ordsConn, pageId, type),
+    (client) => mcpAdapter.listComponents(client, pageId, type as any),
+    (ordsConn) => ordsFallback.listComponents(ordsConn, appId ?? 0, Number(pageId), type as any),
   );
 
   // Cache result
@@ -270,6 +271,7 @@ export async function getApplicationTree(
           connectionId,
           page.pageId,
           'regions',
+          undefined,
           client,
         );
         return { ...page, components };
@@ -312,14 +314,14 @@ export async function searchObjects(
 
   const conn = await getConnectionDetails(tenantId, connectionId, client);
 
-  const allResults = await withMcpFallback(
+  const allResults: any[] = await withMcpFallback(
     conn,
     (client) => mcpAdapter.searchObjects(client, term, objectTypes),
-    (ordsConn) => ordsFallback.searchObjects(ordsConn, term, objectTypes),
+    (ordsConn) => ordsFallback.searchObjects(ordsConn, term, objectTypes) as any,
   );
 
   // Cache full results
-  await cache.setSearchResults(tenantId, connectionId, term, allResults, objectTypes);
+  await cache.setSearchResults(tenantId, connectionId, term, allResults as any, objectTypes);
 
   // Apply pagination
   const sliced = allResults.slice(offset, offset + limit);
@@ -329,7 +331,7 @@ export async function searchObjects(
     'Explorer: search completed',
   );
 
-  return { results: sliced, total: allResults.length };
+  return { results: sliced as any, total: allResults.length };
 }
 
 /**

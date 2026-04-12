@@ -68,7 +68,8 @@ const navGroups: NavGroup[] = [
     label: 'Admin',
     items: [
       { to: '/governance', label: 'AI Governance', icon: '🛡️' },
-      { to: '/admin', label: 'Admin', icon: '⚙️' },
+      { to: '/admin', label: 'Admin Console', icon: '⚙️' },
+      { to: '/llm-providers', label: 'LLM Providers', icon: '🧠' },
     ],
   },
 ];
