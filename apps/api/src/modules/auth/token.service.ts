@@ -61,7 +61,7 @@ export function generateAccessToken(userId: string, tenantId: string, roles: Rol
 export function verifyAccessToken(token: string): JwtPayload {
   const { algorithms, secret } = getVerifyConfig();
 
-  const decoded = jwt.verify(token, secret, { algorithms }) as JwtPayload;
+  const decoded = jwt.verify(token, secret, { algorithms }) as unknown as JwtPayload;
   return decoded;
 }
 

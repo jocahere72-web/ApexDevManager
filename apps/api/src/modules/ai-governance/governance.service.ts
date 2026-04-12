@@ -244,7 +244,7 @@ export async function updateRule(
   }
 
   if (setClauses.length === 0) {
-    throw new AppError('No fields to update', 400);
+    throw new AppError('No fields to update', 400, 'BAD_REQUEST');
   }
 
   const result = await pool.query<SafetyRuleRow>(

@@ -5,7 +5,7 @@
 /**
  * Status of a tenant.
  */
-export type TenantStatus = 'provisioning' | 'active' | 'suspended' | 'deleting' | 'deleted';
+export type SaaSTenantStatus = 'provisioning' | 'active' | 'suspended' | 'deleting' | 'deleted';
 
 /**
  * SSO protocol type.
@@ -24,12 +24,12 @@ export interface TenantOnboarding {
   id: string;
   name: string;
   slug: string;
-  status: TenantStatus;
+  status: SaaSTenantStatus;
   adminEmail: string;
   adminUserId?: string;
   plan: 'free' | 'starter' | 'professional' | 'enterprise';
-  quota: TenantQuota;
-  settings: TenantSettings;
+  quota: SaaSTenantQuota;
+  settings: SaaSTenantSettings;
   ssoConfigured: boolean;
   scimConfigured: boolean;
   provisionedAt?: string;
@@ -40,7 +40,7 @@ export interface TenantOnboarding {
 /**
  * Resource quotas for a tenant.
  */
-export interface TenantQuota {
+export interface SaaSTenantQuota {
   maxUsers: number;
   maxConnections: number;
   maxApps: number;
@@ -55,7 +55,7 @@ export interface TenantQuota {
 /**
  * Tenant-level settings.
  */
-export interface TenantSettings {
+export interface SaaSTenantSettings {
   defaultTimezone: string;
   defaultLocale: string;
   enforceSSO: boolean;
@@ -120,7 +120,7 @@ export interface CreateTenantRequest {
   slug: string;
   adminEmail: string;
   plan: 'free' | 'starter' | 'professional' | 'enterprise';
-  settings?: Partial<TenantSettings>;
+  settings?: Partial<SaaSTenantSettings>;
 }
 
 /**
@@ -129,8 +129,8 @@ export interface CreateTenantRequest {
 export interface UpdateTenantConfigRequest {
   name?: string;
   plan?: 'free' | 'starter' | 'professional' | 'enterprise';
-  quota?: Partial<TenantQuota>;
-  settings?: Partial<TenantSettings>;
+  quota?: Partial<SaaSTenantQuota>;
+  settings?: Partial<SaaSTenantSettings>;
 }
 
 /**

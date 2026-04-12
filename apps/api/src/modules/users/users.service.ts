@@ -3,7 +3,7 @@ import { pool } from '../../config/database.js';
 import { logger } from '../../lib/logger.js';
 import { NotFoundError, ConflictError, ValidationError } from '../../lib/errors.js';
 import type { CreateUserInput, UpdateUserInput, ListUsersQuery } from './users.validation.js';
-import type { UserProfile } from '../auth/auth.types.js';
+import type { UserProfile, Role } from '../auth/auth.types.js';
 
 // ── Password Hashing ────────────────────────────────────────────────────────
 const SALT_LENGTH = 32;
@@ -55,7 +55,7 @@ function rowToProfile(row: Record<string, unknown>): UserProfile {
     email: row.email as string,
     displayName: row.display_name as string,
     tenantId: row.tenant_id as string,
-    roles: row.roles as string[],
+    roles: row.roles as Role[],
     isActive: row.is_active as boolean,
     createdAt: row.created_at as Date,
     updatedAt: row.updated_at as Date,

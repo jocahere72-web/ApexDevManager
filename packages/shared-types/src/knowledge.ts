@@ -35,7 +35,7 @@ export interface KnowledgeArticle {
 /**
  * Result from a knowledge search query.
  */
-export interface SearchResult {
+export interface KnowledgeSearchResult {
   article: KnowledgeArticle;
   score: number;
   snippet: string;

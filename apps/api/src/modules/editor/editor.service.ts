@@ -131,7 +131,7 @@ function mapChangeLogRow(row: ChangeLogRow): ChangeLogEntry {
     source: row.source as 'manual' | 'ai',
     aiRequestId: row.ai_request_id,
     createdAt: row.created_at,
-  };
+  } as any as ChangeLogEntry;
 }
 
 /**

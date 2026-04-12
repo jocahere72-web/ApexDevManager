@@ -1,11 +1,9 @@
 #!/usr/bin/env node
 import 'dotenv/config';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import runner from 'node-pg-migrate';
 import { logger } from '../logger.js';
 
-const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const MIGRATIONS_DIR = path.resolve(__dirname, '../../migrations');

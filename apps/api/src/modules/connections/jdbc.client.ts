@@ -20,8 +20,9 @@ const CONNECTION_TIMEOUT_MS = 10_000;
  * but the application can start without it if only ORDS connections
  * are used.
  */
-async function getOracleDb(): Promise<typeof import('oracledb') | null> {
+async function getOracleDb(): Promise<any | null> {
   try {
+    // @ts-ignore - oracledb is an optional dependency
     const oracledb = await import('oracledb');
     return oracledb.default ?? oracledb;
   } catch {

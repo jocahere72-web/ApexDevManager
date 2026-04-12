@@ -359,7 +359,7 @@ export default function EditorPage() {
         {showChangeLog && activeTab && (
           <div className="w-80 flex-shrink-0 border-l border-neutral-700 bg-neutral-900">
             <ChangeLogPanel
-              entries={changeLogQuery.data?.entries ?? []}
+              entries={(changeLogQuery.data?.entries ?? []) as any}
               total={changeLogQuery.data?.total ?? 0}
               isLoading={changeLogQuery.isLoading}
               hasMore={

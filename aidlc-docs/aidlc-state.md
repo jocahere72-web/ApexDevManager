@@ -7,9 +7,9 @@
 - **Current Stage**: CONSTRUCTION - Build and Test COMPLETE
 
 ## Workspace State
-- **Existing Code**: No
+- **Existing Code**: Yes — monorepo TypeScript detected (`apps/api`, `apps/web`, `packages/shared-types`) plus OCI deploy artifacts (`deploy/`, `terraform/`)
 - **Existing PRD**: Yes — APEX_Dev_Manager_PRD_v5_1.md (85.8 KB, 19 modules M0-M18)
-- **Reverse Engineering Needed**: No
+- **Reverse Engineering Needed**: Recommended — implementation now exists after the original greenfield detection and should be reconciled against AI-DLC artifacts
 - **Workspace Root**: /Users/jherrera/Documents/hardcore/ApexDev
 
 ## Code Location Rules

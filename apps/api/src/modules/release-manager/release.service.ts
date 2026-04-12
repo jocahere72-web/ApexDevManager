@@ -127,7 +127,7 @@ export async function listReleases(
 function advanceStage(pipeline: Pipeline, stageName: string, newStatus: PipelineStage['status']): Pipeline {
   const updated = { ...pipeline, stages: [...pipeline.stages] };
   const stageIdx = updated.stages.findIndex((s) => s.name === stageName);
-  if (stageIdx === -1) throw new AppError(`Pipeline stage '${stageName}' not found`, 400);
+  if (stageIdx === -1) throw new AppError(`Pipeline stage '${stageName}' not found`, 400, 'BAD_REQUEST');
 
   updated.stages[stageIdx] = {
     ...updated.stages[stageIdx],
@@ -152,7 +152,7 @@ export async function buildRelease(
 ): Promise<Release> {
   const release = await getRelease(tenantId, releaseId);
   if (release.status !== 'draft') {
-    throw new AppError('Only draft releases can be built', 400);
+    throw new AppError('Only draft releases can be built', 400, 'BAD_REQUEST');
   }
 
   let pipeline = advanceStage(release.pipeline, 'build', 'running');
@@ -175,7 +175,7 @@ export async function promoteToStaging(
 ): Promise<Release> {
   const release = await getRelease(tenantId, releaseId);
   if (!['building', 'testing'].includes(release.status)) {
-    throw new AppError('Release must be in building or testing status to promote to staging', 400);
+    throw new AppError('Release must be in building or testing status to promote to staging', 400, 'BAD_REQUEST');
   }
 
   let pipeline = advanceStage(release.pipeline, 'test', 'passed');
@@ -198,7 +198,7 @@ export async function deployToProduction(
 ): Promise<Release> {
   const release = await getRelease(tenantId, releaseId);
   if (release.status !== 'staging') {
-    throw new AppError('Only staged releases can be deployed to production', 400);
+    throw new AppError('Only staged releases can be deployed to production', 400, 'BAD_REQUEST');
   }
 
   let pipeline = advanceStage(release.pipeline, 'staging', 'passed');
@@ -223,7 +223,7 @@ export async function rollback(
 ): Promise<Release> {
   const release = await getRelease(tenantId, releaseId);
   if (release.status !== 'production') {
-    throw new AppError('Only production releases can be rolled back', 400);
+    throw new AppError('Only production releases can be rolled back', 400, 'BAD_REQUEST');
   }
 
   const result = await pool.query<ReleaseRow>(

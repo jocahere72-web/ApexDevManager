@@ -1,6 +1,6 @@
 import { useState, useCallback, type CSSProperties } from 'react';
 import type {
-  SearchResult,
+  KnowledgeSearchResult,
   ContextualHelp,
   LearningPath,
   LearningResource,
@@ -126,7 +126,7 @@ const categoryOptions: KnowledgeCategory[] = [
 export function KnowledgeSearch() {
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState<KnowledgeCategory | ''>('');
-  const [results, setResults] = useState<SearchResult[]>([]);
+  const [results, setResults] = useState<KnowledgeSearchResult[]>([]);
   const [contextHelp, setContextHelp] = useState<ContextualHelp | null>(null);
   const [learningPaths, setLearningPaths] = useState<LearningPath[]>([]);
   const [searching, setSearching] = useState(false);
@@ -144,7 +144,7 @@ export function KnowledgeSearch() {
         undefined,
         20,
       );
-      setResults(data);
+      setResults(data as any);
     } catch (err) {
       setError((err as Error).message);
     } finally {

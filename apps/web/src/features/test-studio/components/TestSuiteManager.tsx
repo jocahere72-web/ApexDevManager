@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, type CSSProperties } from 'react';
 import type {
   TestSuite,
   TestCase,
-  TestResult,
+  TestCaseResult,
   TestCoverage,
   TestStatus,
 } from '@apex-dev-manager/shared-types';
@@ -126,7 +126,7 @@ export function TestSuiteManager() {
   const [suites, setSuites] = useState<TestSuite[]>([]);
   const [coverage, setCoverage] = useState<TestCoverage | null>(null);
   const [selectedSuite, setSelectedSuite] = useState<TestSuite | null>(null);
-  const [results, setResults] = useState<TestResult[]>([]);
+  const [results, setResults] = useState<TestCaseResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [executing, setExecuting] = useState(false);
@@ -178,7 +178,7 @@ export function TestSuiteManager() {
         suiteId: suite.id,
         connectionId: suite.connectionId,
       });
-      setResults(testResults);
+      setResults(testResults as any);
       await loadSuites();
     } catch (err) {
       setError((err as Error).message);
@@ -191,7 +191,7 @@ export function TestSuiteManager() {
     setSelectedSuite(suite);
     try {
       const testResults = await testStudioApi.getTestResults(suite.id);
-      setResults(testResults);
+      setResults(testResults as any);
     } catch (err) {
       setError((err as Error).message);
     }

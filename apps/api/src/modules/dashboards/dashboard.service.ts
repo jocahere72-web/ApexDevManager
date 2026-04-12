@@ -81,14 +81,17 @@ export async function getDashboardData(tenantId: string): Promise<DashboardOverv
     [tenantId],
   );
 
-  const connections: ConnectionHealth[] = connResult.rows.map((row) => ({
+  const connections = connResult.rows.map((row) => ({
     connectionId: row.id as string,
     connectionName: row.name as string,
     status: (row.status as HealthStatus) ?? 'unknown',
     responseTimeMs: (row.response_time_ms as number) ?? 0,
     lastCheckedAt: row.last_tested_at ? (row.last_tested_at as Date).toISOString() : new Date().toISOString(),
+    lastCheckAt: row.last_tested_at ? (row.last_tested_at as Date).toISOString() : new Date().toISOString(),
+    lastLatencyMs: (row.response_time_ms as number) ?? 0,
+    consecutiveFailures: 0,
     errorMessage: (row.error_message as string) ?? undefined,
-  }));
+  })) as ConnectionHealth[];
 
   // 2. AI usage stats
   const todayStart = new Date();
@@ -139,14 +142,14 @@ export async function getDashboardData(tenantId: string): Promise<DashboardOverv
 
   const deployRow = deployResult.rows[0];
   const totalDeploy = (deployRow.total as number) ?? 0;
-  const deployments: DeploymentStatus = {
+  const deployments = {
     totalDeployments: totalDeploy,
     successfulDeployments: (deployRow.successful as number) ?? 0,
     failedDeployments: (deployRow.failed as number) ?? 0,
     pendingDeployments: (deployRow.pending as number) ?? 0,
     lastDeploymentAt: deployRow.last_at ? (deployRow.last_at as Date).toISOString() : undefined,
     successRate: totalDeploy > 0 ? Math.round(((deployRow.successful as number) / totalDeploy) * 100) : 100,
-  };
+  } as any as DeploymentStatus;
 
   // 4. Test coverage
   const testResult = await pool.query(
@@ -206,9 +209,9 @@ export async function getDashboardData(tenantId: string): Promise<DashboardOverv
 
   return {
     tenantId,
-    connections,
+    connections: connections as any,
     aiUsage,
-    deployments,
+    deployments: deployments as any,
     testCoverage,
     activeUsers: {
       today: usersToday.rows[0].count as number,
@@ -217,7 +220,7 @@ export async function getDashboardData(tenantId: string): Promise<DashboardOverv
     },
     recentActivity,
     generatedAt: new Date().toISOString(),
-  };
+  } as DashboardOverview;
 }
 
 // ---------------------------------------------------------------------------

@@ -77,15 +77,18 @@ async function executeSqlViaOrds(
   sql: string,
 ): Promise<Record<string, unknown>[]> {
   const conn = await getConnectionDetails(tenantId, connectionId);
-  const creds = decryptCredentials(conn.encrypted_credentials);
+  const creds = decryptCredentials(conn.encrypted_credentials, tenantId);
+  const config = conn.config as Record<string, unknown>;
   const mcpConfig: MCPConnectionConfig = {
-    type: conn.type,
-    config: conn.config,
-    credentials: creds,
+    baseUrl: (config.mcpBaseUrl ?? config.ordsBaseUrl ?? '') as string,
+    username: creds.username,
+    password: creds.password,
+    schema: config.schema as string | undefined,
   };
   const mcp = new MCPClient(mcpConfig);
   try {
-    const result = await mcp.executeSQL(sql);
+    await mcp.connect();
+    const result = await mcp.query(sql);
     return result.rows ?? [];
   } finally {
     await mcp.disconnect();

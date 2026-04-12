@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { ChangeLogEntry } from '@apex-dev-manager/shared-types';
+import type { EditorChangeLogEntry } from '@apex-dev-manager/shared-types';
 import DiffViewer from './DiffViewer';
 
 // ---------------------------------------------------------------------------
@@ -7,7 +7,7 @@ import DiffViewer from './DiffViewer';
 // ---------------------------------------------------------------------------
 
 export interface ChangeLogPanelProps {
-  entries: ChangeLogEntry[];
+  entries: EditorChangeLogEntry[];
   total: number;
   isLoading: boolean;
   onLoadMore?: () => void;

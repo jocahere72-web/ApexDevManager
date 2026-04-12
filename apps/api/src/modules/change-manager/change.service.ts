@@ -122,7 +122,7 @@ export async function addObject(
 ): Promise<ChangeSet> {
   const cs = await getChangeSet(tenantId, changeSetId);
   if (cs.status !== 'draft') {
-    throw new AppError('Cannot modify a non-draft change set', 400);
+    throw new AppError('Cannot modify a non-draft change set', 400, 'BAD_REQUEST');
   }
 
   const updatedObjects = [...cs.objects, object];
@@ -142,7 +142,7 @@ export async function removeObject(
 ): Promise<ChangeSet> {
   const cs = await getChangeSet(tenantId, changeSetId);
   if (cs.status !== 'draft') {
-    throw new AppError('Cannot modify a non-draft change set', 400);
+    throw new AppError('Cannot modify a non-draft change set', 400, 'BAD_REQUEST');
   }
 
   const updatedObjects = cs.objects.filter((_, i) => i !== objectIndex);
@@ -197,10 +197,10 @@ export async function submitForReview(
 ): Promise<ChangeSet> {
   const cs = await getChangeSet(tenantId, changeSetId);
   if (cs.status !== 'draft') {
-    throw new AppError('Only draft change sets can be submitted for review', 400);
+    throw new AppError('Only draft change sets can be submitted for review', 400, 'BAD_REQUEST');
   }
   if (cs.objects.length === 0) {
-    throw new AppError('Cannot submit an empty change set', 400);
+    throw new AppError('Cannot submit an empty change set', 400, 'BAD_REQUEST');
   }
 
   const result = await pool.query<ChangeSetRow>(
@@ -220,7 +220,7 @@ export async function approve(
 ): Promise<ChangeSet> {
   const cs = await getChangeSet(tenantId, changeSetId);
   if (cs.status !== 'review') {
-    throw new AppError('Only change sets in review can be approved', 400);
+    throw new AppError('Only change sets in review can be approved', 400, 'BAD_REQUEST');
   }
 
   const result = await pool.query<ChangeSetRow>(
@@ -239,7 +239,7 @@ export async function reject(
 ): Promise<ChangeSet> {
   const cs = await getChangeSet(tenantId, changeSetId);
   if (cs.status !== 'review') {
-    throw new AppError('Only change sets in review can be rejected', 400);
+    throw new AppError('Only change sets in review can be rejected', 400, 'BAD_REQUEST');
   }
 
   const result = await pool.query<ChangeSetRow>(
@@ -258,7 +258,7 @@ export async function applyChangeSet(
 ): Promise<ChangeSet> {
   const cs = await getChangeSet(tenantId, changeSetId);
   if (cs.status !== 'approved') {
-    throw new AppError('Only approved change sets can be applied', 400);
+    throw new AppError('Only approved change sets can be applied', 400, 'BAD_REQUEST');
   }
 
   // Execute DDL statements via MCP/ORDS connection

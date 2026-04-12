@@ -20,7 +20,7 @@ export type IncidentStatus = 'open' | 'acknowledged' | 'investigating' | 'resolv
 /**
  * Connection health summary for the dashboard.
  */
-export interface ConnectionHealth {
+export interface ConnectionHealthSummary {
   connectionId: string;
   connectionName: string;
   status: HealthStatus;
@@ -44,7 +44,7 @@ export interface AIUsageStats {
 /**
  * Deployment status for the dashboard.
  */
-export interface DeploymentStatus {
+export interface DeploymentSummary {
   totalDeployments: number;
   successfulDeployments: number;
   failedDeployments: number;
@@ -58,9 +58,9 @@ export interface DeploymentStatus {
  */
 export interface DashboardOverview {
   tenantId: string;
-  connections: ConnectionHealth[];
+  connections: ConnectionHealthSummary[];
   aiUsage: AIUsageStats;
-  deployments: DeploymentStatus;
+  deployments: DeploymentSummary;
   testCoverage: { percent: number; totalSuites: number; passRate: number };
   activeUsers: { today: number; thisWeek: number; thisMonth: number };
   recentActivity: ActivityItem[];

@@ -57,7 +57,7 @@ export interface TestSuite {
 /**
  * Result of a test execution run.
  */
-export interface TestResult {
+export interface TestCaseResult {
   id: string;
   suiteId: string;
   testCaseId: string;
