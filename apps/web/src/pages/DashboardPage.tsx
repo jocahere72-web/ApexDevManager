@@ -49,7 +49,7 @@ function DashboardPage() {
         if (cancelled) return;
 
         if (statsData) setStats(statsData);
-        if (issuesData) setRecentIssues(issuesData.data);
+        if (issuesData?.data) setRecentIssues(issuesData.data);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -61,15 +61,16 @@ function DashboardPage() {
 
   const firstName = user?.displayName?.split(' ')[0] ?? 'there';
 
+  const byStatus = stats?.byStatus ?? {};
   const summaryCards = stats
     ? [
-        { label: 'Total Issues', value: stats.total, tone: 'accent' as const },
+        { label: 'Total Issues', value: stats.total ?? 0, tone: 'accent' as const },
         {
           label: 'In Progress',
-          value: (stats.byStatus.build ?? 0) + (stats.byStatus.review ?? 0) + (stats.byStatus.test ?? 0),
+          value: (byStatus.build ?? 0) + (byStatus.review ?? 0) + (byStatus.test ?? 0),
           tone: 'warning' as const,
         },
-        { label: 'Done', value: stats.byStatus.done ?? 0, tone: 'success' as const },
+        { label: 'Done', value: byStatus.done ?? 0, tone: 'success' as const },
       ]
     : null;
 
