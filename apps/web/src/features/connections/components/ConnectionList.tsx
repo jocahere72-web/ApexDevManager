@@ -100,9 +100,10 @@ export default function ConnectionList() {
             className="app-select conn-filter-select"
           >
             <option value="">All Environments</option>
-            <option value="development">Development</option>
+            <option value="dev">Development</option>
+            <option value="test">Test</option>
             <option value="staging">Staging</option>
-            <option value="production">Production</option>
+            <option value="prod">Production</option>
           </select>
           <select
             value={filters.status}
