@@ -47,5 +47,9 @@ export * from './dashboard.js';
 export * from './factory.js';
 export * from './marketplace.js';
 
+// Clients & Issues (U14)
+export * from './client.js';
+export * from './issue.js';
+
 // SaaS (U13)
 export * from './saas.js';

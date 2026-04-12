@@ -27,7 +27,7 @@ router.get('/tenant/:slug', async (req: Request, res: Response, next: NextFuncti
     const tenant = result.rows[0];
     return res.json({ success: true, data: { id: tenant.id, name: tenant.name, slug: tenant.slug, plan: tenant.plan } });
   } catch (err) {
-    next(err);
+    return next(err);
   }
 });
 

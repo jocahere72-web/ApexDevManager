@@ -21,6 +21,8 @@ import { dashboardRouter } from '../modules/dashboards/index.js';
 import { factoryRouter } from '../modules/code-factory/index.js';
 import { marketplaceRouter } from '../modules/marketplace/index.js';
 import { tenantOnboardingRouter, ssoRouter } from '../modules/saas/index.js';
+import { clientsRouter } from '../modules/clients/index.js';
+import { issuesRouter } from '../modules/issues/index.js';
 import { authenticate } from '../modules/auth/auth.middleware.js';
 import { tenantResolver } from '../middleware/tenant-resolver.js';
 
@@ -52,3 +54,5 @@ router.use('/api/v1/factory', authenticate(), tenantResolver(), factoryRouter);
 router.use('/api/v1/marketplace', authenticate(), tenantResolver(), marketplaceRouter);
 router.use('/api/v1/admin', authenticate(), tenantResolver(), tenantOnboardingRouter);
 router.use('/api/v1/admin', authenticate(), tenantResolver(), ssoRouter);
+router.use('/api/v1/clients', authenticate(), tenantResolver(), clientsRouter);
+router.use('/api/v1/issues', authenticate(), tenantResolver(), issuesRouter);
