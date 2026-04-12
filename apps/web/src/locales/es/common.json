@@ -41,7 +41,15 @@
     "allPriorities": "Todas las Prioridades",
     "noIssues": "No hay requerimientos", "noIssuesDesc": "Crea uno para comenzar.",
     "advance": "Avanzar →", "linkedArtifacts": "Artefactos Vinculados",
-    "activity": "Actividad", "noActivity": "Sin actividad registrada"
+    "activity": "Actividad", "noActivity": "Sin actividad registrada",
+    "eyebrow": "Entrega",
+    "description": "Planifica, prioriza y mueve el trabajo a traves del pipeline de entrega.",
+    "createIssue": "Crear Requerimiento", "newIssueTitle": "Nuevo Requerimiento",
+    "client": "Cliente", "issueTitle": "Titulo del requerimiento",
+    "describeIssue": "Describe el requerimiento...", "selectClient": "Seleccionar cliente...",
+    "noIssuesFound": "No se encontraron requerimientos.",
+    "loading": "Cargando requerimientos...",
+    "code": "Codigo", "assigned": "Asignado", "updated": "Actualizado"
   },
   "issueStatus": {
     "intake": "Recepcion", "prd": "PRD", "design": "Diseno", "build": "Construccion",
@@ -54,27 +62,50 @@
     "name": "Nombre", "code": "Codigo", "description": "Descripcion",
     "connection": "Conexion", "contactName": "Nombre de Contacto", "contactEmail": "Correo de Contacto",
     "noClients": "No hay clientes", "active": "Activo", "inactive": "Inactivo",
-    "edit": "Editar", "deactivate": "Desactivar", "search": "Buscar clientes..."
+    "edit": "Editar", "deactivate": "Desactivar", "search": "Buscar clientes...",
+    "eyebrow": "Espacios de Trabajo de Clientes",
+    "clientDescription": "Gestiona el contexto del cliente, conexiones vinculadas y detalles de propiedad.",
+    "loading": "Cargando clientes...",
+    "noClientsFound": "No se encontraron clientes. Crea uno para comenzar.",
+    "editClient": "Editar Cliente", "saveChanges": "Guardar Cambios",
+    "createClient": "Crear Cliente", "deleteClient": "Eliminar"
   },
   "connections": {
     "title": "Conexiones", "newConnection": "Nueva Conexion", "create": "Crear",
     "name": "Nombre", "type": "Tipo", "environment": "Ambiente", "status": "Estado",
     "test": "Probar", "edit": "Editar", "delete": "Eliminar",
     "allEnvironments": "Todos los Ambientes", "allStatuses": "Todos los Estados",
-    "noConnections": "No hay conexiones", "search": "Buscar conexiones..."
+    "noConnections": "No hay conexiones", "search": "Buscar conexiones...",
+    "eyebrow": "Conectividad APEX",
+    "description": "Gestiona los endpoints ORDS y de base de datos usados por Explorador, Editor, automatizacion y flujos de release.",
+    "noConnectionsDesc": "No se encontraron conexiones.",
+    "lastCheck": "Ultima Verificacion", "loading": "Cargando conexiones...",
+    "page": "Pagina", "of": "de", "total": "total",
+    "previous": "Anterior", "next": "Siguiente"
   },
   "explorer": {
     "title": "Explorador de Aplicaciones", "selectConnection": "Seleccionar Conexion...",
     "search": "Buscar...", "noApps": "No se encontraron aplicaciones",
     "pages": "paginas", "runApp": "Ejecutar Aplicacion", "refresh": "Actualizar",
     "runPage": "Ejecutar Pagina", "regions": "Regiones", "items": "Items",
-    "noComponents": "No se encontraron componentes"
+    "noComponents": "No se encontraron componentes",
+    "eyebrow": "APEX Explorer",
+    "description": "Navega aplicaciones, paginas, regiones e items de tu instancia APEX.",
+    "selectConnectionDesc": "Selecciona una conexion para explorar tus aplicaciones APEX.",
+    "applications": "Aplicaciones", "supportingObjects": "Objetos de Soporte",
+    "sharedComponents": "Componentes Compartidos", "utilities": "Utilidades",
+    "noMatch": "No hay resultados para tu busqueda.", "loading": "Cargando..."
   },
   "editor": {
     "title": "Editor de Codigo", "selectConnection": "Seleccionar Conexion",
     "componentName": "Nombre del componente...", "load": "Cargar", "loading": "Cargando...",
     "editing": "Editando", "viewOnly": "Solo Lectura", "editMode": "Modo Edicion",
-    "viewMode": "Modo Vista", "modified": "Modificado", "sourceLoaded": "Fuente cargada"
+    "viewMode": "Modo Vista", "modified": "Modificado", "sourceLoaded": "Fuente cargada",
+    "eyebrow": "Control de Fuente",
+    "description": "Carga, revisa y edita codigo fuente APEX y de base de datos en un espacio enfocado.",
+    "noFileOpen": "Ningun archivo abierto",
+    "noFileOpenDesc": "Abre un componente desde el Explorador para comenzar a editar.",
+    "selectComponent": "Selecciona un componente"
   },
   "prd": {
     "title": "Constructor PRD", "eyebrow": "Requerimientos de Producto",
@@ -91,12 +122,14 @@
     "extractionResults": "Resultados de Extraccion", "sections": "Secciones PRD",
     "noContent": "Sin contenido aun", "noContentDesc": "Sube fuentes, luego extrae y genera para construir el PRD.",
     "linkToIssue": "Vincular a Requerimiento (opcional)", "none": "Ninguno",
-    "chunks": "fragmentos", "uploading": "Subiendo...", "creating": "Creando..."
+    "chunks": "fragmentos", "uploading": "Subiendo...", "creating": "Creando...",
+    "description": "Crea, refina y exporta documentos de requerimientos de producto."
   },
   "admin": {
     "title": "Consola de Administracion", "eyebrow": "Administracion",
     "tenants": "Gestion de Tenants", "sso": "SSO e Identidad",
-    "llmProviders": "Proveedores LLM", "promptTemplates": "Plantillas de Prompts"
+    "llmProviders": "Proveedores LLM", "promptTemplates": "Plantillas de Prompts",
+    "description": "Gestiona tenants, identidad y controles de acceso desde un espacio de trabajo."
   },
   "llm": {
     "addProvider": "Agregar Proveedor", "editProvider": "Editar Proveedor",
@@ -119,5 +152,65 @@
     "actions": "Acciones", "name": "Nombre", "description": "Descripcion",
     "status": "Estado", "type": "Tipo", "priority": "Prioridad",
     "createdAt": "Creado", "updatedAt": "Actualizado", "language": "Idioma"
+  },
+  "aiStudio": {
+    "title": "Desarrollo APEX asistido por IA", "eyebrow": "Estudio IA",
+    "description": "Mantiene conversaciones, contexto de codigo, acciones rapidas e informacion de uso en un solo espacio.",
+    "newChat": "Nuevo Chat", "conversations": "Conversaciones",
+    "quickActions": "Acciones Rapidas", "send": "Enviar",
+    "usage": "Uso"
+  },
+  "changeManager": {
+    "title": "Conjuntos de Cambios", "eyebrow": "Gestor de Cambios",
+    "description": "Rastrea cambios de despliegue y revisa la preparacion de releases."
+  },
+  "schemaInspector": {
+    "title": "Esquema de Base de Datos", "eyebrow": "Inspector de Esquema",
+    "description": "Explora objetos, columnas y metadatos de una conexion seleccionada."
+  },
+  "releases": {
+    "title": "Releases", "eyebrow": "Gestor de Releases",
+    "description": "Coordina empaquetado, aprobaciones y progreso del pipeline de release."
+  },
+  "dependencies": {
+    "title": "Grafo de Impacto", "eyebrow": "Analizador de Dependencias",
+    "description": "Mapea dependencias y revisa el impacto descendente antes de enviar cambios."
+  },
+  "autoDocs": {
+    "title": "Documentacion Automatica", "eyebrow": "Documentacion",
+    "description": "Genera y revisa documentacion desde metadatos APEX y contexto del proyecto."
+  },
+  "testStudio": {
+    "title": "Estudio de Pruebas", "eyebrow": "Calidad",
+    "description": "Gestiona suites de pruebas y preparacion de ejecucion."
+  },
+  "knowledge": {
+    "title": "Motor de Conocimiento", "eyebrow": "Conocimiento",
+    "description": "Busca conocimiento del proyecto, guias y referencias de implementacion."
+  },
+  "codeFactory": {
+    "title": "Espacio de Generacion", "eyebrow": "Fabrica de Codigo",
+    "description": "Crea, inspecciona y refina resultados de implementacion."
+  },
+  "marketplace": {
+    "title": "Plantillas y Extensiones", "eyebrow": "Marketplace",
+    "description": "Explora aceleradores reutilizables para entrega APEX."
+  },
+  "governance": {
+    "title": "Gobernanza IA", "eyebrow": "Gobernanza",
+    "description": "Revisa el uso de modelos, controles de seguridad y actividad de auditoria."
+  },
+  "usage": {
+    "title": "Panel de Costos", "eyebrow": "Inteligencia de Uso",
+    "description": "Rastrea uso, gasto y patrones operacionales en la plataforma."
+  },
+  "observability": {
+    "title": "Dashboards", "eyebrow": "Operaciones",
+    "description": "Monitorea la salud del sistema, actividad y senales de respuesta a incidentes.",
+    "overview": "Resumen", "incidents": "Incidentes"
+  },
+  "pageGen": {
+    "title": "Generador de Paginas", "eyebrow": "PRD a Pagina",
+    "description": "Convierte requerimientos aprobados en estructura de pagina APEX y notas de implementacion."
   }
 }

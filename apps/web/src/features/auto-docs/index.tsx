@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { AppPage, AppPageHeader } from '@/components/ui/AppTemplate';
 import DocsGenerator from './components/DocsGenerator';
 
@@ -8,12 +9,14 @@ import DocsGenerator from './components/DocsGenerator';
  *   /auto-docs - Documentation generator with preview and export
  */
 export default function AutoDocsPage() {
+  const { t } = useTranslation();
+
   return (
     <AppPage fullWidth>
       <AppPageHeader
-        eyebrow="Documentation"
-        title="Auto Docs"
-        description="Generate and review documentation from APEX metadata and project context."
+        eyebrow={t('autoDocs.eyebrow')}
+        title={t('autoDocs.title')}
+        description={t('autoDocs.description')}
       />
       <DocsGenerator />
     </AppPage>

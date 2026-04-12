@@ -1,4 +1,5 @@
 import { useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { AppPage, AppPageHeader } from '@/components/ui/AppTemplate';
 import SchemaExplorer from './components/SchemaExplorer';
 
@@ -9,15 +10,16 @@ import SchemaExplorer from './components/SchemaExplorer';
  *   /schema-inspector          - Schema explorer with optional ?connectionId param
  */
 export default function SchemaInspectorPage() {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const connectionId = searchParams.get('connectionId') ?? undefined;
 
   return (
     <AppPage fullWidth>
       <AppPageHeader
-        eyebrow="Schema Inspector"
-        title="Database Schema"
-        description="Explore objects, columns, and metadata for a selected connection."
+        eyebrow={t('schemaInspector.eyebrow')}
+        title={t('schemaInspector.title')}
+        description={t('schemaInspector.description')}
       />
       <SchemaExplorer connectionId={connectionId} />
     </AppPage>

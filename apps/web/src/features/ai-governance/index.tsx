@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { AppPage, AppPageHeader } from '@/components/ui/AppTemplate';
 import GovernanceDashboard from './components/GovernanceDashboard';
 
@@ -8,12 +9,14 @@ import GovernanceDashboard from './components/GovernanceDashboard';
  *   /governance - Dashboard with audit log and safety rules
  */
 export default function GovernancePage() {
+  const { t } = useTranslation();
+
   return (
     <AppPage fullWidth>
       <AppPageHeader
-        eyebrow="Governance"
-        title="AI Governance"
-        description="Review model usage, safety controls, and audit activity."
+        eyebrow={t('governance.eyebrow')}
+        title={t('governance.title')}
+        description={t('governance.description')}
       />
       <GovernanceDashboard />
     </AppPage>

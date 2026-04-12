@@ -976,3 +976,39 @@ revisa el codigo de nuevo y me generas un archivo revision.md con todos los prob
 **Context**: Code Review - Consolidated revision report generation completed.
 
 ---
+
+## Frontend Audit Report
+**Timestamp**: 2026-04-12T19:01:53Z
+**User Input**: "# Review findings:
+
+## Finding 1 (apps/web/src/lib/api-client.ts:43-52) [added]
+[P1] Interceptor 401 sigue expulsando por errores no fatales
+
+El interceptor todavía intenta refrescar y, si falla, limpia sesión y redirige para cualquier 401 que no sea una ruta de auth. En pantallas con llamadas opcionales o API mockeada, un endpoint secundario puede sacar al usuario de toda la app. Conviene redirigir solo cuando el backend indique token expirado/inválido, o cuando la request marque explícitamente authRedirectOn401.
+
+## Finding 2 (apps/web/src/features/connections/components/ConnectionDetail.tsx:190-199) [added]
+[P2] Placeholder visible en historial de latencia
+
+La pantalla sigue mostrando el texto literal 'Latency chart placeholder -- integrate charting library here' aunque luego informa que hay data points disponibles. Eso confirma que Connections no quedó terminada visualmente: debe renderizar una visualización simple con los puntos existentes o un empty state real cuando no haya datos.
+
+## Finding 3 (apps/web/src/features/explorer/index.tsx:247-255) [added]
+[P1] Explorer abre una URL hardcodeada del ambiente
+
+Los botones Run Application y Run Page abren un host/IP fijo con workspace hardcodeado. En una UI multi-tenant esto rompe la experiencia fuera de ese ambiente y puede abrir una aplicación equivocada; debe construir la URL desde la conexión seleccionada/configuración del backend, o pedir al backend el launch URL.
+
+## Finding 4 (apps/web/src/features/explorer/index.tsx:168-237) [added]
+[P2] Explorer todavía no está migrado al shell visual común
+
+La página renderiza su propio topbar, cards, hover styles y search input inline en lugar de AppPage/AppPageHeader/AppCard/app-input. Esto la deja visualmente distinta al resto de la app y más frágil en responsive; debe migrarse al template común antes de considerar la interfaz completa.
+
+## Finding 5 (apps/web/src/features/schema-inspector/components/SchemaExplorer.tsx:12) [added]
+[P2] Pantallas de análisis siguen con grids fijos sin breakpoint local
+
+Aún hay pantallas con columnas rígidas como 280px/320px + 1fr y 1fr/1fr sin fallback local. Aunque algunas tengan wrappers, estos estilos inline pueden ganar y comprimir contenido en mobile; Schema Inspector, Auto Docs, Dashboard, Issues detail y otros deben usar clases responsive del template.
+
+## My request for Codex:
+escribelo en auditor_front.md"
+**AI Response**: "Created `auditor_front.md` at the repository root with the frontend review findings, impact, recommended remediation, verification steps, and correction order."
+**Context**: Frontend audit documentation.
+
+---

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { AppPage, AppPageHeader, AppStatusPill } from '@/components/ui/AppTemplate';
 import { apiClient } from '@/lib/api-client';
 import MonacoEditorWrapper from './components/MonacoEditorWrapper';
@@ -10,6 +11,7 @@ interface ConnectionOption {
 }
 
 export default function EditorPage() {
+  const { t } = useTranslation();
   const [connections, setConnections] = useState<ConnectionOption[]>([]);
   const [selectedConnId, setSelectedConnId] = useState('');
   const [componentType, setComponentType] = useState('plsql_package');
@@ -91,9 +93,9 @@ END my_package;
   return (
     <AppPage fullWidth>
       <AppPageHeader
-        eyebrow="Source Control"
-        title="Code Editor"
-        description="Load, review, and edit APEX and database source with a focused workspace."
+        eyebrow={t('editor.eyebrow')}
+        title={t('editor.title')}
+        description={t('editor.description')}
       />
       <div className="app-card app-editor-surface">
         <div className="app-toolbar editor-toolbar">
@@ -102,7 +104,7 @@ END my_package;
             onChange={(e) => setSelectedConnId(e.target.value)}
             className="app-select editor-select-connection"
           >
-            <option value="">Select Connection</option>
+            <option value="">{t('editor.selectConnection')}</option>
             {connections.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name} ({c.connection_type})
@@ -137,17 +139,17 @@ END my_package;
             disabled={loading || !selectedConnId || !componentId}
             className={`app-button app-button-primary${loading || !selectedConnId || !componentId ? ' editor-button-disabled' : ''}`}
           >
-            {loading ? 'Loading...' : 'Load'}
+            {loading ? t('editor.loading') : t('editor.load')}
           </button>
 
           <div className="editor-toolbar-spacer" />
 
           <AppStatusPill tone={isEditing ? 'warning' : 'neutral'}>
-            {isEditing ? 'Editing' : 'View Only'}
+            {isEditing ? t('editor.editing') : t('editor.viewOnly')}
           </AppStatusPill>
 
           <button onClick={() => setIsEditing(!isEditing)} className="app-button">
-            {isEditing ? 'View Mode' : 'Edit Mode'}
+            {isEditing ? t('editor.viewMode') : t('editor.editMode')}
           </button>
 
           {isDirty && <AppStatusPill tone="accent">Modified</AppStatusPill>}

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   AppCard,
   AppEmptyState,
@@ -33,6 +34,7 @@ function debounce<T extends (...args: unknown[]) => void>(fn: T, ms: number) {
 // ---------------------------------------------------------------------------
 
 export default function ClientsPage() {
+  const { t } = useTranslation();
   const [clients, setClients] = useState<ClientSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -140,13 +142,13 @@ export default function ClientsPage() {
   return (
     <AppPage fullWidth>
       <AppPageHeader
-        eyebrow="Client Workspaces"
-        title="Clients"
-        description="Manage client context, linked connections, and ownership details."
+        eyebrow={t('clients.eyebrow')}
+        title={t('clients.title')}
+        description={t('clients.description')}
         actions={
           <>
             <input
-              placeholder="Search clients..."
+              placeholder={t('clients.search')}
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
@@ -156,18 +158,18 @@ export default function ClientsPage() {
               style={{ width: 'min(100%, 280px)' }}
             />
             <button onClick={openNew} className="app-button app-button-primary">
-              + New Client
+              + {t('clients.newClient')}
             </button>
           </>
         }
       />
       <div className="app-stack">
         {/* Loading */}
-        {loading && <AppEmptyState>Loading clients...</AppEmptyState>}
+        {loading && <AppEmptyState>{t('clients.loading')}</AppEmptyState>}
 
         {/* Grid */}
         {!loading && clients.length === 0 && (
-          <AppEmptyState>No clients found. Create one to get started.</AppEmptyState>
+          <AppEmptyState>{t('clients.noClients')}</AppEmptyState>
         )}
 
         {!loading && clients.length > 0 && (
@@ -263,7 +265,7 @@ export default function ClientsPage() {
                       }}
                       className="app-button"
                     >
-                      Edit
+                      {t('clients.edit')}
                     </button>
                     <button
                       onClick={(e) => {
@@ -273,7 +275,7 @@ export default function ClientsPage() {
                       className="app-button"
                       style={{ color: 'var(--app-danger)', borderColor: '#f4b4ae' }}
                     >
-                      Delete
+                      {t('clients.delete')}
                     </button>
                   </div>
                 </div>
@@ -287,11 +289,11 @@ export default function ClientsPage() {
           <div className="app-modal-backdrop" onClick={() => setModalOpen(false)}>
             <div className="app-modal" onClick={(e) => e.stopPropagation()}>
               <h2 className="app-card-title" style={{ marginBottom: '18px' }}>
-                {editingId ? 'Edit Client' : 'New Client'}
+                {editingId ? t('clients.editClient') : t('clients.newClient')}
               </h2>
 
               <div className="app-field">
-                <label className="app-label">Name *</label>
+                <label className="app-label">{t('clients.name')} *</label>
                 <input
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
@@ -301,7 +303,7 @@ export default function ClientsPage() {
               </div>
 
               <div className="app-field">
-                <label className="app-label">Code *</label>
+                <label className="app-label">{t('clients.code')} *</label>
                 <input
                   value={formCode}
                   onChange={(e) => setFormCode(e.target.value.toUpperCase())}
@@ -313,7 +315,7 @@ export default function ClientsPage() {
               </div>
 
               <div className="app-field">
-                <label className="app-label">Description</label>
+                <label className="app-label">{t('clients.descriptionLabel')}</label>
                 <textarea
                   value={formDescription}
                   onChange={(e) => setFormDescription(e.target.value)}
@@ -324,7 +326,7 @@ export default function ClientsPage() {
               </div>
 
               <div className="app-field">
-                <label className="app-label">Connection</label>
+                <label className="app-label">{t('clients.connection')}</label>
                 <select
                   value={formConnectionId}
                   onChange={(e) => setFormConnectionId(e.target.value)}
@@ -340,7 +342,7 @@ export default function ClientsPage() {
               </div>
 
               <div className="app-field">
-                <label className="app-label">Contact Name</label>
+                <label className="app-label">{t('clients.contactName')}</label>
                 <input
                   value={formContactName}
                   onChange={(e) => setFormContactName(e.target.value)}
@@ -350,7 +352,7 @@ export default function ClientsPage() {
               </div>
 
               <div className="app-field">
-                <label className="app-label">Contact Email</label>
+                <label className="app-label">{t('clients.contactEmail')}</label>
                 <input
                   value={formContactEmail}
                   onChange={(e) => setFormContactEmail(e.target.value)}
@@ -362,7 +364,7 @@ export default function ClientsPage() {
 
               <div className="app-toolbar" style={{ justifyContent: 'flex-end', marginTop: '8px' }}>
                 <button onClick={() => setModalOpen(false)} className="app-button">
-                  Cancel
+                  {t('clients.cancel')}
                 </button>
                 <button
                   onClick={handleSubmit}
@@ -370,7 +372,7 @@ export default function ClientsPage() {
                   className="app-button app-button-primary"
                   style={{ opacity: !formName.trim() || !formCode.trim() ? 0.5 : 1 }}
                 >
-                  {editingId ? 'Save Changes' : 'Create Client'}
+                  {editingId ? t('clients.saveChanges') : t('clients.createClient')}
                 </button>
               </div>
             </div>

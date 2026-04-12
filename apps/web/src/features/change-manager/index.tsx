@@ -1,4 +1,5 @@
 import { Routes, Route } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { AppPage, AppPageHeader } from '@/components/ui/AppTemplate';
 import ChangeSetList from './components/ChangeSetList';
 import ChangeSetDetail from './components/ChangeSetDetail';
@@ -11,12 +12,13 @@ import ChangeSetDetail from './components/ChangeSetDetail';
  *   /change-manager/:id      - View change set detail
  */
 export default function ChangeManagerPage() {
+  const { t } = useTranslation();
   return (
     <AppPage fullWidth>
       <AppPageHeader
-        eyebrow="Change Manager"
-        title="Change Sets"
-        description="Track deployment changes and review release readiness."
+        eyebrow={t('changeManager.eyebrow')}
+        title={t('changeManager.title')}
+        description={t('changeManager.description')}
       />
       <Routes>
         <Route index element={<ChangeSetList />} />

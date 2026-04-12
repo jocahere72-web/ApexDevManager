@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { AppPage, AppPageHeader, AppCard, AppEmptyState, AppStatusPill } from '@/components/ui/AppTemplate';
 import { apiClient } from '@/lib/api-client';
 import { fetchIssues, type IssueSummary } from '@/services/issues.api';
@@ -29,6 +30,7 @@ const STATUS_TONE: Record<string, 'neutral' | 'accent' | 'warning' | 'success' |
 // ── PRD Builder Page ────────────────────────────────────────────────────────
 
 export default function PRDBuilderPage() {
+  const { t } = useTranslation();
   const [view, setView] = useState<View>('list');
   const [sessions, setSessions] = useState<PRDSession[]>([]);
   const [activeSession, setActiveSession] = useState<PRDSession | null>(null);
@@ -202,14 +204,14 @@ export default function PRDBuilderPage() {
   if (view === 'list') {
     return (
       <AppPage>
-        <AppPageHeader eyebrow="Product Requirements" title="PRD Builder"
-          description="Create, refine and export Product Requirements Documents."
-          actions={<button onClick={() => { setShowCreate(true); loadIssuesForSelector(); }} className="app-button app-button-primary">+ New PRD</button>}
+        <AppPageHeader eyebrow={t('prd.eyebrow')} title={t('prd.title')}
+          description={t('prd.description')}
+          actions={<button onClick={() => { setShowCreate(true); loadIssuesForSelector(); }} className="app-button app-button-primary">+ {t('prd.newSession')}</button>}
         />
         {error && <div className="app-alert app-alert-danger" style={{ marginBottom: 12 }}>{error}</div>}
         {loading ? <AppEmptyState>Loading...</AppEmptyState> :
           sessions.length === 0 ? (
-            <AppEmptyState><p className="app-card-title">No PRD sessions yet</p><p className="app-card-meta">Create one to get started.</p></AppEmptyState>
+            <AppEmptyState><p className="app-card-title">{t('prd.noSessions')}</p><p className="app-card-meta">{t('prd.createToStart')}</p></AppEmptyState>
           ) : (
             <div className="app-stack">
               {sessions.map(s => (
@@ -285,7 +287,7 @@ export default function PRDBuilderPage() {
         {/* Left: Sources + Upload */}
         <div>
           <AppCard padded>
-            <h3 className="app-card-title" style={{ marginBottom: 12 }}>📄 Sources ({sources.length}/10)</h3>
+            <h3 className="app-card-title" style={{ marginBottom: 12 }}>{t('prd.sources')} ({sources.length}/10)</h3>
 
             {sources.map(s => (
               <div key={s.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid var(--app-border)' }}>
@@ -319,13 +321,13 @@ export default function PRDBuilderPage() {
             <h3 className="app-card-title" style={{ marginBottom: 12 }}>⚡ Actions</h3>
             <div className="app-stack">
               <button onClick={handleExtract} disabled={sources.length === 0 || !!actionLoading} className="app-button" style={{ width: '100%' }}>
-                {actionLoading === 'extract' ? '⏳ Extracting...' : '🔍 Extract Requirements'}
+                {actionLoading === 'extract' ? t('prd.extracting') : t('prd.extract')}
               </button>
               <button onClick={handleGenerate} disabled={!extraction || !!actionLoading} className="app-button" style={{ width: '100%' }}>
-                {actionLoading === 'generate' ? '⏳ Generating...' : '📋 Generate PRD Sections'}
+                {actionLoading === 'generate' ? t('prd.generating') : t('prd.generate')}
               </button>
               <button onClick={handleValidate} disabled={sections.length === 0 || !!actionLoading} className="app-button" style={{ width: '100%' }}>
-                {actionLoading === 'validate' ? '⏳ Validating...' : '✅ Validate PRD'}
+                {actionLoading === 'validate' ? t('prd.validating') : t('prd.validate')}
               </button>
               <div className="app-toolbar">
                 <button onClick={() => handleExport('markdown')} disabled={sections.length === 0 || (activeSession?.validationBlockers ?? 0) > 0 || !!actionLoading} className="app-button app-button-primary" style={{ flex: 1 }}>
@@ -363,7 +365,7 @@ export default function PRDBuilderPage() {
               {extraction.flows?.length > 0 && <Detail label="Flows" items={extraction.flows.map((f: any) => f.name)} />}
               {extraction.businessRules?.length > 0 && <Detail label="Business Rules" items={extraction.businessRules.map((r: any) => r.description)} />}
               {extraction.apexPages?.length > 0 && <Detail label="APEX Pages" items={extraction.apexPages.map((p: any) => `${p.name} (${p.type})`)} />}
-              {extraction.genesysTables?.length > 0 && <Detail label="GENESYS Tables" items={extraction.genesysTables.map((t: any) => t.name)} />}
+              {extraction.genesysTables?.length > 0 && <Detail label="GENESYS Tables" items={extraction.genesysTables.map((tbl: any) => tbl.name)} />}
               {!extraction.actors && !extraction.flows && (
                 <p className="app-card-meta">Extraction data: {JSON.stringify(extraction).substring(0, 200)}...</p>
               )}
@@ -391,8 +393,8 @@ export default function PRDBuilderPage() {
 
           {!extraction && sections.length === 0 && (
             <AppEmptyState>
-              <p className="app-card-title">No content yet</p>
-              <p className="app-card-meta">Upload sources, then extract and generate to build the PRD.</p>
+              <p className="app-card-title">{t('prd.noContent')}</p>
+              <p className="app-card-meta">{t('prd.noContentHint')}</p>
             </AppEmptyState>
           )}
         </div>
