@@ -1,6 +1,11 @@
+import { config as dotenvConfig } from 'dotenv';
+import { resolve } from 'path';
+
+// Load test environment before any other imports
+dotenvConfig({ path: resolve(__dirname, '../.env.test') });
+
 import { expect } from 'chai';
 
-// Make chai expect available globally for all test files
 declare global {
   // eslint-disable-next-line no-var
   var expect: Chai.ExpectStatic;
