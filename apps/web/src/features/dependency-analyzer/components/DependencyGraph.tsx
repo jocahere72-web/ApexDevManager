@@ -4,6 +4,7 @@ import type {
   DependencyNode,
   ImpactAssessment,
 } from '@apex-dev-manager/shared-types';
+import { apiClient } from '@/lib/api-client';
 import * as dependencyApi from '@/services/dependency.api';
 
 // ---------------------------------------------------------------------------
@@ -216,8 +217,13 @@ interface Props {
 }
 
 export default function DependencyGraph({ connectionId: propConnectionId }: Props) {
+  const [connections, setConnections] = useState<Array<{ id: string; name: string }>>([]);
   const [connectionId, setConnectionId] = useState(propConnectionId ?? '');
   const [objectType, setObjectType] = useState('TABLE');
+
+  useEffect(() => {
+    apiClient.get('/connections').then(res => setConnections(res.data.data || [])).catch(() => {});
+  }, []);
   const [objectId, setObjectId] = useState('');
   const [graph, setGraph] = useState<DependencyGraphType | null>(null);
   const [impact, setImpact] = useState<ImpactAssessment | null>(null);
@@ -374,13 +380,17 @@ export default function DependencyGraph({ connectionId: propConnectionId }: Prop
         <h2 style={styles.sidebarTitle}>Dependency Analyzer</h2>
 
         <div style={styles.formGroup}>
-          <label style={styles.label}>Connection ID</label>
-          <input
-            style={styles.input}
+          <label style={styles.label}>Connection</label>
+          <select
+            style={styles.select}
             value={connectionId}
             onChange={(e) => setConnectionId(e.target.value)}
-            placeholder="Enter connection ID"
-          />
+          >
+            <option value="">Select a connection</option>
+            {connections.map((c) => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
         </div>
 
         <div style={styles.formGroup}>

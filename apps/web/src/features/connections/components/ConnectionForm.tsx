@@ -33,7 +33,7 @@ export default function ConnectionForm() {
 
   // -- Form state -----------------------------------------------------------
 
-  const [type, setType] = useState<ConnectionType>('ORDS');
+  const [type, setType] = useState<ConnectionType>('ords');
   const [name, setName] = useState('');
   const [environment, setEnvironment] = useState<Environment>('development');
   const [username, setUsername] = useState('');
@@ -54,7 +54,7 @@ export default function ConnectionForm() {
     setEnvironment(existing.environment);
     setUsername(existing.username);
     setTagsInput(existing.tags.join(', '));
-    if (existing.type === 'ORDS') {
+    if (existing.type === 'ords') {
       setOrdsBaseUrl(existing.ordsBaseUrl ?? '');
     } else {
       setHost(existing.host ?? '');
@@ -80,7 +80,7 @@ export default function ConnectionForm() {
       tags,
     };
 
-    if (type === 'ORDS') {
+    if (type === 'ords') {
       base.ordsBaseUrl = ordsBaseUrl;
     } else {
       base.host = host;
@@ -110,7 +110,8 @@ export default function ConnectionForm() {
   };
 
   const handleTest = () => {
-    testMutation.mutate(buildPayload());
+    if (!id) return;
+    testMutation.mutate(id);
   };
 
   // -- Loading state ---------------------------------------------------------
@@ -218,15 +219,15 @@ export default function ConnectionForm() {
           <div style={toggleContainerStyle}>
             <button
               type="button"
-              style={toggleBtnStyle(type === 'ORDS')}
-              onClick={() => setType('ORDS')}
+              style={toggleBtnStyle(type === 'ords')}
+              onClick={() => setType('ords')}
             >
               ORDS
             </button>
             <button
               type="button"
-              style={toggleBtnStyle(type === 'JDBC')}
-              onClick={() => setType('JDBC')}
+              style={toggleBtnStyle(type === 'jdbc')}
+              onClick={() => setType('jdbc')}
             >
               JDBC
             </button>
@@ -261,7 +262,7 @@ export default function ConnectionForm() {
         </label>
 
         {/* Type-specific fields */}
-        {type === 'ORDS' ? (
+        {type === 'ords' ? (
           <fieldset style={fieldsetStyle}>
             <legend style={legendStyle}>ORDS Settings</legend>
             <label style={labelStyle}>
@@ -362,7 +363,7 @@ export default function ConnectionForm() {
 
         {/* Test Connection */}
         <div>
-          <button type="button" style={btnSecondary} onClick={handleTest} disabled={testMutation.isPending}>
+          <button type="button" style={btnSecondary} onClick={handleTest} disabled={testMutation.isPending || !id}>
             {testMutation.isPending ? 'Testing...' : 'Test Connection'}
           </button>
           {testMutation.isSuccess && (

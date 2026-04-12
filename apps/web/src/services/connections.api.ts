@@ -4,7 +4,7 @@ import { apiClient } from '@/lib/api-client';
 // Types
 // ---------------------------------------------------------------------------
 
-export type ConnectionType = 'ORDS' | 'JDBC';
+export type ConnectionType = 'ords' | 'jdbc';
 export type ConnectionStatus = 'connected' | 'degraded' | 'disconnected' | 'unknown';
 export type Environment = 'development' | 'staging' | 'production';
 
@@ -104,51 +104,55 @@ export async function fetchConnections(
   params.page = filters.page ?? 1;
   params.pageSize = filters.pageSize ?? 20;
 
-  const { data } = await apiClient.get<PaginatedConnections>('/connections', { params });
-  return data;
+  const response = await apiClient.get('/connections', { params });
+  // Backend returns { success, data, pagination }. Axios wraps in .data.
+  const body = response.data;
+  return {
+    data: body.data ?? [],
+    total: body.pagination?.total ?? 0,
+    page: body.pagination?.page ?? 1,
+    pageSize: body.pagination?.pageSize ?? 20,
+    totalPages: body.pagination?.totalPages ?? 0,
+  };
 }
 
 export async function fetchConnectionById(id: string): Promise<Connection> {
-  const { data } = await apiClient.get<Connection>(`/connections/${id}`);
-  return data;
+  const response = await apiClient.get(`/connections/${id}`);
+  return response.data.data;
 }
 
 export async function createConnection(payload: ConnectionPayload): Promise<Connection> {
-  const { data } = await apiClient.post<Connection>('/connections', payload);
-  return data;
+  const response = await apiClient.post('/connections', payload);
+  return response.data.data;
 }
 
 export async function updateConnection(
   id: string,
   payload: Partial<ConnectionPayload>,
 ): Promise<Connection> {
-  const { data } = await apiClient.put<Connection>(`/connections/${id}`, payload);
-  return data;
+  const response = await apiClient.patch(`/connections/${id}`, payload);
+  return response.data.data;
 }
 
 export async function deleteConnection(id: string): Promise<void> {
   await apiClient.delete(`/connections/${id}`);
 }
 
-export async function testConnection(
-  payload: ConnectionPayload,
-): Promise<TestConnectionResult> {
-  const { data } = await apiClient.post<TestConnectionResult>('/connections/test', payload);
-  return data;
+export async function testConnection(id: string): Promise<TestConnectionResult> {
+  const response = await apiClient.post(`/connections/${id}/test`);
+  return response.data.data;
 }
 
+// Stubs - backend endpoints not yet implemented
 export async function fetchHealthHistory(
-  id: string,
-  hours = 24,
+  _id: string,
+  _hours = 24,
 ): Promise<HealthHistoryEntry[]> {
-  const { data } = await apiClient.get<HealthHistoryEntry[]>(
-    `/connections/${id}/health-history`,
-    { params: { hours } },
-  );
-  return data;
+  console.warn('fetchHealthHistory: endpoint not yet available in backend');
+  return [];
 }
 
-export async function fetchChangeLog(id: string): Promise<ChangeLogEntry[]> {
-  const { data } = await apiClient.get<ChangeLogEntry[]>(`/connections/${id}/changelog`);
-  return data;
+export async function fetchChangeLog(_id: string): Promise<ChangeLogEntry[]> {
+  console.warn('fetchChangeLog: endpoint not yet available in backend');
+  return [];
 }

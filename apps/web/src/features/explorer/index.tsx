@@ -1,5 +1,6 @@
-import { useState, useCallback, useMemo, type CSSProperties } from 'react';
+import { useState, useCallback, useEffect, useMemo, type CSSProperties } from 'react';
 import type { TreeNode as TreeNodeData } from '@apex-dev-manager/shared-types';
+import { apiClient } from '@/lib/api-client';
 import { useApplications, usePages, useComponents } from './hooks/useExplorer';
 import { ApplicationExplorer } from './components/ApplicationExplorer';
 import { ExplorerSearch } from './components/ExplorerSearch';
@@ -56,15 +57,6 @@ const rightPanelStyle: CSSProperties = {
 };
 
 // ---------------------------------------------------------------------------
-// Stub connections – in a real app these would come from a connections store
-// ---------------------------------------------------------------------------
-const STUB_CONNECTIONS = [
-  { id: 'conn-1', name: 'Development (DEV)' },
-  { id: 'conn-2', name: 'Staging (STG)' },
-  { id: 'conn-3', name: 'Production (PROD)' },
-];
-
-// ---------------------------------------------------------------------------
 // Helper: build tree nodes from applications list
 // ---------------------------------------------------------------------------
 
@@ -90,9 +82,21 @@ function appsToTreeNodes(
 // ---------------------------------------------------------------------------
 
 export function ExplorerPage() {
+  const [connections, setConnections] = useState<Array<{ id: string; name: string }>>([]);
   const [selectedConnectionId, setSelectedConnectionId] = useState('');
   const [selectedNode, setSelectedNode] = useState<TreeNodeData | null>(null);
   const [treeNodes, setTreeNodes] = useState<TreeNodeData[]>([]);
+
+  // Fetch real connections on mount
+  useEffect(() => {
+    apiClient
+      .get('/connections')
+      .then((res) => {
+        const items = res.data.data || [];
+        setConnections(items.map((c: { id: string; name: string }) => ({ id: c.id, name: c.name })));
+      })
+      .catch(() => {});
+  }, []);
 
   const { data: applications } = useApplications(selectedConnectionId);
 
@@ -123,16 +127,80 @@ export function ExplorerPage() {
     setSelectedNode(node);
   }, []);
 
-  const handleExpandNode = useCallback((node: TreeNodeData) => {
-    // Mark the node as loading – the actual data fetching is delegated to
-    // query hooks and will update via the query cache. For the prototype we
-    // toggle the loading flag so the skeleton shows.
-    setTreeNodes((prev) =>
-      prev.map((n) =>
-        n.id === node.id ? { ...n, isLoading: true } : n,
-      ),
-    );
-  }, []);
+  const handleExpandNode = useCallback(
+    (node: TreeNodeData) => {
+      if (node.isLoaded) return;
+
+      // Mark the node as loading
+      setTreeNodes((prev) =>
+        prev.map((n) =>
+          n.id === node.id ? { ...n, isLoading: true } : n,
+        ),
+      );
+
+      // Fetch children based on node type
+      if (node.nodeType === 'application' && selectedConnectionId) {
+        apiClient
+          .get(`/explorer/${selectedConnectionId}/applications/${node.id}/pages`)
+          .then((res) => {
+            const pages = res.data.data || res.data || [];
+            const children: TreeNodeData[] = pages.map((p: { id: string; name: string; pageId?: number }) => ({
+              id: p.id,
+              parentId: node.id,
+              label: p.name,
+              nodeType: 'page' as const,
+              data: p as TreeNodeData['data'],
+              children: [],
+              isLoading: false,
+              isLoaded: false,
+              isCached: false,
+            }));
+            setTreeNodes((prev) =>
+              prev.map((n) =>
+                n.id === node.id ? { ...n, children, isLoading: false, isLoaded: true } : n,
+              ),
+            );
+          })
+          .catch(() => {
+            setTreeNodes((prev) =>
+              prev.map((n) =>
+                n.id === node.id ? { ...n, isLoading: false } : n,
+              ),
+            );
+          });
+      } else if (node.nodeType === 'page' && selectedConnectionId) {
+        apiClient
+          .get(`/explorer/${selectedConnectionId}/pages/${node.id}/components`)
+          .then((res) => {
+            const components = res.data.data || res.data || [];
+            const children: TreeNodeData[] = components.map((c: { id: string; name: string; componentType?: string }) => ({
+              id: c.id,
+              parentId: node.id,
+              label: c.name,
+              nodeType: 'component' as const,
+              data: c as TreeNodeData['data'],
+              children: [],
+              isLoading: false,
+              isLoaded: true,
+              isCached: false,
+            }));
+            setTreeNodes((prev) =>
+              prev.map((n) =>
+                n.id === node.id ? { ...n, children, isLoading: false, isLoaded: true } : n,
+              ),
+            );
+          })
+          .catch(() => {
+            setTreeNodes((prev) =>
+              prev.map((n) =>
+                n.id === node.id ? { ...n, isLoading: false } : n,
+              ),
+            );
+          });
+      }
+    },
+    [selectedConnectionId],
+  );
 
   const handleSearchNavigate = useCallback(
     (nodeId: string) => {
@@ -167,7 +235,7 @@ export function ExplorerPage() {
       {/* Left sidebar: connection selector + search */}
       <div style={leftSidebarStyle}>
         <ApplicationExplorer
-          connections={STUB_CONNECTIONS}
+          connections={connections}
           selectedConnectionId={selectedConnectionId}
           onConnectionChange={handleConnectionChange}
           selectedNodeId={selectedNode?.id ?? null}
@@ -187,7 +255,7 @@ export function ExplorerPage() {
       <div style={centerStyle}>
         <div style={centerHeaderStyle}>
           {selectedConnectionId
-            ? `Explorer - ${STUB_CONNECTIONS.find((c) => c.id === selectedConnectionId)?.name ?? ''}`
+            ? `Explorer - ${connections.find((c) => c.id === selectedConnectionId)?.name ?? ''}`
             : 'Select a connection to explore'}
         </div>
         <div style={treeAreaStyle} role="tree" aria-label="Component tree">

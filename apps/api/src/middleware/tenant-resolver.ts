@@ -50,7 +50,7 @@ export function tenantResolver() {
       // We wrap the entire request in a transaction so RLS policies can
       // reference current_setting('app.current_tenant').
       await client.query('BEGIN');
-      await client.query("SET LOCAL app.current_tenant = $1", [tenantId]);
+      await client.query(`SET LOCAL app.current_tenant = '${tenantId.replace(/'/g, "''")}'`);
 
       req.dbClient = client;
 

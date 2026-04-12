@@ -8,6 +8,30 @@ import { ValidationError } from '../../lib/errors.js';
 export const router = Router();
 
 /**
+ * GET /tenant/:slug
+ *
+ * Public endpoint to resolve a tenant by slug.
+ * Returns tenant ID and name (no sensitive data).
+ */
+router.get('/tenant/:slug', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { slug } = req.params;
+    const { pool } = await import('../../config/database.js');
+    const result = await pool.query(
+      'SELECT id, name, slug, plan, status FROM tenants WHERE slug = $1 AND status != $2',
+      [slug, 'DELETED'],
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'Organization not found' } });
+    }
+    const tenant = result.rows[0];
+    return res.json({ success: true, data: { id: tenant.id, name: tenant.name, slug: tenant.slug, plan: tenant.plan } });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
  * POST /login
  *
  * Authenticate a user with email and password.

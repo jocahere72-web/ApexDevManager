@@ -4,7 +4,6 @@ import { useConnection, useHealthHistory, useChangeLog, useDeleteConnection } fr
 import HealthBadge from './HealthBadge';
 import DeleteConnectionModal from './DeleteConnectionModal';
 import { testConnection } from '@/services/connections.api';
-import type { ConnectionPayload } from '@/services/connections.api';
 
 // ---------------------------------------------------------------------------
 // Tab type
@@ -33,23 +32,11 @@ export default function ConnectionDetail() {
   // -- Handlers --------------------------------------------------------------
 
   const handleTestNow = async () => {
-    if (!connection) return;
+    if (!connection || !id) return;
     setIsTesting(true);
     setTestResult(null);
     try {
-      const payload: ConnectionPayload = {
-        name: connection.name,
-        type: connection.type,
-        environment: connection.environment,
-        username: connection.username,
-        password: '', // server uses stored credentials for existing connections
-        tags: connection.tags,
-        ordsBaseUrl: connection.ordsBaseUrl,
-        host: connection.host,
-        port: connection.port,
-        serviceName: connection.serviceName,
-      };
-      const result = await testConnection(payload);
+      const result = await testConnection(id);
       setTestResult({ success: result.success, message: result.message });
     } catch (err) {
       setTestResult({ success: false, message: (err as Error).message });
@@ -196,13 +183,13 @@ export default function ConnectionDetail() {
             <span style={propLabelStyle}>Username</span>
             <span style={propValueStyle}>{connection.username}</span>
           </div>
-          {connection.type === 'ORDS' && (
+          {connection.type === 'ords' && (
             <div style={propRowStyle}>
               <span style={propLabelStyle}>ORDS Base URL</span>
               <span style={propValueStyle}>{connection.ordsBaseUrl}</span>
             </div>
           )}
-          {connection.type === 'JDBC' && (
+          {connection.type === 'jdbc' && (
             <>
               <div style={propRowStyle}>
                 <span style={propLabelStyle}>Host</span>

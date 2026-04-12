@@ -5,13 +5,25 @@ import { apiClient } from '@/lib/api-client';
 interface User {
   id: string;
   email: string;
-  name: string;
-  role: string;
+  displayName: string;
+  tenantId: string;
+  roles: string[];
+  isActive: boolean;
 }
 
 interface LoginCredentials {
   email: string;
   password: string;
+}
+
+interface LoginResponse {
+  success: boolean;
+  data: {
+    user: User;
+    accessToken: string;
+    refreshToken: string;
+    expiresIn: number;
+  };
 }
 
 interface UseAuthReturn {
@@ -24,21 +36,32 @@ interface UseAuthReturn {
 export function useAuth(): UseAuthReturn {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(() => {
-    const stored = localStorage.getItem('auth_user');
+    const stored = localStorage.getItem('apex_user');
     return stored ? (JSON.parse(stored) as User) : null;
   });
 
-  const isAuthenticated = user !== null && !!localStorage.getItem('auth_token');
+  const isAuthenticated = user !== null && !!localStorage.getItem('apex_token');
 
   const login = useCallback(
     async (credentials: LoginCredentials) => {
-      const response = await apiClient.post<{ token: string; user: User }>(
+      // Get tenant ID from slug first
+      const tenantId = localStorage.getItem('apex_tenant_id') || '';
+
+      const response = await apiClient.post<LoginResponse>(
         '/auth/login',
         credentials,
+        {
+          headers: {
+            'x-tenant-id': tenantId,
+          },
+        },
       );
-      const { token, user: loggedInUser } = response.data;
-      localStorage.setItem('auth_token', token);
-      localStorage.setItem('auth_user', JSON.stringify(loggedInUser));
+
+      const { accessToken, refreshToken, user: loggedInUser } = response.data.data;
+      localStorage.setItem('apex_token', accessToken);
+      localStorage.setItem('apex_refresh_token', refreshToken);
+      localStorage.setItem('apex_user', JSON.stringify(loggedInUser));
+      localStorage.setItem('apex_tenant_id', loggedInUser.tenantId);
       setUser(loggedInUser);
       navigate('/');
     },
@@ -46,8 +69,9 @@ export function useAuth(): UseAuthReturn {
   );
 
   const logout = useCallback(() => {
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('auth_user');
+    localStorage.removeItem('apex_token');
+    localStorage.removeItem('apex_refresh_token');
+    localStorage.removeItem('apex_user');
     setUser(null);
     navigate('/login');
   }, [navigate]);
