@@ -2,6 +2,94 @@
 
 ---
 
+## User Request — Install Playwright
+**Timestamp**: 2026-04-12T05:26:44Z
+**User Input**: "# Review findings:
+
+## Finding 1 (apps/web/src/layouts/MainLayout.tsx:81) [added]
+[P1] Layout principal no es responsive
+
+El shell renderiza un sidebar fijo de `15rem` con cerca de veinte módulos y un header horizontal, sin breakpoint, drawer, colapso ni agrupación. En pantallas medianas o pequeñas el contenido principal queda comprimido y la navegación se vuelve una lista larga difícil de usar.
+
+## Finding 2 (apps/web/src/features/ai-studio/index.tsx:19) [added]
+[P1] AI Studio usa paneles fijos
+
+La pantalla usa una composición fija de `280px + flex + 300px` sin reglas responsive. Es una experiencia central de trabajo, así que en anchos reducidos puede cortar contenido o dejar paneles inutilizables.
+
+## Finding 3 (apps/web/src/features/dashboards/components/OverviewDashboard.tsx:241) [added]
+[P1] Dashboard usa grid 1fr 1fr sin breakpoint
+
+Esta sección fuerza dos columnas con `gridTemplateColumns: '1fr 1fr'` y no define reorganización para pantallas estrechas. Con contenido real, tablas o nombres largos puede provocar compresión fuerte o scroll incómodo.
+
+## Finding 4 (apps/web/src/features/connections/components/ConnectionDetail.tsx:283) [added]
+[P2] Placeholder visual visible en detalle
+
+La UI muestra un placeholder literal de gráfica de latencia aunque ya muestra que hay data points disponibles. Esto hace que la pantalla parezca terminada pero entregue una experiencia incompleta.
+
+## Finding 5 (apps/api/src/modules/ai-studio/rate-limiter.ts:70-76) [added]
+[P1] Rate limiter aun usa pool.query directo
+
+Este rate limiter sigue leyendo `ai_token_usage` con `pool.query()` en vez de usar el cliente tenant-scoped del request. Si la tabla depende de RLS por `app.current_tenant`, esta consulta no participa del mismo contexto que el resto de la ruta autenticada.
+
+## My request for Codex:
+instala playwright"
+**AI Response**: "Installed `@playwright/test` in the web workspace, downloaded/verified the Chromium browser for Playwright, and confirmed Playwright version 1.59.1."
+**Context**: Tooling - Playwright installation for web UI validation.
+
+---
+
+## User Request — Graphical Interface Review
+**Timestamp**: 2026-04-12T05:21:25Z
+**User Input**: "# Review findings:
+
+## Finding 1 (apps/web/src/services/usage.api.ts:10) [added]
+[P1] Servicios duplican /api/v1
+
+`apiClient` ya define `baseURL: '/api/v1'`, pero este servicio vuelve a incluir `/api/v1` en el recurso. Axios termina armando rutas como `/api/v1/api/v1/usage`; el mismo patrón aparece en admin, marketplace, factory, dashboard, test-studio y knowledge.
+
+## Finding 2 (apps/web/src/services/connections.api.ts:107) [added]
+[P1] Connections no desempaqueta el envelope backend
+
+El backend devuelve `{ success, data, pagination }`, pero el cliente tipa y retorna directamente `PaginatedConnections`. La lista consume `data.data`, `data.totalPages` y `data.total`, así que queda desalineada con `pagination.totalItems` y puede romper el render o la paginación.
+
+## Finding 3 (apps/web/src/services/connections.api.ts:125) [added]
+[P1] Rutas de connections no coinciden
+
+El frontend usa `PUT /connections/:id`, pero el controller backend expone `PATCH /:id`. En el mismo service también se usa `POST /connections/test`, `health-history` y `changelog`, rutas que no coinciden con el controller revisado.
+
+## Finding 4 (apps/web/src/features/explorer/index.tsx:61) [added]
+[P1] Explorer sigue usando conexiones stub
+
+La pantalla selecciona conexiones hardcodeadas (`conn-1`, `conn-2`, `conn-3`) y luego usa esos ids para pedir aplicaciones. En un entorno real esos ids no corresponden a conexiones del tenant, así que Explorer puede quedar vacío o fallar aunque el backend funcione.
+
+## Finding 5 (apps/web/src/features/explorer/index.tsx:126) [added]
+[P1] Expansion de Explorer no carga hijos
+
+`handleExpandNode()` solo marca el nodo como loading; no usa los hooks importados para páginas/componentes ni inserta hijos en el árbol. La navegación del árbol queda como prototipo, no como flujo funcional.
+
+## My request for Codex:
+y la interfaz grafica"
+**AI Response**: "Reviewed the graphical UI construction at the layout and visual system level. Added findings to `revision.md` for the non-responsive main shell, fixed-width workspace layouts, and lack of a consistent design system."
+**Context**: Code Review - Graphical interface review and revision report update.
+
+---
+
+## User Request — Frontend Construction Review
+**Timestamp**: 2026-04-12T05:16:26Z
+**User Input**: "# Review findings:
+
+## Finding 1 (apps/api/src/modules/schema-inspector/schema.service.ts:100-112) [added]
+[P1] Schema Inspector no propaga req.dbClient en consultas Oracle
+
+El helper ya acepta `client`, pero `getSchema()` no lo recibe ni lo pasa a `executeSqlViaOrds()`. El mismo patrón queda en `getTable`, `getTableDDL`, `createSnapshot` y `generateERD`, y el controller tampoco pasa `req.dbClient` en varias rutas. La resolución de conexiones puede caer al fallback de `pool.query()` y no usar el contexto RLS del request.
+
+## My request for Codex:
+revisa la costruccion de los front porque hay muchas paginas mal"
+**AI Response**: "Reviewed frontend construction against the current API client and backend route contracts, identified broken service URL prefixes, connections contract mismatches, stubbed Explorer behavior, and pages still wired as manual UUID/prototype flows. Updated `revision.md` with the new frontend findings and best recommended fixes."
+**Context**: Code Review - Frontend construction review and revision report update.
+
+---
+
 ## User Request — Recheck Usage RLS Finding
 **Timestamp**: 2026-04-12T04:30:19Z
 **User Input**: "# Review findings:

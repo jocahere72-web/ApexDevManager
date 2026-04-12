@@ -128,7 +128,7 @@ export function useDeleteConnection() {
 }
 
 export function useTestConnection() {
-  return useMutation<TestConnectionResult, Error, ConnectionPayload>({
+  return useMutation<TestConnectionResult, Error, string>({
     mutationFn: testConnection,
   });
 }

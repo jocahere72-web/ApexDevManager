@@ -19,7 +19,7 @@ interface ClaudeConfig {
 
 function loadConfig(): ClaudeConfig {
   const apiKey = process.env.ANTHROPIC_API_KEY ?? '';
-  if (!apiKey && process.env.NODE_ENV !== 'test') {
+  if (!apiKey && process.env.NODE_ENV === 'production') {
     throw new Error('ANTHROPIC_API_KEY environment variable is required');
   }
   return {

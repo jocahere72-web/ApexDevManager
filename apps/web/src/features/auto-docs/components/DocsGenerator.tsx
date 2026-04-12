@@ -1,5 +1,6 @@
 import { useState, useEffect, type CSSProperties } from 'react';
 import type { GeneratedDoc, DocExportFormat, DocGenRequest } from '@apex-dev-manager/shared-types';
+import { apiClient } from '@/lib/api-client';
 import * as docsApi from '@/services/docs.api';
 
 // ---------------------------------------------------------------------------
@@ -174,6 +175,7 @@ export default function DocsGenerator() {
   const [docs, setDocs] = useState<GeneratedDoc[]>([]);
   const [selectedDoc, setSelectedDoc] = useState<GeneratedDoc | null>(null);
   const [loading, setLoading] = useState(false);
+  const [connections, setConnections] = useState<Array<{ id: string; name: string }>>([]);
 
   // Form state
   const [connectionId, setConnectionId] = useState('');
@@ -185,6 +187,7 @@ export default function DocsGenerator() {
 
   useEffect(() => {
     loadDocs();
+    apiClient.get('/connections').then(res => setConnections(res.data.data || [])).catch(() => {});
   }, []);
 
   async function loadDocs() {
@@ -264,13 +267,17 @@ export default function DocsGenerator() {
         <h2 style={styles.sidebarTitle}>Auto Docs</h2>
 
         <div style={styles.formGroup}>
-          <label style={styles.label}>Connection ID</label>
-          <input
-            style={styles.input}
+          <label style={styles.label}>Connection</label>
+          <select
+            style={styles.select}
             value={connectionId}
             onChange={(e) => setConnectionId(e.target.value)}
-            placeholder="Enter connection ID"
-          />
+          >
+            <option value="">Select a connection</option>
+            {connections.map((c) => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
         </div>
 
         <div style={styles.formGroup}>

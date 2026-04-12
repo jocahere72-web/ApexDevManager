@@ -229,8 +229,8 @@ export default function ConnectionList() {
                       <span
                         style={{
                           padding: '0.125rem 0.5rem',
-                          backgroundColor: conn.type === 'ORDS' ? '#eff6ff' : '#f5f3ff',
-                          color: conn.type === 'ORDS' ? '#1d4ed8' : '#6d28d9',
+                          backgroundColor: conn.type === 'ords' ? '#eff6ff' : '#f5f3ff',
+                          color: conn.type === 'ords' ? '#1d4ed8' : '#6d28d9',
                           borderRadius: '0.25rem',
                           fontSize: '0.75rem',
                           fontWeight: 600,
