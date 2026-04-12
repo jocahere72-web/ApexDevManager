@@ -24,7 +24,7 @@ factoryRouter.post(
         throw new ValidationError('spec with name, componentType, requirements, and connectionId is required');
       }
 
-      const job = await factoryService.generateFromSpec(spec, req.tenantId!, req.userId!);
+      const job = await factoryService.generateFromSpec(spec, req.tenantId!, req.userId!, req.dbClient);
       res.status(201).json({ success: true, data: job });
     } catch (err) {
       next(err);
@@ -46,7 +46,7 @@ factoryRouter.post(
         throw new ValidationError('specs array and connectionId are required');
       }
 
-      const jobs = await factoryService.generateBatch(specs, connectionId, req.tenantId!, req.userId!);
+      const jobs = await factoryService.generateBatch(specs, connectionId, req.tenantId!, req.userId!, req.dbClient);
       res.status(201).json({ success: true, data: jobs });
     } catch (err) {
       next(err);
@@ -63,7 +63,7 @@ factoryRouter.get(
   async (req: Request, res: Response<ApiResponse<FactoryTemplate[]>>, next: NextFunction) => {
     try {
       const componentType = req.query.componentType as string | undefined;
-      const templates = await factoryService.getTemplates(req.tenantId!, componentType as any);
+      const templates = await factoryService.getTemplates(req.tenantId!, componentType as any, req.dbClient);
       res.json({ success: true, data: templates });
     } catch (err) {
       next(err);
@@ -89,6 +89,7 @@ factoryRouter.post(
         { name, description, componentType, templateContent, variables, tags },
         req.tenantId!,
         req.userId!,
+        req.dbClient,
       );
 
       res.status(201).json({ success: true, data: template });
@@ -106,7 +107,7 @@ factoryRouter.delete(
   '/templates/:id',
   async (req: Request, res: Response<ApiResponse>, next: NextFunction) => {
     try {
-      await factoryService.deleteTemplate(req.params.id, req.tenantId!);
+      await factoryService.deleteTemplate(req.params.id, req.tenantId!, req.dbClient);
       res.json({ success: true, data: { message: 'Template deleted successfully' } });
     } catch (err) {
       next(err);
@@ -123,7 +124,7 @@ factoryRouter.get(
   async (req: Request, res: Response<ApiResponse<FactoryJob[]>>, next: NextFunction) => {
     try {
       const status = req.query.status as string | undefined;
-      const jobs = await factoryService.listJobs(req.tenantId!, status as any);
+      const jobs = await factoryService.listJobs(req.tenantId!, status as any, req.dbClient);
       res.json({ success: true, data: jobs });
     } catch (err) {
       next(err);
@@ -139,7 +140,7 @@ factoryRouter.get(
   '/jobs/:id',
   async (req: Request, res: Response<ApiResponse<FactoryJob>>, next: NextFunction) => {
     try {
-      const job = await factoryService.getJob(req.params.id, req.tenantId!);
+      const job = await factoryService.getJob(req.params.id, req.tenantId!, req.dbClient);
       res.json({ success: true, data: job });
     } catch (err) {
       next(err);

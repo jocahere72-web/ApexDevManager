@@ -32,7 +32,7 @@ tenantOnboardingRouter.post(
         throw new ValidationError('slug must contain only lowercase letters, numbers, and hyphens');
       }
 
-      const tenant = await tenantService.createTenant({ name, slug, adminEmail, plan, settings });
+      const tenant = await tenantService.createTenant({ name, slug, adminEmail, plan, settings }, req.dbClient);
       res.status(201).json({ success: true, data: tenant });
     } catch (err) {
       next(err);
@@ -48,7 +48,7 @@ tenantOnboardingRouter.get(
   '/tenants/:id/config',
   async (req: Request, res: Response<ApiResponse<TenantOnboarding>>, next: NextFunction) => {
     try {
-      const tenant = await tenantService.getTenantConfig(req.params.id);
+      const tenant = await tenantService.getTenantConfig(req.params.id, req.dbClient);
       res.json({ success: true, data: tenant });
     } catch (err) {
       next(err);
@@ -65,7 +65,7 @@ tenantOnboardingRouter.patch(
   async (req: Request, res: Response<ApiResponse<TenantOnboarding>>, next: NextFunction) => {
     try {
       const { name, plan, quota, settings } = req.body;
-      const tenant = await tenantService.updateTenantConfig(req.params.id, { name, plan, quota, settings });
+      const tenant = await tenantService.updateTenantConfig(req.params.id, { name, plan, quota, settings }, req.dbClient);
       res.json({ success: true, data: tenant });
     } catch (err) {
       next(err);
@@ -81,7 +81,7 @@ tenantOnboardingRouter.post(
   '/tenants/:id/suspend',
   async (req: Request, res: Response<ApiResponse<TenantOnboarding>>, next: NextFunction) => {
     try {
-      const tenant = await tenantService.suspendTenant(req.params.id);
+      const tenant = await tenantService.suspendTenant(req.params.id, req.dbClient);
       res.json({ success: true, data: tenant });
     } catch (err) {
       next(err);
@@ -97,7 +97,7 @@ tenantOnboardingRouter.delete(
   '/tenants/:id',
   async (req: Request, res: Response<ApiResponse>, next: NextFunction) => {
     try {
-      await tenantService.deleteTenant(req.params.id);
+      await tenantService.deleteTenant(req.params.id, req.dbClient);
       res.json({ success: true, data: { message: 'Tenant deleted successfully' } });
     } catch (err) {
       next(err);

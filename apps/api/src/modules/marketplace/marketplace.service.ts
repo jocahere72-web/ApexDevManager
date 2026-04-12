@@ -3,6 +3,8 @@
 // ---------------------------------------------------------------------------
 
 import { pool } from '../../config/database.js';
+import { tenantQuery } from '../../lib/tenant-db.js';
+import type { PoolClient } from 'pg';
 import { logger } from '../../lib/logger.js';
 import { NotFoundError, ValidationError } from '../../lib/errors.js';
 import type {
@@ -70,6 +72,7 @@ function rowToRating(row: Record<string, unknown>): ItemRating {
  */
 export async function listItems(
   params: MarketplaceSearchParams = {},
+  client?: PoolClient,
 ): Promise<{ items: MarketplaceItem[]; total: number }> {
   const conditions = ["status = 'published'"];
   const queryParams: unknown[] = [];
@@ -113,11 +116,11 @@ export async function listItems(
   const orderBy = sortMap[params.sortBy ?? 'newest'] ?? 'created_at DESC';
 
   const [dataResult, countResult] = await Promise.all([
-    pool.query(
+    tenantQuery(client,
       `SELECT * FROM marketplace_items WHERE ${where} ORDER BY ${orderBy} LIMIT $${paramIdx} OFFSET $${paramIdx + 1}`,
       [...queryParams, limit, offset],
     ),
-    pool.query(
+    tenantQuery(client,
       `SELECT COUNT(*)::int AS total FROM marketplace_items WHERE ${where}`,
       queryParams,
     ),
@@ -135,8 +138,9 @@ export async function listItems(
 export async function searchItems(
   query: string,
   params: Omit<MarketplaceSearchParams, 'query'> = {},
+  client?: PoolClient,
 ): Promise<{ items: MarketplaceItem[]; total: number }> {
-  return listItems({ ...params, query });
+  return listItems({ ...params, query }, client);
 }
 
 // ---------------------------------------------------------------------------
@@ -146,8 +150,8 @@ export async function searchItems(
 /**
  * Get a single marketplace item by ID.
  */
-export async function getItem(id: string): Promise<MarketplaceItem> {
-  const result = await pool.query(
+export async function getItem(id: string, client?: PoolClient): Promise<MarketplaceItem> {
+  const result = await tenantQuery(client,
     `SELECT * FROM marketplace_items WHERE id = $1`,
     [id],
   );
@@ -171,12 +175,13 @@ export async function publishItem(
   tenantId: string,
   userId: string,
   userName: string,
+  client?: PoolClient,
 ): Promise<MarketplaceItem> {
   logger.info({ name: request.name, category: request.category, tenantId }, 'Publishing marketplace item');
 
   const fileSize = Buffer.byteLength(request.content, 'utf8');
 
-  const result = await pool.query(
+  const result = await tenantQuery(client,
     `INSERT INTO marketplace_items
        (tenant_id, publisher_id, publisher_name, name, description, long_description, category, tags, version, status, price, content, screenshots, repository_url, documentation_url, compatible_versions, file_size)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending-review', $10, $11, $12, $13, $14, $15, $16)
@@ -215,8 +220,9 @@ export async function publishItem(
 export async function downloadItem(
   itemId: string,
   tenantId: string,
+  client?: PoolClient,
 ): Promise<MarketplaceDownload> {
-  const result = await pool.query(
+  const result = await tenantQuery(client,
     `SELECT * FROM marketplace_items WHERE id = $1 AND status = 'published'`,
     [itemId],
   );
@@ -226,7 +232,7 @@ export async function downloadItem(
   }
 
   // Increment download count
-  await pool.query(
+  await tenantQuery(client,
     `UPDATE marketplace_items SET download_count = download_count + 1 WHERE id = $1`,
     [itemId],
   );
@@ -253,13 +259,14 @@ export async function rateItem(
   request: RateItemRequest,
   userId: string,
   userName: string,
+  client?: PoolClient,
 ): Promise<ItemRating> {
   if (request.rating < 1 || request.rating > 5) {
     throw new ValidationError('Rating must be between 1 and 5');
   }
 
   // Check if user already rated
-  const existingResult = await pool.query(
+  const existingResult = await tenantQuery(client,
     `SELECT id FROM marketplace_ratings WHERE item_id = $1 AND user_id = $2`,
     [itemId, userId],
   );
@@ -267,7 +274,7 @@ export async function rateItem(
   let ratingResult;
   if (existingResult.rowCount && existingResult.rowCount > 0) {
     // Update existing rating
-    ratingResult = await pool.query(
+    ratingResult = await tenantQuery(client,
       `UPDATE marketplace_ratings SET rating = $1, review = $2, created_at = NOW()
        WHERE item_id = $3 AND user_id = $4
        RETURNING *`,
@@ -275,7 +282,7 @@ export async function rateItem(
     );
   } else {
     // Insert new rating
-    ratingResult = await pool.query(
+    ratingResult = await tenantQuery(client,
       `INSERT INTO marketplace_ratings (item_id, user_id, user_name, rating, review)
        VALUES ($1, $2, $3, $4, $5)
        RETURNING *`,
@@ -284,13 +291,13 @@ export async function rateItem(
   }
 
   // Update average rating on the item
-  const avgResult = await pool.query(
+  const avgResult = await tenantQuery(client,
     `SELECT AVG(rating)::numeric AS avg_rating, COUNT(*)::int AS count
      FROM marketplace_ratings WHERE item_id = $1`,
     [itemId],
   );
 
-  await pool.query(
+  await tenantQuery(client,
     `UPDATE marketplace_items SET average_rating = $1, rating_count = $2, updated_at = NOW()
      WHERE id = $3`,
     [parseFloat(avgResult.rows[0].avg_rating as string), avgResult.rows[0].count, itemId],
@@ -309,8 +316,9 @@ export async function rateItem(
 export async function getMyPublished(
   tenantId: string,
   userId: string,
+  client?: PoolClient,
 ): Promise<MarketplaceItem[]> {
-  const result = await pool.query(
+  const result = await tenantQuery(client,
     `SELECT * FROM marketplace_items WHERE tenant_id = $1 AND publisher_id = $2 ORDER BY created_at DESC`,
     [tenantId, userId],
   );
@@ -329,8 +337,9 @@ export async function installItem(
   itemId: string,
   tenantId: string,
   connectionId: string,
+  client?: PoolClient,
 ): Promise<MarketplaceInstall> {
-  const item = await getItem(itemId);
+  const item = await getItem(itemId, client);
 
   logger.info({ itemId, tenantId, connectionId }, 'Installing marketplace item');
 

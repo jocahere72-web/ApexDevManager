@@ -2,7 +2,7 @@
 
 Fecha: 2026-04-12
 
-Ultima actualizacion: 2026-04-12T04:08:25Z
+Ultima actualizacion: 2026-04-12T04:24:43Z
 
 Esta revision revalida los hallazgos reportados contra el estado actual del backend. No se ejecutaron tests ni typecheck porque `node` no esta disponible en el PATH de esta sesion.
 
@@ -18,75 +18,41 @@ Corregidos o mitigados en la revision actual:
 - `usage-intelligence` ya valida `granularity` y usa `GRANULARITY_MAP`.
 - La clave de pool MCP ya incluye `tenantId` y `connectionId`.
 - `@apex-dev-manager/shared-types` ya esta declarado en `apps/api/package.json` y `apps/web/package.json` como `workspace:^`.
+- Explorer ya no convierte siempre `workspaceName` a `WORKSPACE_ID`; ahora construye un filtro `{ id }` si el valor es numerico o `{ name }` si es texto, y los adaptadores MCP/ORDS aceptan ambos filtros.
+- El hallazgo de auditoria `audit_logs` ya no aplica para auth/users/connections: los tres servicios escriben en `audit_events`, que es la tabla definida por las migraciones.
+- Schema Inspector ya propaga `req.dbClient` en sus rutas Oracle y reenvia `client` desde `getSchema`, `getTable`, `getTableDDL`, `createSnapshot` y `generateERD` hacia la resolucion de conexiones.
 
-## 1. Repositorio de conexiones se llama sin `req.dbClient`
-
-Severidad: P1
-
-Archivos:
-
-- `apps/api/src/modules/connections/connections.repository.ts`
-- `apps/api/src/modules/explorer/explorer.service.ts`
-- `apps/api/src/modules/editor/editor.service.ts`
-- `apps/api/src/modules/schema-inspector/schema.service.ts`
-- `apps/api/src/modules/dependency-analyzer/dependency.service.ts`
-- `apps/api/src/modules/auto-docs/docs.service.ts`
-
-Problema:
-
-`getConnectionForTenant()` acepta un `PoolClient` opcional y usa `tenantQuery(client, ...)`, pero los consumidores MCP/Oracle lo llaman sin pasar el cliente tenant-scoped. Por ejemplo:
-
-```ts
-const conn = await getConnectionForTenant(tenantId, connectionId);
-```
-
-Esto hace que `tenantQuery()` caiga al fallback de `pool.query()`. Aunque el query filtra `tenant_id = $1`, no usa el mismo cliente donde `tenantResolver()` aplico `app.current_tenant`.
-
-Impacto:
-
-La migracion elimino columnas inexistentes, pero RLS sigue incompleto en la resolucion de conexiones para Explorer, Editor, Schema Inspector, Dependency Analyzer y Auto Docs. En una DB con RLS activo, esas rutas pueden comportarse distinto a users/connections/dashboard/usage, o fallar si la politica depende de `current_setting('app.current_tenant')`.
-
-Mejor solucion:
-
-- Cambiar `getConnectionDetails()` en esos servicios para aceptar `client?: PoolClient`.
-- Propagar `client` desde las funciones exportadas hasta `getConnectionForTenant(tenantId, connectionId, client)`.
-- Pasar `req.dbClient` desde los controladores que todavia no lo hacen, como Explorer, Dependency Analyzer y Auto Docs.
-- Considerar que `tenantQuery()` no haga fallback silencioso a `pool.query()` en modulos tenant-scoped.
-- Agregar tests que verifiquen que la resolucion de conexiones usa el client del request.
-
-## 2. Explorer convierte `workspaceName` a `WORKSPACE_ID`
+## 1. Rate limiter de AI Studio sigue usando `pool.query()` directo
 
 Severidad: P1
 
 Archivos:
 
-- `apps/api/src/modules/connections/connections.repository.ts`
-- `apps/api/src/modules/explorer/explorer.service.ts`
-- `apps/api/src/integrations/mcp/mcp-apex-adapter.ts`
-- `apps/api/src/integrations/mcp/ords-fallback.ts`
+- `apps/api/src/modules/ai-studio/rate-limiter.ts`
 
 Problema:
 
-El repositorio mapea `workspace_name` a `config.workspaceName`, pero Explorer calcula:
+La migracion de RLS/tenant client avanzo bastante: las busquedas anteriores ya no muestran `pool.query()` en los modulos grandes revisados. El residuo que queda en esa seleccion esta en `ai-studio/rate-limiter.ts`, donde `checkRateLimit()` y `getTenantMonthlyBudget()` consultan `ai_token_usage` y `tenants` con `pool.query()` directo.
 
-```ts
-return Number(conn.config.workspaceName ?? 0);
-```
+Ademas, los call sites actuales todavia no le pasan el client tenant-scoped:
 
-Luego pasa ese valor como `workspaceId` a consultas que filtran `WORKSPACE_ID`. Si `workspace_name` contiene un nombre real de workspace, `Number('MI_WORKSPACE')` produce `NaN`, y las consultas a `APEX_APPLICATIONS` no encontraran aplicaciones.
+- `ai.controller.ts` en quick action llama `checkRateLimit(req.tenantId!, req.userId!)`.
+- `ai.service.ts` en `chat()` llama `checkRateLimit(tenantId, userId)` aunque la funcion ya recibe `client?: PoolClient`.
+- `ai.service.ts` en `streamChat()` llama `checkRateLimit(tenantId, userId)` aunque la funcion ya recibe `client?: PoolClient`.
 
 Impacto:
 
-Explorer puede quedar vacio o fallar para conexiones validas, especialmente en el listado de aplicaciones y rutas que dependen de `listApplications()`.
+Si estas tablas dependen de politicas RLS basadas en `app.current_tenant`, el rate limiter no usa el cliente tenant-scoped del request. En la practica puede depender solo de filtros manuales por `tenant_id`, que no es consistente con el resto de la ruta autenticada.
 
 Mejor solucion:
 
-- Persistir o resolver un `workspace_id` numerico real, no derivarlo desde `workspace_name`.
-- Extender el modelo de conexiones con `workspace_id` si el producto necesita filtrar por ID.
-- Si solo se tiene nombre, cambiar las consultas de Explorer/ORDS/MCP para filtrar por `WORKSPACE = :workspace_name` o resolver primero el ID desde Oracle/APEX.
-- Validar el valor antes de consultar: si no hay ID numerico, responder 400/422 con un error de configuracion claro.
+- Cambiar `checkRateLimit(tenantId, userId, client?: PoolClient)`.
+- Usar `tenantQuery(client, ...)` para `ai_token_usage` y para leer el presupuesto del tenant.
+- Pasar `req.dbClient` desde el flujo de AI Studio que invoca el rate limiter.
+- Reenviar `client` desde `chat()` y `streamChat()` hacia `checkRateLimit()`.
+- Agregar test que confirme que el rate limiter usa el client tenant-scoped.
 
-## 3. Validacion ejecutable pendiente
+## 2. Validacion ejecutable pendiente
 
 Severidad: P2
 

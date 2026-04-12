@@ -3,6 +3,8 @@
 // ---------------------------------------------------------------------------
 
 import { pool } from '../../config/database.js';
+import { tenantQuery } from '../../lib/tenant-db.js';
+import type { PoolClient } from 'pg';
 import { logger } from '../../lib/logger.js';
 import { NotFoundError, ValidationError } from '../../lib/errors.js';
 import { claudeClient } from '../ai-studio/claude.client.js';
@@ -87,6 +89,7 @@ export async function generateTests(
   request: GenerateTestsRequest,
   tenantId: string,
   userId: string,
+  client?: PoolClient,
 ): Promise<TestCase[]> {
   logger.info({ request, tenantId }, 'Generating tests via AI');
 
@@ -138,7 +141,7 @@ Return ONLY the JSON array, no other text.`;
 
   // Create a suite if needed and insert test cases
   let suiteId: string;
-  const suiteResult = await pool.query(
+  const suiteResult = await tenantQuery(client,
     `INSERT INTO test_suites (tenant_id, connection_id, name, app_id, page_id, total_tests)
      VALUES ($1, $2, $3, $4, $5, $6)
      RETURNING id`,
@@ -155,7 +158,7 @@ Return ONLY the JSON array, no other text.`;
 
   const testCases: TestCase[] = [];
   for (const tc of generatedCases) {
-    const result = await pool.query(
+    const result = await tenantQuery(client,
       `INSERT INTO test_cases (suite_id, tenant_id, name, description, type, component_type, component_name, plsql_block, expected_result, status)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending')
        RETURNING *`,
@@ -188,6 +191,7 @@ Return ONLY the JSON array, no other text.`;
 export async function executeTest(
   request: ExecuteTestRequest,
   tenantId: string,
+  client?: PoolClient,
 ): Promise<TestResult[]> {
   logger.info({ request, tenantId }, 'Executing tests');
 
@@ -200,7 +204,7 @@ export async function executeTest(
     params.push(request.testCaseIds);
   }
 
-  const casesResult = await pool.query(
+  const casesResult = await tenantQuery(client,
     `SELECT * FROM test_cases tc WHERE ${caseConditions.join(' AND ')}`,
     params,
   );
@@ -210,7 +214,7 @@ export async function executeTest(
   }
 
   // Get connection details for ORDS execution
-  const connResult = await pool.query(
+  const connResult = await tenantQuery(client,
     `SELECT * FROM connections WHERE id = $1 AND tenant_id = $2`,
     [request.connectionId, tenantId],
   );
@@ -275,7 +279,7 @@ export async function executeTest(
     const executionTimeMs = Date.now() - startTime;
 
     // Save the result
-    const resultRow = await pool.query(
+    const resultRow = await tenantQuery(client,
       `INSERT INTO test_results (suite_id, test_case_id, tenant_id, status, execution_time_ms, actual_result, error_message, stack_trace, ords_response, executed_at)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
        RETURNING *`,
@@ -293,7 +297,7 @@ export async function executeTest(
     );
 
     // Update the test case status
-    await pool.query(
+    await tenantQuery(client,
       `UPDATE test_cases SET status = $1, actual_result = $2, error_message = $3, execution_time_ms = $4, updated_at = NOW()
        WHERE id = $5`,
       [status, actualResult ?? null, errorMessage ?? null, executionTimeMs, testCase.id],
@@ -303,7 +307,7 @@ export async function executeTest(
   }
 
   // Update suite stats
-  const statsResult = await pool.query(
+  const statsResult = await tenantQuery(client,
     `SELECT
        COUNT(*)::int AS total,
        COUNT(*) FILTER (WHERE status = 'passed')::int AS passed,
@@ -313,7 +317,7 @@ export async function executeTest(
   );
   const stats = statsResult.rows[0];
 
-  await pool.query(
+  await tenantQuery(client,
     `UPDATE test_suites
      SET total_tests = $1, passed_tests = $2, failed_tests = $3, last_run_at = NOW(), updated_at = NOW()
      WHERE id = $4`,
@@ -334,8 +338,9 @@ export async function executeTest(
 export async function getTestResults(
   suiteId: string,
   tenantId: string,
+  client?: PoolClient,
 ): Promise<TestResult[]> {
-  const result = await pool.query(
+  const result = await tenantQuery(client,
     `SELECT * FROM test_results WHERE suite_id = $1 AND tenant_id = $2 ORDER BY executed_at DESC`,
     [suiteId, tenantId],
   );
@@ -353,6 +358,7 @@ export async function getTestCoverage(
   connectionId: string,
   tenantId: string,
   appId?: number,
+  client?: PoolClient,
 ): Promise<TestCoverage> {
   // Get all components from the explorer data
   const componentQuery = appId
@@ -362,7 +368,7 @@ export async function getTestCoverage(
     ? [connectionId, tenantId, appId]
     : [connectionId, tenantId];
 
-  const componentsResult = await pool.query(componentQuery, componentParams);
+  const componentsResult = await tenantQuery(client,componentQuery, componentParams);
   const totalComponents = componentsResult.rowCount ?? 0;
 
   // Get tested components
@@ -374,7 +380,7 @@ export async function getTestCoverage(
        JOIN test_suites ts ON tc.suite_id = ts.id
        WHERE ts.connection_id = $1 AND ts.tenant_id = $2 AND tc.status = 'passed'`;
 
-  const testedResult = await pool.query(testedQuery, componentParams);
+  const testedResult = await tenantQuery(client,testedQuery, componentParams);
   const testedComponents = testedResult.rowCount ?? 0;
 
   // Build by-type breakdown
@@ -429,6 +435,7 @@ export async function getTestCoverage(
 export async function listTestSuites(
   tenantId: string,
   connectionId?: string,
+  client?: PoolClient,
 ): Promise<TestSuite[]> {
   const conditions = ['tenant_id = $1'];
   const params: unknown[] = [tenantId];
@@ -438,7 +445,7 @@ export async function listTestSuites(
     params.push(connectionId);
   }
 
-  const result = await pool.query(
+  const result = await tenantQuery(client,
     `SELECT * FROM test_suites WHERE ${conditions.join(' AND ')} ORDER BY updated_at DESC`,
     params,
   );
@@ -447,7 +454,7 @@ export async function listTestSuites(
 
   // Load test cases for each suite
   for (const suite of suites) {
-    const casesResult = await pool.query(
+    const casesResult = await tenantQuery(client,
       `SELECT * FROM test_cases WHERE suite_id = $1 ORDER BY created_at`,
       [suite.id],
     );
@@ -463,8 +470,9 @@ export async function listTestSuites(
 export async function createTestSuite(
   request: CreateTestSuiteRequest,
   tenantId: string,
+  client?: PoolClient,
 ): Promise<TestSuite> {
-  const result = await pool.query(
+  const result = await tenantQuery(client,
     `INSERT INTO test_suites (tenant_id, connection_id, name, description, app_id, page_id)
      VALUES ($1, $2, $3, $4, $5, $6)
      RETURNING *`,
@@ -487,8 +495,9 @@ export async function createTestSuite(
 export async function getTestSuite(
   id: string,
   tenantId: string,
+  client?: PoolClient,
 ): Promise<TestSuite> {
-  const result = await pool.query(
+  const result = await tenantQuery(client,
     `SELECT * FROM test_suites WHERE id = $1 AND tenant_id = $2`,
     [id, tenantId],
   );
@@ -499,7 +508,7 @@ export async function getTestSuite(
 
   const suite = rowToTestSuite(result.rows[0]);
 
-  const casesResult = await pool.query(
+  const casesResult = await tenantQuery(client,
     `SELECT * FROM test_cases WHERE suite_id = $1 ORDER BY created_at`,
     [id],
   );
@@ -514,8 +523,9 @@ export async function getTestSuite(
 export async function deleteTestSuite(
   id: string,
   tenantId: string,
+  client?: PoolClient,
 ): Promise<void> {
-  const result = await pool.query(
+  const result = await tenantQuery(client,
     `DELETE FROM test_suites WHERE id = $1 AND tenant_id = $2 RETURNING id`,
     [id, tenantId],
   );

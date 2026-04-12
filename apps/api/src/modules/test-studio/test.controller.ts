@@ -29,6 +29,7 @@ testStudioRouter.post(
         { connectionId, appId, pageId, componentType, componentName, componentSource, testTypes },
         req.tenantId!,
         req.userId!,
+        req.dbClient,
       );
 
       res.status(201).json({ success: true, data: testCases });
@@ -55,6 +56,7 @@ testStudioRouter.post(
       const results = await testService.executeTest(
         { suiteId, testCaseIds, connectionId },
         req.tenantId!,
+        req.dbClient,
       );
 
       res.json({ success: true, data: results });
@@ -72,7 +74,7 @@ testStudioRouter.get(
   '/results/:suiteId',
   async (req: Request, res: Response<ApiResponse<TestResult[]>>, next: NextFunction) => {
     try {
-      const results = await testService.getTestResults(req.params.suiteId, req.tenantId!);
+      const results = await testService.getTestResults(req.params.suiteId, req.tenantId!, req.dbClient);
       res.json({ success: true, data: results });
     } catch (err) {
       next(err);
@@ -94,7 +96,7 @@ testStudioRouter.get(
       }
 
       const appId = req.query.appId ? parseInt(req.query.appId as string, 10) : undefined;
-      const coverage = await testService.getTestCoverage(connectionId, req.tenantId!, appId);
+      const coverage = await testService.getTestCoverage(connectionId, req.tenantId!, appId, req.dbClient);
       res.json({ success: true, data: coverage });
     } catch (err) {
       next(err);
@@ -111,7 +113,7 @@ testStudioRouter.get(
   async (req: Request, res: Response<ApiResponse<TestSuite[]>>, next: NextFunction) => {
     try {
       const connectionId = req.query.connectionId as string | undefined;
-      const suites = await testService.listTestSuites(req.tenantId!, connectionId);
+      const suites = await testService.listTestSuites(req.tenantId!, connectionId, req.dbClient);
       res.json({ success: true, data: suites });
     } catch (err) {
       next(err);
@@ -136,6 +138,7 @@ testStudioRouter.post(
       const suite = await testService.createTestSuite(
         { connectionId, name, description, appId, pageId },
         req.tenantId!,
+        req.dbClient,
       );
 
       res.status(201).json({ success: true, data: suite });
@@ -153,7 +156,7 @@ testStudioRouter.get(
   '/suites/:id',
   async (req: Request, res: Response<ApiResponse<TestSuite>>, next: NextFunction) => {
     try {
-      const suite = await testService.getTestSuite(req.params.id, req.tenantId!);
+      const suite = await testService.getTestSuite(req.params.id, req.tenantId!, req.dbClient);
       res.json({ success: true, data: suite });
     } catch (err) {
       next(err);
@@ -169,7 +172,7 @@ testStudioRouter.delete(
   '/suites/:id',
   async (req: Request, res: Response<ApiResponse>, next: NextFunction) => {
     try {
-      await testService.deleteTestSuite(req.params.id, req.tenantId!);
+      await testService.deleteTestSuite(req.params.id, req.tenantId!, req.dbClient);
       res.json({ success: true, data: { message: 'Test suite deleted successfully' } });
     } catch (err) {
       next(err);

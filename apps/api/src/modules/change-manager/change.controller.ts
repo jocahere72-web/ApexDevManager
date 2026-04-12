@@ -17,6 +17,7 @@ changeManagerRouter.post(
         name,
         description ?? null,
         req.userId!,
+        req.dbClient,
       );
       res.status(201).json({ success: true, data: cs });
     } catch (err) {
@@ -37,6 +38,7 @@ changeManagerRouter.get(
         status as any,
         limit ? parseInt(limit as string, 10) : undefined,
         offset ? parseInt(offset as string, 10) : undefined,
+        req.dbClient,
       );
       res.json({ success: true, data: result });
     } catch (err) {
@@ -50,7 +52,7 @@ changeManagerRouter.get(
   '/:id',
   async (req: Request, res: Response<ApiResponse<ChangeSet>>, next: NextFunction) => {
     try {
-      const cs = await changeService.getChangeSet(req.tenantId!, req.params.id);
+      const cs = await changeService.getChangeSet(req.tenantId!, req.params.id, req.dbClient);
       res.json({ success: true, data: cs });
     } catch (err) {
       next(err);
@@ -63,7 +65,7 @@ changeManagerRouter.post(
   '/:id/objects',
   async (req: Request, res: Response<ApiResponse<ChangeSet>>, next: NextFunction) => {
     try {
-      const cs = await changeService.addObject(req.tenantId!, req.params.id, req.body);
+      const cs = await changeService.addObject(req.tenantId!, req.params.id, req.body, req.dbClient);
       res.json({ success: true, data: cs });
     } catch (err) {
       next(err);
@@ -80,6 +82,7 @@ changeManagerRouter.delete(
         req.tenantId!,
         req.params.id,
         parseInt(req.params.index, 10),
+        req.dbClient,
       );
       res.json({ success: true, data: cs });
     } catch (err) {
@@ -93,7 +96,7 @@ changeManagerRouter.post(
   '/:id/detect-conflicts',
   async (req: Request, res: Response<ApiResponse<ConflictDetail[]>>, next: NextFunction) => {
     try {
-      const conflicts = await changeService.detectConflicts(req.tenantId!, req.params.id);
+      const conflicts = await changeService.detectConflicts(req.tenantId!, req.params.id, req.dbClient);
       res.json({ success: true, data: conflicts });
     } catch (err) {
       next(err);
@@ -106,7 +109,7 @@ changeManagerRouter.post(
   '/:id/submit',
   async (req: Request, res: Response<ApiResponse<ChangeSet>>, next: NextFunction) => {
     try {
-      const cs = await changeService.submitForReview(req.tenantId!, req.params.id);
+      const cs = await changeService.submitForReview(req.tenantId!, req.params.id, req.dbClient);
       res.json({ success: true, data: cs });
     } catch (err) {
       next(err);
@@ -119,7 +122,7 @@ changeManagerRouter.post(
   '/:id/approve',
   async (req: Request, res: Response<ApiResponse<ChangeSet>>, next: NextFunction) => {
     try {
-      const cs = await changeService.approve(req.tenantId!, req.params.id, req.userId!);
+      const cs = await changeService.approve(req.tenantId!, req.params.id, req.userId!, req.dbClient);
       res.json({ success: true, data: cs });
     } catch (err) {
       next(err);
@@ -132,7 +135,7 @@ changeManagerRouter.post(
   '/:id/reject',
   async (req: Request, res: Response<ApiResponse<ChangeSet>>, next: NextFunction) => {
     try {
-      const cs = await changeService.reject(req.tenantId!, req.params.id);
+      const cs = await changeService.reject(req.tenantId!, req.params.id, req.dbClient);
       res.json({ success: true, data: cs });
     } catch (err) {
       next(err);
@@ -145,7 +148,7 @@ changeManagerRouter.post(
   '/:id/apply',
   async (req: Request, res: Response<ApiResponse<ChangeSet>>, next: NextFunction) => {
     try {
-      const cs = await changeService.applyChangeSet(req.tenantId!, req.params.id);
+      const cs = await changeService.applyChangeSet(req.tenantId!, req.params.id, req.dbClient);
       res.json({ success: true, data: cs });
     } catch (err) {
       next(err);

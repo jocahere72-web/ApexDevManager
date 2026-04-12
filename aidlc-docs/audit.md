@@ -2,6 +2,64 @@
 
 ---
 
+## User Request — Recheck Rate Limiter Finding
+**Timestamp**: 2026-04-12T04:24:43Z
+**User Input**: "# Review findings:
+
+## Finding 1 (apps/api/src/modules/ai-studio/rate-limiter.ts:70-76) [added]
+[P1] Rate limiter aun usa pool.query directo
+
+Este rate limiter sigue leyendo `ai_token_usage` con `pool.query()` en vez de usar el cliente tenant-scoped del request. Si la tabla depende de RLS por `app.current_tenant`, esta consulta no participa del mismo contexto que el resto de la ruta autenticada.
+
+## My request for Codex:
+revisa de nuevo "
+**AI Response**: "Revalide el rate limiter. El hallazgo sigue vigente: `rate-limiter.ts` usa `pool.query()` directo y los call sites en `ai.controller.ts`, `chat()` y `streamChat()` no pasan `req.dbClient`/`client`. Actualice `revision.md` con esos call sites."
+**Context**: Code Review - Rate limiter finding verification.
+
+---
+
+## User Request — Follow-up Review
+**Timestamp**: 2026-04-12T04:23:07Z
+**User Input**: "revisa de nuevo"
+**AI Response**: "Revalide auditoria, script de test, Schema Inspector y RLS residual. Auditoria y test script siguen resueltos; Schema Inspector ya propaga `req.dbClient`; el residuo encontrado en la seleccion revisada es `ai-studio/rate-limiter.ts`, que aun usa `pool.query()` directo. Actualice `revision.md` con ese estado."
+**Context**: Code Review - Follow-up verification and revision report update.
+
+---
+
+## User Request — Recheck Audit Finding
+**Timestamp**: 2026-04-12T04:18:35Z
+**User Input**: "# Review findings:
+
+## Finding 1 (apps/api/src/modules/auth/auth.service.ts:38) [added]
+[P1] Auditoría sigue escribiendo tabla inexistente
+
+Los servicios siguen insertando en `audit_logs`, mientras las migraciones definen `audit_events`. La corrección todavía no llegó a auth/users/connections y el audit trail funcional sigue perdiéndose.
+
+## Finding 2 (apps/api/package.json:11) [added]
+[P1] Tests API siguen sin ejecutarse
+
+El script de test sigue buscando `src/**/*.test.ts`, mientras los tests reales están en `apps/api/test`. La suite backend todavía puede dar una señal falsa.
+
+## Finding 3 (apps/api/src/modules/schema-inspector/schema.service.ts:100-112) [added]
+[P1] Schema Inspector no propaga req.dbClient en consultas Oracle
+
+El helper ya acepta `client`, pero `getSchema()` no lo recibe ni lo pasa a `executeSqlViaOrds()`. El mismo patrón queda en `getTable`, `getTableDDL`, `createSnapshot` y `generateERD`, y el controller tampoco pasa `req.dbClient` en varias rutas. La resolución de conexiones puede caer al fallback de `pool.query()` y no usar el contexto RLS del request.
+
+## My request for Codex:
+revisa de nuevo el 1"
+**AI Response**: "Revalide solo el Finding 1. `auth.service.ts`, `users.service.ts` y `connections.service.ts` insertan en `audit_events`, y las migraciones definen `audit_events`; no hay coincidencias de `audit_logs` en esos modulos. Actualice `revision.md` para marcar ese hallazgo como no aplicable/resuelto."
+**Context**: Code Review - Audit table finding verification.
+
+---
+
+## User Request — Follow-up Review
+**Timestamp**: 2026-04-12T04:11:32Z
+**User Input**: "revisa de nuevo"
+**AI Response**: "Revalide los hallazgos abiertos. Explorer ya corrige el filtro de workspace usando id o name, y varios consumidores ya pasan `client` a `getConnectionForTenant`. Actualice `revision.md` para dejar abiertos los riesgos actuales: Schema Inspector aun no propaga `req.dbClient` en rutas Oracle, y RLS sigue inconsistente en otros modulos tenant-scoped con `pool.query()` directo."
+**Context**: Code Review - Follow-up verification and revision report update.
+
+---
+
 ## User Request — Follow-up Findings Review
 **Timestamp**: 2026-04-12T04:08:25Z
 **User Input**: "# Review findings:

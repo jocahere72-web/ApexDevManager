@@ -43,7 +43,7 @@ aiRouter.post(
       });
 
       // Stream response
-      const stream = aiService.streamChat(parsed.data, req.userId!, req.tenantId!);
+      const stream = aiService.streamChat(parsed.data, req.userId!, req.tenantId!, req.dbClient);
 
       for await (const event of stream) {
         res.write(`data: ${JSON.stringify(event)}\n\n`);
@@ -142,6 +142,7 @@ aiRouter.get(
         page,
         limit,
         connectionId,
+        req.dbClient,
       );
       const totalPages = Math.ceil(total / limit);
 
@@ -171,7 +172,7 @@ aiRouter.get(
   '/conversations/:id',
   async (req: Request, res: Response<ApiResponse<Conversation>>, next: NextFunction) => {
     try {
-      const conversation = await aiService.getConversation(req.params.id, req.tenantId!);
+      const conversation = await aiService.getConversation(req.params.id, req.tenantId!, req.dbClient);
 
       res.json({ success: true, data: conversation });
     } catch (err) {
@@ -188,7 +189,7 @@ aiRouter.delete(
   '/conversations/:id',
   async (req: Request, res: Response<ApiResponse>, next: NextFunction) => {
     try {
-      await aiService.deleteConversation(req.params.id, req.tenantId!, req.userId!);
+      await aiService.deleteConversation(req.params.id, req.tenantId!, req.userId!, req.dbClient);
 
       res.json({ success: true, data: { message: 'Conversation deleted successfully' } });
     } catch (err) {
@@ -207,7 +208,7 @@ aiRouter.get(
   async (req: Request, res: Response<ApiResponse<TokenUsageSummary>>, next: NextFunction) => {
     try {
       const period = (req.query.period as 'day' | 'week' | 'month') ?? 'month';
-      const usage = await aiService.getUsageSummary(req.tenantId!, period);
+      const usage = await aiService.getUsageSummary(req.tenantId!, period, req.dbClient);
 
       res.json({ success: true, data: usage });
     } catch (err) {

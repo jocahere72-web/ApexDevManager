@@ -33,7 +33,7 @@ marketplaceRouter.get(
 
       const { items, total } = await marketplaceService.listItems({
         query, category: category as any, minRating, maxPrice, sortBy: sortBy as any, page, limit,
-      });
+      }, req.dbClient);
 
       const totalPages = Math.ceil(total / limit);
 
@@ -63,7 +63,7 @@ marketplaceRouter.get(
   '/items/:id',
   async (req: Request, res: Response<ApiResponse<MarketplaceItem>>, next: NextFunction) => {
     try {
-      const item = await marketplaceService.getItem(req.params.id);
+      const item = await marketplaceService.getItem(req.params.id, req.dbClient);
       res.json({ success: true, data: item });
     } catch (err) {
       next(err);
@@ -90,6 +90,7 @@ marketplaceRouter.post(
         req.tenantId!,
         req.userId!,
         (req as any).userName ?? 'Unknown',
+        req.dbClient,
       );
 
       res.status(201).json({ success: true, data: item });
@@ -107,7 +108,7 @@ marketplaceRouter.post(
   '/items/:id/download',
   async (req: Request, res: Response<ApiResponse<MarketplaceDownload>>, next: NextFunction) => {
     try {
-      const download = await marketplaceService.downloadItem(req.params.id, req.tenantId!);
+      const download = await marketplaceService.downloadItem(req.params.id, req.tenantId!, req.dbClient);
       res.json({ success: true, data: download });
     } catch (err) {
       next(err);
@@ -134,6 +135,7 @@ marketplaceRouter.post(
         { rating, review },
         req.userId!,
         (req as any).userName ?? 'Unknown',
+        req.dbClient,
       );
 
       res.json({ success: true, data: result });
@@ -151,7 +153,7 @@ marketplaceRouter.get(
   '/my-items',
   async (req: Request, res: Response<ApiResponse<MarketplaceItem[]>>, next: NextFunction) => {
     try {
-      const items = await marketplaceService.getMyPublished(req.tenantId!, req.userId!);
+      const items = await marketplaceService.getMyPublished(req.tenantId!, req.userId!, req.dbClient);
       res.json({ success: true, data: items });
     } catch (err) {
       next(err);
@@ -173,7 +175,7 @@ marketplaceRouter.post(
         throw new ValidationError('connectionId is required');
       }
 
-      const result = await marketplaceService.installItem(req.params.id, req.tenantId!, connectionId);
+      const result = await marketplaceService.installItem(req.params.id, req.tenantId!, connectionId, req.dbClient);
       res.json({ success: true, data: result });
     } catch (err) {
       next(err);

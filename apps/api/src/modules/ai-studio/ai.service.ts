@@ -1,4 +1,6 @@
 import { pool, getClient } from '../../config/database.js';
+import { tenantQuery } from '../../lib/tenant-db.js';
+import type { PoolClient } from 'pg';
 import { logger } from '../../lib/logger.js';
 import { NotFoundError, ValidationError } from '../../lib/errors.js';
 import { claudeClient } from './claude.client.js';
@@ -76,6 +78,7 @@ export async function chat(
   request: ChatRequestInput,
   userId: string,
   tenantId: string,
+  client?: PoolClient,
 ): Promise<{ conversation: Conversation; message: ConversationMessage }> {
   // Rate limit check
   await checkRateLimit(tenantId, userId);
@@ -97,16 +100,16 @@ export async function chat(
   const systemPrompt = buildSystemPrompt(context);
 
   // Get or create conversation
-  const client = await getClient();
+  const txClient = await getClient();
   try {
-    await client.query('BEGIN');
+    await txClient.query('BEGIN');
 
     let conversationId = request.conversationId;
     let existingMessages: ChatMessage[] = [];
 
     if (conversationId) {
       // Load existing messages for context
-      const msgResult = await client.query(
+      const msgResult = await txClient.query(
         `SELECT role, content FROM ai_messages
          WHERE conversation_id = $1 AND tenant_id = $2
          ORDER BY created_at ASC`,
@@ -123,7 +126,7 @@ export async function chat(
           ? sanitized.sanitized.substring(0, 97) + '...'
           : sanitized.sanitized;
 
-      const convResult = await client.query(
+      const convResult = await txClient.query(
         `INSERT INTO ai_conversations (tenant_id, user_id, connection_id, app_id, page_id, title)
          VALUES ($1, $2, $3, $4, $5, $6)
          RETURNING *`,
@@ -139,7 +142,7 @@ export async function chat(
     ];
 
     // Save user message
-    await client.query(
+    await txClient.query(
       `INSERT INTO ai_messages (conversation_id, tenant_id, role, content)
        VALUES ($1, $2, 'user', $3)`,
       [conversationId, tenantId, sanitized.sanitized],
@@ -155,7 +158,7 @@ export async function chat(
     const sanitizedOutput = sanitizeOutput(response.content);
 
     // Save assistant message
-    const msgResult = await client.query(
+    const msgResult = await txClient.query(
       `INSERT INTO ai_messages (conversation_id, tenant_id, role, content, tokens_input, tokens_output, model)
        VALUES ($1, $2, 'assistant', $3, $4, $5, $6)
        RETURNING *`,
@@ -166,14 +169,14 @@ export async function chat(
     const totalTokens = response.inputTokens + response.outputTokens;
     const cost = estimateCost(response.model, response.inputTokens, response.outputTokens);
 
-    await client.query(
+    await txClient.query(
       `INSERT INTO ai_token_usage (tenant_id, user_id, conversation_id, message_id, model, input_tokens, output_tokens, total_tokens, estimated_cost_usd)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
       [tenantId, userId, conversationId, msgResult.rows[0].id, response.model, response.inputTokens, response.outputTokens, totalTokens, cost],
     );
 
     // Update conversation counters
-    await client.query(
+    await txClient.query(
       `UPDATE ai_conversations
        SET message_count = message_count + 2,
            total_tokens = total_tokens + $1,
@@ -182,10 +185,10 @@ export async function chat(
       [totalTokens, conversationId],
     );
 
-    await client.query('COMMIT');
+    await txClient.query('COMMIT');
 
     // Fetch updated conversation
-    const convResult = await pool.query(
+    const convResult = await tenantQuery(client,
       `SELECT * FROM ai_conversations WHERE id = $1`,
       [conversationId],
     );
@@ -195,10 +198,10 @@ export async function chat(
       message: rowToMessage(msgResult.rows[0]),
     };
   } catch (err) {
-    await client.query('ROLLBACK');
+    await txClient.query('ROLLBACK');
     throw err;
   } finally {
-    client.release();
+    txClient.release();
   }
 }
 
@@ -213,6 +216,7 @@ export async function* streamChat(
   request: ChatRequestInput,
   userId: string,
   tenantId: string,
+  client?: PoolClient,
 ): AsyncGenerator<AIStreamEvent> {
   // Rate limit check
   await checkRateLimit(tenantId, userId);
@@ -240,7 +244,7 @@ export async function* streamChat(
   let existingMessages: ChatMessage[] = [];
 
   if (conversationId) {
-    const msgResult = await pool.query(
+    const msgResult = await tenantQuery(client,
       `SELECT role, content FROM ai_messages
        WHERE conversation_id = $1 AND tenant_id = $2
        ORDER BY created_at ASC`,
@@ -256,7 +260,7 @@ export async function* streamChat(
         ? sanitized.sanitized.substring(0, 97) + '...'
         : sanitized.sanitized;
 
-    const convResult = await pool.query(
+    const convResult = await tenantQuery(client,
       `INSERT INTO ai_conversations (tenant_id, user_id, connection_id, app_id, page_id, title)
        VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING *`,
@@ -266,7 +270,7 @@ export async function* streamChat(
   }
 
   // Save user message
-  await pool.query(
+  await tenantQuery(client,
     `INSERT INTO ai_messages (conversation_id, tenant_id, role, content)
      VALUES ($1, $2, 'user', $3)`,
     [conversationId, tenantId, sanitized.sanitized],
@@ -307,7 +311,7 @@ export async function* streamChat(
     sanitizeOutput(fullContent);
 
     // Save assistant message
-    const msgResult = await pool.query(
+    const msgResult = await tenantQuery(client,
       `INSERT INTO ai_messages (conversation_id, tenant_id, role, content, tokens_input, tokens_output, model)
        VALUES ($1, $2, 'assistant', $3, $4, $5, $6)
        RETURNING id`,
@@ -319,14 +323,14 @@ export async function* streamChat(
     const totalTokens = inputTokens + outputTokens;
     const cost = estimateCost(model, inputTokens, outputTokens);
 
-    await pool.query(
+    await tenantQuery(client,
       `INSERT INTO ai_token_usage (tenant_id, user_id, conversation_id, message_id, model, input_tokens, output_tokens, total_tokens, estimated_cost_usd)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
       [tenantId, userId, conversationId, messageId, model, inputTokens, outputTokens, totalTokens, cost],
     );
 
     // Update conversation counters
-    await pool.query(
+    await tenantQuery(client,
       `UPDATE ai_conversations
        SET message_count = message_count + 2,
            total_tokens = total_tokens + $1,
@@ -360,6 +364,7 @@ export async function getConversations(
   page = 1,
   limit = 20,
   connectionId?: string,
+  client?: PoolClient,
 ): Promise<{ conversations: Conversation[]; total: number }> {
   const conditions = ['tenant_id = $1', 'user_id = $2'];
   const params: unknown[] = [tenantId, userId];
@@ -375,14 +380,14 @@ export async function getConversations(
   const offset = (page - 1) * limit;
 
   const [dataResult, countResult] = await Promise.all([
-    pool.query(
+    tenantQuery(client,
       `SELECT * FROM ai_conversations
        WHERE ${where}
        ORDER BY updated_at DESC
        LIMIT $${paramIdx} OFFSET $${paramIdx + 1}`,
       [...params, limit, offset],
     ),
-    pool.query(
+    tenantQuery(client,
       `SELECT COUNT(*)::int AS total FROM ai_conversations WHERE ${where}`,
       params,
     ),
@@ -400,8 +405,9 @@ export async function getConversations(
 export async function getConversation(
   id: string,
   tenantId: string,
+  client?: PoolClient,
 ): Promise<Conversation> {
-  const convResult = await pool.query(
+  const convResult = await tenantQuery(client,
     `SELECT * FROM ai_conversations WHERE id = $1 AND tenant_id = $2`,
     [id, tenantId],
   );
@@ -412,7 +418,7 @@ export async function getConversation(
 
   const conversation = rowToConversation(convResult.rows[0]);
 
-  const msgResult = await pool.query(
+  const msgResult = await tenantQuery(client,
     `SELECT * FROM ai_messages
      WHERE conversation_id = $1 AND tenant_id = $2
      ORDER BY created_at ASC`,
@@ -431,8 +437,9 @@ export async function deleteConversation(
   id: string,
   tenantId: string,
   userId: string,
+  client?: PoolClient,
 ): Promise<void> {
-  const result = await pool.query(
+  const result = await tenantQuery(client,
     `DELETE FROM ai_conversations
      WHERE id = $1 AND tenant_id = $2 AND user_id = $3
      RETURNING id`,
@@ -456,6 +463,7 @@ export async function deleteConversation(
 export async function getUsageSummary(
   tenantId: string,
   period: 'day' | 'week' | 'month' = 'month',
+  client?: PoolClient,
 ): Promise<TokenUsageSummary> {
   const periodMap = {
     day: "date_trunc('day', NOW())",
@@ -465,7 +473,7 @@ export async function getUsageSummary(
   const since = periodMap[period];
 
   // Totals
-  const totalsResult = await pool.query(
+  const totalsResult = await tenantQuery(client,
     `SELECT
        COALESCE(SUM(input_tokens), 0)::int AS total_input,
        COALESCE(SUM(output_tokens), 0)::int AS total_output,
@@ -479,7 +487,7 @@ export async function getUsageSummary(
   const totals = totalsResult.rows[0];
 
   // By model
-  const byModelResult = await pool.query(
+  const byModelResult = await tenantQuery(client,
     `SELECT
        model,
        COALESCE(SUM(input_tokens), 0)::int AS input_tokens,
@@ -505,7 +513,7 @@ export async function getUsageSummary(
   }
 
   // By user
-  const byUserResult = await pool.query(
+  const byUserResult = await tenantQuery(client,
     `SELECT
        user_id,
        COALESCE(SUM(input_tokens), 0)::int AS input_tokens,
@@ -527,7 +535,7 @@ export async function getUsageSummary(
   }
 
   // Daily breakdown
-  const dailyResult = await pool.query(
+  const dailyResult = await tenantQuery(client,
     `SELECT
        DATE(created_at) AS date,
        COALESCE(SUM(total_tokens), 0)::int AS total_tokens,

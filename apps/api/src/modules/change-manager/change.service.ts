@@ -1,4 +1,6 @@
 import { pool } from '../../config/database.js';
+import { tenantQuery } from '../../lib/tenant-db.js';
+import type { PoolClient } from 'pg';
 import { logger } from '../../lib/logger.js';
 import { NotFoundError, AppError } from '../../lib/errors.js';
 import type {
@@ -52,8 +54,9 @@ export async function createChangeSet(
   name: string,
   description: string | null,
   createdBy: string,
+  client?: PoolClient,
 ): Promise<ChangeSet> {
-  const result = await pool.query<ChangeSetRow>(
+  const result = await tenantQuery(client,
     `INSERT INTO change_sets (tenant_id, connection_id, name, description, created_by)
      VALUES ($1, $2, $3, $4, $5)
      RETURNING *`,
@@ -66,8 +69,9 @@ export async function createChangeSet(
 export async function getChangeSet(
   tenantId: string,
   changeSetId: string,
+  client?: PoolClient,
 ): Promise<ChangeSet> {
-  const result = await pool.query<ChangeSetRow>(
+  const result = await tenantQuery(client,
     `SELECT * FROM change_sets WHERE tenant_id = $1 AND id = $2`,
     [tenantId, changeSetId],
   );
@@ -83,6 +87,7 @@ export async function listChangeSets(
   status?: ChangeSetStatus,
   limit = 50,
   offset = 0,
+  client?: PoolClient,
 ): Promise<{ items: ChangeSet[]; total: number }> {
   const conditions = ['tenant_id = $1'];
   const params: unknown[] = [tenantId];
@@ -99,12 +104,12 @@ export async function listChangeSets(
 
   const where = conditions.join(' AND ');
 
-  const countResult = await pool.query<{ count: string }>(
+  const countResult = await tenantQuery(client,
     `SELECT COUNT(*) as count FROM change_sets WHERE ${where}`,
     params,
   );
 
-  const result = await pool.query<ChangeSetRow>(
+  const result = await tenantQuery(client,
     `SELECT * FROM change_sets WHERE ${where} ORDER BY created_at DESC LIMIT $${idx++} OFFSET $${idx++}`,
     [...params, limit, offset],
   );
@@ -119,14 +124,15 @@ export async function addObject(
   tenantId: string,
   changeSetId: string,
   object: ChangeSetObject,
+  client?: PoolClient,
 ): Promise<ChangeSet> {
-  const cs = await getChangeSet(tenantId, changeSetId);
+  const cs = await getChangeSet(tenantId, changeSetId, client);
   if (cs.status !== 'draft') {
     throw new AppError('Cannot modify a non-draft change set', 400, 'BAD_REQUEST');
   }
 
   const updatedObjects = [...cs.objects, object];
-  const result = await pool.query<ChangeSetRow>(
+  const result = await tenantQuery(client,
     `UPDATE change_sets SET objects = $3::jsonb, updated_at = NOW()
      WHERE tenant_id = $1 AND id = $2
      RETURNING *`,
@@ -139,14 +145,15 @@ export async function removeObject(
   tenantId: string,
   changeSetId: string,
   objectIndex: number,
+  client?: PoolClient,
 ): Promise<ChangeSet> {
-  const cs = await getChangeSet(tenantId, changeSetId);
+  const cs = await getChangeSet(tenantId, changeSetId, client);
   if (cs.status !== 'draft') {
     throw new AppError('Cannot modify a non-draft change set', 400, 'BAD_REQUEST');
   }
 
   const updatedObjects = cs.objects.filter((_, i) => i !== objectIndex);
-  const result = await pool.query<ChangeSetRow>(
+  const result = await tenantQuery(client,
     `UPDATE change_sets SET objects = $3::jsonb, updated_at = NOW()
      WHERE tenant_id = $1 AND id = $2
      RETURNING *`,
@@ -158,8 +165,9 @@ export async function removeObject(
 export async function detectConflicts(
   tenantId: string,
   changeSetId: string,
+  client?: PoolClient,
 ): Promise<ConflictDetail[]> {
-  const cs = await getChangeSet(tenantId, changeSetId);
+  const cs = await getChangeSet(tenantId, changeSetId, client);
   const conflicts: ConflictDetail[] = [];
 
   // Compare each object's DDL against the live schema via ORDS/MCP
@@ -182,7 +190,7 @@ export async function detectConflicts(
   }
 
   // Update conflict count
-  await pool.query(
+  await tenantQuery(client,
     `UPDATE change_sets SET conflict_count = $3, updated_at = NOW()
      WHERE tenant_id = $1 AND id = $2`,
     [tenantId, changeSetId, conflicts.length],
@@ -194,8 +202,9 @@ export async function detectConflicts(
 export async function submitForReview(
   tenantId: string,
   changeSetId: string,
+  client?: PoolClient,
 ): Promise<ChangeSet> {
-  const cs = await getChangeSet(tenantId, changeSetId);
+  const cs = await getChangeSet(tenantId, changeSetId, client);
   if (cs.status !== 'draft') {
     throw new AppError('Only draft change sets can be submitted for review', 400, 'BAD_REQUEST');
   }
@@ -203,7 +212,7 @@ export async function submitForReview(
     throw new AppError('Cannot submit an empty change set', 400, 'BAD_REQUEST');
   }
 
-  const result = await pool.query<ChangeSetRow>(
+  const result = await tenantQuery(client,
     `UPDATE change_sets SET status = 'review', updated_at = NOW()
      WHERE tenant_id = $1 AND id = $2
      RETURNING *`,
@@ -217,13 +226,14 @@ export async function approve(
   tenantId: string,
   changeSetId: string,
   approvedBy: string,
+  client?: PoolClient,
 ): Promise<ChangeSet> {
-  const cs = await getChangeSet(tenantId, changeSetId);
+  const cs = await getChangeSet(tenantId, changeSetId, client);
   if (cs.status !== 'review') {
     throw new AppError('Only change sets in review can be approved', 400, 'BAD_REQUEST');
   }
 
-  const result = await pool.query<ChangeSetRow>(
+  const result = await tenantQuery(client,
     `UPDATE change_sets SET status = 'approved', approved_by = $3, updated_at = NOW()
      WHERE tenant_id = $1 AND id = $2
      RETURNING *`,
@@ -236,13 +246,14 @@ export async function approve(
 export async function reject(
   tenantId: string,
   changeSetId: string,
+  client?: PoolClient,
 ): Promise<ChangeSet> {
-  const cs = await getChangeSet(tenantId, changeSetId);
+  const cs = await getChangeSet(tenantId, changeSetId, client);
   if (cs.status !== 'review') {
     throw new AppError('Only change sets in review can be rejected', 400, 'BAD_REQUEST');
   }
 
-  const result = await pool.query<ChangeSetRow>(
+  const result = await tenantQuery(client,
     `UPDATE change_sets SET status = 'rejected', updated_at = NOW()
      WHERE tenant_id = $1 AND id = $2
      RETURNING *`,
@@ -255,8 +266,9 @@ export async function reject(
 export async function applyChangeSet(
   tenantId: string,
   changeSetId: string,
+  client?: PoolClient,
 ): Promise<ChangeSet> {
-  const cs = await getChangeSet(tenantId, changeSetId);
+  const cs = await getChangeSet(tenantId, changeSetId, client);
   if (cs.status !== 'approved') {
     throw new AppError('Only approved change sets can be applied', 400, 'BAD_REQUEST');
   }
@@ -271,7 +283,7 @@ export async function applyChangeSet(
     // TODO: Execute obj.ddl via MCP client against the target connection
   }
 
-  const result = await pool.query<ChangeSetRow>(
+  const result = await tenantQuery(client,
     `UPDATE change_sets SET status = 'applied', applied_at = NOW(), updated_at = NOW()
      WHERE tenant_id = $1 AND id = $2
      RETURNING *`,

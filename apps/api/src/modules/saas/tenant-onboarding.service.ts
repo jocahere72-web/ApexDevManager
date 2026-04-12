@@ -3,6 +3,8 @@
 // ---------------------------------------------------------------------------
 
 import { pool, getClient } from '../../config/database.js';
+import { tenantQuery } from '../../lib/tenant-db.js';
+import type { PoolClient } from 'pg';
 import { logger } from '../../lib/logger.js';
 import { NotFoundError, ValidationError } from '../../lib/errors.js';
 import type {
@@ -109,11 +111,12 @@ function rowToTenant(row: Record<string, unknown>): TenantOnboarding {
  */
 export async function createTenant(
   request: CreateTenantRequest,
+  client?: PoolClient,
 ): Promise<TenantOnboarding> {
   logger.info({ name: request.name, slug: request.slug, plan: request.plan }, 'Creating new tenant');
 
   // Validate slug uniqueness
-  const existingResult = await pool.query(
+  const existingResult = await tenantQuery(client,
     `SELECT id FROM tenants WHERE slug = $1`,
     [request.slug],
   );
@@ -122,9 +125,9 @@ export async function createTenant(
     throw new ValidationError('Tenant slug already exists');
   }
 
-  const client = await getClient();
+  const txClient = await getClient();
   try {
-    await client.query('BEGIN');
+    await txClient.query('BEGIN');
 
     // Create tenant record
     const planQuota = PLAN_QUOTAS[request.plan] ?? PLAN_QUOTAS.free;
@@ -140,7 +143,7 @@ export async function createTenant(
       ...(request.settings ?? {}),
     } as any as TenantSettings;
 
-    const tenantResult = await client.query(
+    const tenantResult = await txClient.query(
       `INSERT INTO tenants (name, slug, status, admin_email, plan, quota, settings)
        VALUES ($1, $2, 'provisioning', $3, $4, $5, $6)
        RETURNING *`,
@@ -157,10 +160,10 @@ export async function createTenant(
     const tenantId = tenantResult.rows[0].id as string;
 
     // Create the tenant schema (namespace isolation)
-    await client.query(`CREATE SCHEMA IF NOT EXISTS tenant_${request.slug.replace(/-/g, '_')}`);
+    await txClient.query(`CREATE SCHEMA IF NOT EXISTS tenant_${request.slug.replace(/-/g, '_')}`);
 
     // Create admin user
-    const userResult = await client.query(
+    const userResult = await txClient.query(
       `INSERT INTO users (tenant_id, email, display_name, role, status)
        VALUES ($1, $2, $3, 'admin', 'active')
        RETURNING id`,
@@ -170,25 +173,25 @@ export async function createTenant(
     const adminUserId = userResult.rows[0].id as string;
 
     // Update tenant with admin user and mark as active
-    await client.query(
+    await txClient.query(
       `UPDATE tenants
        SET admin_user_id = $1, status = 'active', provisioned_at = NOW(), updated_at = NOW()
        WHERE id = $2`,
       [adminUserId, tenantId],
     );
 
-    await client.query('COMMIT');
+    await txClient.query('COMMIT');
 
     // Fetch the final tenant state
-    const finalResult = await pool.query(`SELECT * FROM tenants WHERE id = $1`, [tenantId]);
+    const finalResult = await tenantQuery(client,`SELECT * FROM tenants WHERE id = $1`, [tenantId]);
 
     logger.info({ tenantId, slug: request.slug }, 'Tenant created successfully');
     return rowToTenant(finalResult.rows[0]);
   } catch (err) {
-    await client.query('ROLLBACK');
+    await txClient.query('ROLLBACK');
     throw err;
   } finally {
-    client.release();
+    txClient.release();
   }
 }
 
@@ -201,8 +204,9 @@ export async function createTenant(
  */
 export async function suspendTenant(
   tenantId: string,
+  client?: PoolClient,
 ): Promise<TenantOnboarding> {
-  const result = await pool.query(
+  const result = await tenantQuery(client,
     `UPDATE tenants SET status = 'suspended', updated_at = NOW()
      WHERE id = $1 AND status = 'active'
      RETURNING *`,
@@ -226,13 +230,14 @@ export async function suspendTenant(
  */
 export async function deleteTenant(
   tenantId: string,
+  client?: PoolClient,
 ): Promise<void> {
-  const client = await getClient();
+  const txClient = await getClient();
   try {
-    await client.query('BEGIN');
+    await txClient.query('BEGIN');
 
     // Get tenant slug for schema cleanup
-    const tenantResult = await client.query(
+    const tenantResult = await txClient.query(
       `SELECT slug FROM tenants WHERE id = $1`,
       [tenantId],
     );
@@ -244,34 +249,34 @@ export async function deleteTenant(
     const slug = tenantResult.rows[0].slug as string;
 
     // Mark as deleting
-    await client.query(
+    await txClient.query(
       `UPDATE tenants SET status = 'deleting', updated_at = NOW() WHERE id = $1`,
       [tenantId],
     );
 
     // Delete all tenant data (cascade via foreign keys)
-    await client.query(`DELETE FROM ai_token_usage WHERE tenant_id = $1`, [tenantId]);
-    await client.query(`DELETE FROM ai_messages WHERE tenant_id = $1`, [tenantId]);
-    await client.query(`DELETE FROM ai_conversations WHERE tenant_id = $1`, [tenantId]);
-    await client.query(`DELETE FROM connections WHERE tenant_id = $1`, [tenantId]);
-    await client.query(`DELETE FROM users WHERE tenant_id = $1`, [tenantId]);
+    await txClient.query(`DELETE FROM ai_token_usage WHERE tenant_id = $1`, [tenantId]);
+    await txClient.query(`DELETE FROM ai_messages WHERE tenant_id = $1`, [tenantId]);
+    await txClient.query(`DELETE FROM ai_conversations WHERE tenant_id = $1`, [tenantId]);
+    await txClient.query(`DELETE FROM connections WHERE tenant_id = $1`, [tenantId]);
+    await txClient.query(`DELETE FROM users WHERE tenant_id = $1`, [tenantId]);
 
     // Drop tenant schema
-    await client.query(`DROP SCHEMA IF EXISTS tenant_${slug.replace(/-/g, '_')} CASCADE`);
+    await txClient.query(`DROP SCHEMA IF EXISTS tenant_${slug.replace(/-/g, '_')} CASCADE`);
 
     // Mark as deleted (soft delete)
-    await client.query(
+    await txClient.query(
       `UPDATE tenants SET status = 'deleted', updated_at = NOW() WHERE id = $1`,
       [tenantId],
     );
 
-    await client.query('COMMIT');
+    await txClient.query('COMMIT');
     logger.info({ tenantId, slug }, 'Tenant deleted successfully');
   } catch (err) {
-    await client.query('ROLLBACK');
+    await txClient.query('ROLLBACK');
     throw err;
   } finally {
-    client.release();
+    txClient.release();
   }
 }
 
@@ -284,8 +289,9 @@ export async function deleteTenant(
  */
 export async function getTenantConfig(
   tenantId: string,
+  client?: PoolClient,
 ): Promise<TenantOnboarding> {
-  const result = await pool.query(
+  const result = await tenantQuery(client,
     `SELECT * FROM tenants WHERE id = $1`,
     [tenantId],
   );
@@ -298,9 +304,9 @@ export async function getTenantConfig(
   const tenant = rowToTenant(result.rows[0]);
 
   const [usersCount, connsCount, appsCount] = await Promise.all([
-    pool.query(`SELECT COUNT(*)::int AS count FROM users WHERE tenant_id = $1`, [tenantId]),
-    pool.query(`SELECT COUNT(*)::int AS count FROM connections WHERE tenant_id = $1`, [tenantId]),
-    pool.query(
+    tenantQuery(client,`SELECT COUNT(*)::int AS count FROM users WHERE tenant_id = $1`, [tenantId]),
+    tenantQuery(client,`SELECT COUNT(*)::int AS count FROM connections WHERE tenant_id = $1`, [tenantId]),
+    tenantQuery(client,
       `SELECT COUNT(DISTINCT app_id)::int AS count FROM apex_components WHERE tenant_id = $1`,
       [tenantId],
     ),
@@ -319,9 +325,10 @@ export async function getTenantConfig(
 export async function updateTenantConfig(
   tenantId: string,
   request: UpdateTenantConfigRequest,
+  client?: PoolClient,
 ): Promise<TenantOnboarding> {
   // Get current config
-  const current = await getTenantConfig(tenantId);
+  const current = await getTenantConfig(tenantId, client);
 
   const updatedPlan = request.plan ?? current.plan;
   const updatedQuota = {
@@ -338,7 +345,7 @@ export async function updateTenantConfig(
     ...(request.settings ?? {}),
   } as any as TenantSettings;
 
-  const result = await pool.query(
+  const result = await tenantQuery(client,
     `UPDATE tenants
      SET name = COALESCE($1, name),
          plan = $2,
