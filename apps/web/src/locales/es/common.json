@@ -212,5 +212,17 @@
   "pageGen": {
     "title": "Generador de Paginas", "eyebrow": "PRD a Pagina",
     "description": "Convierte requerimientos aprobados en estructura de pagina APEX y notas de implementacion."
+  },
+  "processParams": {
+    "title": "Parametros de Proceso",
+    "eyebrow": "Configuracion",
+    "description": "Configura los parametros de cada etapa del pipeline de desarrollo.",
+    "save": "Guardar", "reset": "Restaurar por Defecto", "saved": "Guardado",
+    "prompt": "Prompt de IA", "model": "Modelo", "temperature": "Temperatura",
+    "referenceDoc": "Documento de Referencia", "checklist": "Lista de Verificacion",
+    "requiredFields": "Campos Requeridos", "approvalRules": "Reglas de Aprobacion",
+    "addItem": "Agregar Item", "required": "Obligatorio",
+    "requireApproval": "Requiere Aprobacion", "minApprovers": "Aprobadores Minimos",
+    "approverRoles": "Roles Aprobadores"
   }
 }

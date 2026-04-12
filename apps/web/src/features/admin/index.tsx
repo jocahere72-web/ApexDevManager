@@ -5,8 +5,9 @@ import { TenantManagement } from './components/TenantManagement';
 import { SSOConfigPanel } from './components/SSOConfig';
 import { LLMProviders } from './components/LLMProviders';
 import { PromptTemplates } from './components/PromptTemplates';
+import { ProcessParams } from './components/ProcessParams';
 
-type Tab = 'tenants' | 'sso' | 'llm-providers' | 'prompt-templates';
+type Tab = 'tenants' | 'sso' | 'llm-providers' | 'prompt-templates' | 'process-params';
 
 export function AdminPage() {
   const [activeTab, setActiveTab] = useState<Tab>('tenants');
@@ -48,12 +49,20 @@ export function AdminPage() {
         >
           {t('admin.promptTemplates')}
         </button>
+        <button
+          type="button"
+          className={`app-tab${activeTab === 'process-params' ? ' app-tab-active' : ''}`}
+          onClick={() => setActiveTab('process-params')}
+        >
+          {t('processParams.title')}
+        </button>
       </div>
       <div>
         {activeTab === 'tenants' && <TenantManagement />}
         {activeTab === 'sso' && <SSOConfigPanel />}
         {activeTab === 'llm-providers' && <LLMProviders />}
         {activeTab === 'prompt-templates' && <PromptTemplates />}
+        {activeTab === 'process-params' && <ProcessParams />}
       </div>
     </AppPage>
   );

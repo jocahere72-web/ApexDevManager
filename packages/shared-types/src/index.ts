@@ -57,5 +57,8 @@ export * from './llm-provider.js';
 // Prompt Templates
 export * from './prompt-template.js';
 
+// Process Params (Pipeline)
+export * from './process-params.js';
+
 // SaaS (U13)
 export * from './saas.js';

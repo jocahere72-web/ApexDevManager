@@ -152,5 +152,17 @@
     "actions": "Actions", "name": "Name", "description": "Description",
     "status": "Status", "type": "Type", "priority": "Priority",
     "createdAt": "Created", "updatedAt": "Updated", "language": "Language"
+  },
+  "processParams": {
+    "title": "Process Parameters",
+    "eyebrow": "Configuration",
+    "description": "Configure parameters for each stage of the development pipeline.",
+    "save": "Save", "reset": "Reset to Default", "saved": "Saved",
+    "prompt": "AI Prompt", "model": "Model", "temperature": "Temperature",
+    "referenceDoc": "Reference Document", "checklist": "Checklist",
+    "requiredFields": "Required Fields", "approvalRules": "Approval Rules",
+    "addItem": "Add Item", "required": "Required",
+    "requireApproval": "Require Approval", "minApprovers": "Min Approvers",
+    "approverRoles": "Approver Roles"
   }
 }
