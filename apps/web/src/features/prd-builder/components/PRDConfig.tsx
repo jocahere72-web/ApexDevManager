@@ -258,16 +258,42 @@ export default function PRDConfigPage() {
             </div>
 
             <div style={{ marginBottom: 12 }}>
-              <label className="app-label">Example Document *</label>
+              <label className="app-label">Documento de Ejemplo *</label>
               <p style={{ fontSize: '0.75rem', color: 'var(--app-muted)', marginBottom: 4 }}>
-                A reference PRD document that the AI uses as format example when generating sections.
+                Un PRD de referencia que la IA usa como modelo de formato al generar las secciones.
               </p>
+              <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                <button
+                  type="button"
+                  className="app-button"
+                  style={{ fontSize: '0.8rem' }}
+                  onClick={() => {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = '.md,.txt,.markdown';
+                    input.onchange = async (e) => {
+                      const file = (e.target as HTMLInputElement).files?.[0];
+                      if (!file) return;
+                      const text = await file.text();
+                      setForm({ ...form, exampleDocument: text });
+                    };
+                    input.click();
+                  }}
+                >
+                  📁 Cargar archivo .md
+                </button>
+                {form.exampleDocument && (
+                  <span style={{ fontSize: '0.75rem', color: 'var(--app-muted)', alignSelf: 'center' }}>
+                    {form.exampleDocument.length.toLocaleString()} caracteres
+                  </span>
+                )}
+              </div>
               <textarea
                 className="app-textarea"
                 rows={10}
                 value={form.exampleDocument}
                 onChange={(e) => setForm({ ...form, exampleDocument: e.target.value })}
-                placeholder="Paste a sample PRD document here..."
+                placeholder="Pega un documento PRD de ejemplo aquí o carga un archivo .md..."
                 style={{ fontFamily: 'monospace', fontSize: '0.8rem' }}
               />
             </div>

@@ -163,6 +163,8 @@
     "requiredFields": "Required Fields", "approvalRules": "Approval Rules",
     "addItem": "Add Item", "required": "Required",
     "requireApproval": "Require Approval", "minApprovers": "Min Approvers",
-    "approverRoles": "Approver Roles"
+    "approverRoles": "Approver Roles",
+    "uploadMd": "Upload .md file",
+    "referenceDocPlaceholder": "Paste the reference document here or upload a .md file..."
   }
 }

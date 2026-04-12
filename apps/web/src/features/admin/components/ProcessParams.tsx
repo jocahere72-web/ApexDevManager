@@ -602,10 +602,42 @@ export function ProcessParams() {
                 {/* Reference Document */}
                 <div style={fieldGroupStyle}>
                   <label style={labelStyle}>{t('processParams.referenceDoc')}</label>
+                  <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                    <button
+                      type="button"
+                      className="app-button"
+                      style={{ fontSize: '0.8rem' }}
+                      onClick={() => {
+                        const input = document.createElement('input');
+                        input.type = 'file';
+                        input.accept = '.md,.txt,.markdown';
+                        input.onchange = async (e) => {
+                          const file = (e.target as HTMLInputElement).files?.[0];
+                          if (!file) return;
+                          const text = await file.text();
+                          updateEdit(stage, { referenceDocument: text });
+                        };
+                        input.click();
+                      }}
+                    >
+                      📁 {t('processParams.uploadMd')}
+                    </button>
+                    {edit.referenceDocument && (
+                      <button
+                        type="button"
+                        className="app-button"
+                        style={{ fontSize: '0.8rem' }}
+                        onClick={() => updateEdit(stage, { referenceDocument: '' })}
+                      >
+                        ✕ {t('common.delete')}
+                      </button>
+                    )}
+                  </div>
                   <textarea
                     style={textareaStyle}
                     value={edit.referenceDocument ?? ''}
                     onChange={(e) => updateEdit(stage, { referenceDocument: e.target.value })}
+                    placeholder={t('processParams.referenceDocPlaceholder')}
                   />
                 </div>
 

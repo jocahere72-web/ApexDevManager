@@ -223,6 +223,8 @@
     "requiredFields": "Campos Requeridos", "approvalRules": "Reglas de Aprobacion",
     "addItem": "Agregar Item", "required": "Obligatorio",
     "requireApproval": "Requiere Aprobacion", "minApprovers": "Aprobadores Minimos",
-    "approverRoles": "Roles Aprobadores"
+    "approverRoles": "Roles Aprobadores",
+    "uploadMd": "Cargar archivo .md",
+    "referenceDocPlaceholder": "Pega el documento de referencia aquí o carga un archivo .md..."
   }
 }
