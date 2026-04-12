@@ -24,7 +24,7 @@ dashboardRouter.get(
   '/overview',
   async (req: Request, res: Response<ApiResponse<DashboardOverview>>, next: NextFunction) => {
     try {
-      const overview = await dashboardService.getDashboardData(req.tenantId!);
+      const overview = await dashboardService.getDashboardData(req.tenantId!, req.dbClient);
       res.json({ success: true, data: overview });
     } catch (err) {
       next(err);
@@ -44,7 +44,7 @@ dashboardRouter.get(
         ? req.query.acknowledged === 'true'
         : undefined;
 
-      const alerts = await dashboardService.getAlerts(req.tenantId!, acknowledged);
+      const alerts = await dashboardService.getAlerts(req.tenantId!, acknowledged, req.dbClient);
       res.json({ success: true, data: alerts });
     } catch (err) {
       next(err);
@@ -61,7 +61,7 @@ dashboardRouter.get(
   async (req: Request, res: Response<ApiResponse<Incident[]>>, next: NextFunction) => {
     try {
       const status = req.query.status as IncidentStatus | undefined;
-      const incidents = await dashboardService.getIncidents(req.tenantId!, status);
+      const incidents = await dashboardService.getIncidents(req.tenantId!, status, req.dbClient);
       res.json({ success: true, data: incidents });
     } catch (err) {
       next(err);
@@ -88,6 +88,7 @@ dashboardRouter.post(
         { title, description, severity, assignedTo, alertIds },
         req.tenantId!,
         req.userId!,
+        req.dbClient,
       );
 
       res.status(201).json({ success: true, data: incident });
@@ -117,6 +118,7 @@ dashboardRouter.post(
         { rootCause, resolution },
         req.tenantId!,
         req.userId!,
+        req.dbClient,
       );
 
       res.json({ success: true, data: incident });

@@ -1,8 +1,11 @@
 import { pool } from '../../config/database.js';
+import { PoolClient } from 'pg';
+import { tenantQuery } from '../../lib/tenant-db.js';
 import { logger } from '../../lib/logger.js';
 import { NotFoundError, AppError } from '../../lib/errors.js';
 import { MCPClient, type MCPConnectionConfig } from '../../integrations/mcp/mcp-client.js';
 import { decryptCredentials } from '../connections/encryption.service.js';
+import { getConnectionForTenant, type ResolvedConnection } from '../connections/connections.repository.js';
 import type {
   ComponentSource,
   EditorSession,
@@ -13,19 +16,6 @@ import type {
 } from '@apex-dev-manager/shared-types';
 
 // ── Types ───────────────────────────────────────────────────────────────────
-
-interface ConnectionRow {
-  id: string;
-  tenant_id: string;
-  type: 'ords' | 'jdbc';
-  config: Record<string, unknown>;
-  encrypted_credentials: {
-    iv: string;
-    encrypted: string;
-    authTag: string;
-    keyId: string;
-  };
-}
 
 interface SessionRow {
   id: string;
@@ -67,32 +57,22 @@ interface ChangeLogRow {
 async function getConnectionDetails(
   tenantId: string,
   connectionId: string,
-): Promise<ConnectionRow> {
-  const result = await pool.query(
-    `SELECT id, tenant_id, type, config, encrypted_credentials
-     FROM connections
-     WHERE tenant_id = $1 AND id = $2 AND deleted_at IS NULL AND is_active = true`,
-    [tenantId, connectionId],
-  );
-
-  if (result.rowCount === 0) {
-    throw new NotFoundError('Connection not found or inactive');
-  }
-
-  return result.rows[0] as ConnectionRow;
+): Promise<ResolvedConnection> {
+  const conn = await getConnectionForTenant(tenantId, connectionId);
+  if (!conn) throw new NotFoundError('Connection not found or inactive');
+  return conn;
 }
 
-function buildMCPConfig(conn: ConnectionRow): MCPConnectionConfig {
-  const creds = decryptCredentials(conn.encrypted_credentials, conn.tenant_id);
-  const config = conn.config as Record<string, unknown>;
-  const mcpBaseUrl = (config.mcpBaseUrl ?? config.ordsBaseUrl ?? '') as string;
+function buildMCPConfig(conn: ResolvedConnection): MCPConnectionConfig {
+  const creds = decryptCredentials(conn.encryptedCredentials, conn.tenantId);
+  const mcpBaseUrl = (conn.config.ordsBaseUrl ?? '') as string;
 
   return {
     baseUrl: mcpBaseUrl,
     username: creds.username,
     password: creds.password,
-    schema: config.schema as string | undefined,
-    tenantId: conn.tenant_id,
+    schema: conn.config.schema,
+    tenantId: conn.tenantId,
     connectionId: conn.id,
   };
 }
@@ -172,6 +152,7 @@ export async function getComponentSource(
   connectionId: string,
   componentType: string,
   componentId: string,
+  client?: PoolClient,
 ): Promise<ComponentSource> {
   const conn = await getConnectionDetails(tenantId, connectionId);
   const mcpConfig = buildMCPConfig(conn);
@@ -235,15 +216,16 @@ export async function openSession(
   componentType: string,
   componentId: string,
   mode: 'view' | 'edit',
+  client?: PoolClient,
 ): Promise<EditorSession> {
   // Clean up expired sessions first
-  await pool.query(
+  await tenantQuery(client,
     `DELETE FROM editor_sessions WHERE expires_at < now()`,
   );
 
   if (mode === 'edit') {
     // Check for existing edit lock
-    const existing = await pool.query(
+    const existing = await tenantQuery(client,
       `SELECT es.*, u.email as locked_by_name
        FROM editor_sessions es
        LEFT JOIN users u ON u.id = es.user_id
@@ -266,7 +248,7 @@ export async function openSession(
         );
       }
       // Same user already has a lock — refresh it
-      const refreshed = await pool.query(
+      const refreshed = await tenantQuery(client,
         `UPDATE editor_sessions
          SET last_active_at = now(),
              expires_at = now() + interval '30 minutes'
@@ -279,7 +261,7 @@ export async function openSession(
   }
 
   // Create new session
-  const result = await pool.query(
+  const result = await tenantQuery(client,
     `INSERT INTO editor_sessions
        (tenant_id, user_id, connection_id, component_type, component_id, mode)
      VALUES ($1, $2, $3, $4, $5, $6)
@@ -306,8 +288,9 @@ export async function saveDraft(
   draftContent: string,
   cursorLine?: number,
   cursorColumn?: number,
+  client?: PoolClient,
 ): Promise<EditorSession> {
-  const result = await pool.query(
+  const result = await tenantQuery(client,
     `UPDATE editor_sessions
      SET draft_content = $1,
          cursor_line = $2,
@@ -340,9 +323,10 @@ export async function applyCode(
   pageId?: number,
   source: 'manual' | 'ai' = 'manual',
   aiRequestId?: string,
+  client?: PoolClient,
 ): Promise<{ changeLogId: string; appliedAt: string }> {
   // Fetch the session
-  const sessionResult = await pool.query(
+  const sessionResult = await tenantQuery(client,
     `SELECT * FROM editor_sessions WHERE id = $1 AND tenant_id = $2`,
     [sessionId, tenantId],
   );
@@ -395,7 +379,7 @@ export async function applyCode(
   }
 
   // Insert change log entry
-  const changeLogResult = await pool.query(
+  const changeLogResult = await tenantQuery(client,
     `INSERT INTO change_log
        (tenant_id, connection_id, component_type, component_id, component_name,
         app_id, page_id, code_before, code_after, diff, applied_by, source, ai_request_id)
@@ -421,7 +405,7 @@ export async function applyCode(
   const changeLog = changeLogResult.rows[0] as { id: string; applied_at: string };
 
   // Release the edit lock
-  await releaseLock(tenantId, sessionId);
+  await releaseLock(tenantId, sessionId, client);
 
   logger.info(
     { tenantId, sessionId, changeLogId: changeLog.id },
@@ -440,8 +424,9 @@ export async function applyCode(
 export async function releaseLock(
   tenantId: string,
   sessionId: string,
+  client?: PoolClient,
 ): Promise<void> {
-  const result = await pool.query(
+  const result = await tenantQuery(client,
     `DELETE FROM editor_sessions WHERE id = $1 AND tenant_id = $2`,
     [sessionId, tenantId],
   );
@@ -461,8 +446,9 @@ export async function getLockStatus(
   connectionId: string,
   componentType: string,
   componentId: string,
+  client?: PoolClient,
 ): Promise<LockStatus> {
-  const result = await pool.query(
+  const result = await tenantQuery(client,
     `SELECT es.id, es.user_id, es.expires_at, u.email as user_name
      FROM editor_sessions es
      LEFT JOIN users u ON u.id = es.user_id
@@ -534,8 +520,9 @@ export async function getChangeLog(
   componentId: string,
   limit = 20,
   offset = 0,
+  client?: PoolClient,
 ): Promise<{ entries: ChangeLogEntry[]; total: number }> {
-  const countResult = await pool.query(
+  const countResult = await tenantQuery(client,
     `SELECT count(*)::int as total
      FROM change_log
      WHERE tenant_id = $1
@@ -547,7 +534,7 @@ export async function getChangeLog(
 
   const total = (countResult.rows[0] as { total: number }).total;
 
-  const result = await pool.query(
+  const result = await tenantQuery(client,
     `SELECT *
      FROM change_log
      WHERE tenant_id = $1

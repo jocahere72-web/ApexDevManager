@@ -3,6 +3,7 @@ import { logger } from '../../lib/logger.js';
 import { NotFoundError, AppError } from '../../lib/errors.js';
 import { MCPClient, type MCPConnectionConfig } from '../../integrations/mcp/mcp-client.js';
 import { decryptCredentials } from '../connections/encryption.service.js';
+import { getConnectionForTenant, type ResolvedConnection } from '../connections/connections.repository.js';
 import type {
   DocGenRequest,
   GeneratedDoc,
@@ -25,33 +26,13 @@ function assertOracleType(type: string): string {
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-interface ConnectionRow {
-  id: string;
-  tenant_id: string;
-  type: 'ords' | 'jdbc';
-  config: Record<string, unknown>;
-  encrypted_credentials: {
-    iv: string;
-    encrypted: string;
-    authTag: string;
-    keyId: string;
-  };
-}
-
 async function getConnectionDetails(
   tenantId: string,
   connectionId: string,
-): Promise<ConnectionRow> {
-  const result = await pool.query<ConnectionRow>(
-    `SELECT id, tenant_id, type, config, encrypted_credentials
-     FROM connections
-     WHERE tenant_id = $1 AND id = $2 AND deleted_at IS NULL AND is_active = true`,
-    [tenantId, connectionId],
-  );
-  if (result.rowCount === 0) {
-    throw new NotFoundError('Connection not found or inactive');
-  }
-  return result.rows[0];
+): Promise<ResolvedConnection> {
+  const conn = await getConnectionForTenant(tenantId, connectionId);
+  if (!conn) throw new NotFoundError('Connection not found or inactive');
+  return conn;
 }
 
 async function executeSql(
@@ -60,13 +41,12 @@ async function executeSql(
   sql: string,
 ): Promise<Record<string, unknown>[]> {
   const conn = await getConnectionDetails(tenantId, connectionId);
-  const creds = decryptCredentials(conn.encrypted_credentials, tenantId);
-  const config = conn.config as Record<string, unknown>;
+  const creds = decryptCredentials(conn.encryptedCredentials, conn.tenantId);
   const mcpConfig: MCPConnectionConfig = {
-    baseUrl: (config.mcpBaseUrl ?? config.ordsBaseUrl ?? '') as string,
+    baseUrl: (conn.config.ordsBaseUrl ?? '') as string,
     username: creds.username,
     password: creds.password,
-    schema: config.schema as string | undefined,
+    schema: conn.config.schema,
     tenantId,
     connectionId,
   };

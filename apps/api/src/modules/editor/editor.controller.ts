@@ -35,6 +35,7 @@ editorRouter.get(
         parsed.data.connectionId,
         parsed.data.componentType,
         parsed.data.componentId,
+        req.dbClient,
       );
 
       res.json({ success: true, data: source });
@@ -61,6 +62,7 @@ editorRouter.post(
         parsed.data.componentType,
         parsed.data.componentId,
         parsed.data.mode,
+        req.dbClient,
       );
 
       res.status(201).json({ success: true, data: session });
@@ -91,6 +93,7 @@ editorRouter.put(
         bodyParsed.data.draftContent,
         bodyParsed.data.cursorLine,
         bodyParsed.data.cursorColumn,
+        req.dbClient,
       );
 
       res.json({ success: true, data: session });
@@ -125,6 +128,7 @@ editorRouter.post(
         bodyParsed.data.pageId,
         bodyParsed.data.source,
         bodyParsed.data.aiRequestId,
+        req.dbClient,
       );
 
       res.json({ success: true, data: result });
@@ -144,7 +148,7 @@ editorRouter.delete(
         throw new ValidationError('Invalid parameters', parsed.error.flatten().fieldErrors);
       }
 
-      await editorService.releaseLock(req.tenantId!, parsed.data.id);
+      await editorService.releaseLock(req.tenantId!, parsed.data.id, req.dbClient);
 
       res.json({ success: true, data: { released: true } });
     } catch (err) {
@@ -199,6 +203,7 @@ editorRouter.get(
         parsed.data.componentId,
         parsed.data.limit,
         parsed.data.offset,
+        req.dbClient,
       );
 
       res.json({

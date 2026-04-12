@@ -63,7 +63,7 @@ schemaInspectorRouter.post(
   async (req: Request, res: Response<ApiResponse<SchemaDiff>>, next: NextFunction) => {
     try {
       const { snapshotIdA, snapshotIdB } = req.body;
-      const diff = await schemaService.compareSchemas(req.tenantId!, snapshotIdA, snapshotIdB);
+      const diff = await schemaService.compareSchemas(req.tenantId!, snapshotIdA, snapshotIdB, req.dbClient);
       res.json({ success: true, data: diff });
     } catch (err) {
       next(err);
@@ -77,7 +77,7 @@ schemaInspectorRouter.post(
   async (req: Request, res: Response<ApiResponse<SchemaSnapshot>>, next: NextFunction) => {
     try {
       const { connectionId } = req.body;
-      const snapshot = await schemaService.createSnapshot(req.tenantId!, connectionId, req.userId!);
+      const snapshot = await schemaService.createSnapshot(req.tenantId!, connectionId, req.userId!, req.dbClient);
       res.status(201).json({ success: true, data: snapshot });
     } catch (err) {
       next(err);
@@ -96,6 +96,7 @@ schemaInspectorRouter.get(
         connectionId as string | undefined,
         limit ? parseInt(limit as string, 10) : undefined,
         offset ? parseInt(offset as string, 10) : undefined,
+        req.dbClient,
       );
       res.json({ success: true, data: result });
     } catch (err) {

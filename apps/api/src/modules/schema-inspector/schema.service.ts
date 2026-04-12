@@ -1,8 +1,11 @@
 import { pool } from '../../config/database.js';
+import { PoolClient } from 'pg';
+import { tenantQuery } from '../../lib/tenant-db.js';
 import { logger } from '../../lib/logger.js';
 import { NotFoundError, AppError } from '../../lib/errors.js';
 import { MCPClient, type MCPConnectionConfig } from '../../integrations/mcp/mcp-client.js';
 import { decryptCredentials } from '../connections/encryption.service.js';
+import { getConnectionForTenant, type ResolvedConnection } from '../connections/connections.repository.js';
 import type {
   SchemaSnapshot,
   SchemaTable,
@@ -24,19 +27,6 @@ interface SnapshotRow {
   indexes_count: number;
   created_by: string | null;
   created_at: string;
-}
-
-interface ConnectionRow {
-  id: string;
-  tenant_id: string;
-  type: 'ords' | 'jdbc';
-  config: Record<string, unknown>;
-  encrypted_credentials: {
-    iv: string;
-    encrypted: string;
-    authTag: string;
-    keyId: string;
-  };
 }
 
 function rowToSnapshot(row: SnapshotRow): SchemaSnapshot {
@@ -72,17 +62,10 @@ function assertOracleType(type: string): string {
 async function getConnectionDetails(
   tenantId: string,
   connectionId: string,
-): Promise<ConnectionRow> {
-  const result = await pool.query<ConnectionRow>(
-    `SELECT id, tenant_id, type, config, encrypted_credentials
-     FROM connections
-     WHERE tenant_id = $1 AND id = $2 AND deleted_at IS NULL AND is_active = true`,
-    [tenantId, connectionId],
-  );
-  if (result.rowCount === 0) {
-    throw new NotFoundError('Connection not found or inactive');
-  }
-  return result.rows[0];
+): Promise<ResolvedConnection> {
+  const conn = await getConnectionForTenant(tenantId, connectionId);
+  if (!conn) throw new NotFoundError('Connection not found or inactive');
+  return conn;
 }
 
 async function executeSqlViaOrds(
@@ -91,13 +74,12 @@ async function executeSqlViaOrds(
   sql: string,
 ): Promise<Record<string, unknown>[]> {
   const conn = await getConnectionDetails(tenantId, connectionId);
-  const creds = decryptCredentials(conn.encrypted_credentials, tenantId);
-  const config = conn.config as Record<string, unknown>;
+  const creds = decryptCredentials(conn.encryptedCredentials, conn.tenantId);
   const mcpConfig: MCPConnectionConfig = {
-    baseUrl: (config.mcpBaseUrl ?? config.ordsBaseUrl ?? '') as string,
+    baseUrl: (conn.config.ordsBaseUrl ?? '') as string,
     username: creds.username,
     password: creds.password,
-    schema: config.schema as string | undefined,
+    schema: conn.config.schema,
     tenantId,
     connectionId,
   };
@@ -238,9 +220,10 @@ export async function compareSchemas(
   tenantId: string,
   snapshotIdA: string,
   snapshotIdB: string,
+  client?: PoolClient,
 ): Promise<SchemaDiff> {
-  const snapA = await getSnapshot(tenantId, snapshotIdA);
-  const snapB = await getSnapshot(tenantId, snapshotIdB);
+  const snapA = await getSnapshot(tenantId, snapshotIdA, client);
+  const snapB = await getSnapshot(tenantId, snapshotIdB, client);
 
   const tablesA = new Map(snapA.snapshotData.tables.map((t) => [t.name, t]));
   const tablesB = new Map(snapB.snapshotData.tables.map((t) => [t.name, t]));
@@ -319,6 +302,7 @@ export async function createSnapshot(
   tenantId: string,
   connectionId: string,
   createdBy: string,
+  client?: PoolClient,
 ): Promise<SchemaSnapshot> {
   const schema = await getSchema(tenantId, connectionId);
 
@@ -326,26 +310,26 @@ export async function createSnapshot(
   const viewsCount = schema.views.length;
   const indexesCount = schema.tables.reduce((sum, t) => sum + t.indexes.length, 0);
 
-  const result = await pool.query<SnapshotRow>(
+  const result = await tenantQuery(client,
     `INSERT INTO schema_snapshots (tenant_id, connection_id, snapshot_data, tables_count, views_count, indexes_count, created_by)
      VALUES ($1, $2, $3::jsonb, $4, $5, $6, $7)
      RETURNING *`,
     [tenantId, connectionId, JSON.stringify(schema), tablesCount, viewsCount, indexesCount, createdBy],
   );
 
-  logger.info({ snapshotId: result.rows[0].id, tablesCount, viewsCount }, 'Schema snapshot created');
-  return rowToSnapshot(result.rows[0]);
+  logger.info({ snapshotId: (result.rows[0] as SnapshotRow).id, tablesCount, viewsCount }, 'Schema snapshot created');
+  return rowToSnapshot(result.rows[0] as SnapshotRow);
 }
 
-async function getSnapshot(tenantId: string, snapshotId: string): Promise<SchemaSnapshot> {
-  const result = await pool.query<SnapshotRow>(
+async function getSnapshot(tenantId: string, snapshotId: string, client?: PoolClient): Promise<SchemaSnapshot> {
+  const result = await tenantQuery(client,
     `SELECT * FROM schema_snapshots WHERE tenant_id = $1 AND id = $2`,
     [tenantId, snapshotId],
   );
   if (result.rowCount === 0) {
     throw new NotFoundError('Schema snapshot not found');
   }
-  return rowToSnapshot(result.rows[0]);
+  return rowToSnapshot(result.rows[0] as SnapshotRow);
 }
 
 export async function listSnapshots(
@@ -353,6 +337,7 @@ export async function listSnapshots(
   connectionId?: string,
   limit = 20,
   offset = 0,
+  client?: PoolClient,
 ): Promise<{ items: SchemaSnapshot[]; total: number }> {
   const conditions = ['tenant_id = $1'];
   const params: unknown[] = [tenantId];
@@ -364,19 +349,19 @@ export async function listSnapshots(
   }
 
   const where = conditions.join(' AND ');
-  const countResult = await pool.query<{ count: string }>(
+  const countResult = await tenantQuery(client,
     `SELECT COUNT(*) as count FROM schema_snapshots WHERE ${where}`,
     params,
   );
 
-  const result = await pool.query<SnapshotRow>(
+  const result = await tenantQuery(client,
     `SELECT * FROM schema_snapshots WHERE ${where} ORDER BY created_at DESC LIMIT $${idx++} OFFSET $${idx++}`,
     [...params, limit, offset],
   );
 
   return {
-    items: result.rows.map(rowToSnapshot),
-    total: parseInt(countResult.rows[0].count, 10),
+    items: (result.rows as SnapshotRow[]).map(rowToSnapshot),
+    total: parseInt((countResult.rows[0] as { count: string }).count, 10),
   };
 }
 

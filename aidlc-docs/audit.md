@@ -2,6 +2,22 @@
 
 ---
 
+## User Request — Follow-up Review
+**Timestamp**: 2026-04-12T03:49:25Z
+**User Input**: "revisa de nuevo"
+**AI Response**: "Revisando nuevamente el backend y los hallazgos previos para confirmar qué quedó corregido, qué sigue abierto y actualizar `revision.md` si aplica."
+**Context**: Code Review - Follow-up verification pass.
+
+---
+
+## AI Action — Revision Report Updated
+**Timestamp**: 2026-04-12T03:49:25Z
+**User Input**: "revisa de nuevo"
+**AI Response**: "Actualice `revision.md` con la revalidacion actual: marque como corregidos CORS, hash de usuarios, audit_events, granularity, MCP pool, schema vacio y test script; deje abiertos consumidores con schema viejo de connections, dashboard con columnas viejas de health, RLS aplicado parcialmente y validacion pendiente por falta de Node."
+**Context**: Code Review - Follow-up report updated.
+
+---
+
 ## User Request — Rewrite Revision Report
 **Timestamp**: 2026-04-12T03:40:44Z
 **User Input**: "# Review findings:

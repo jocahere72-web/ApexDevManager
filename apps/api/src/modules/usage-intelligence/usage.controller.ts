@@ -31,7 +31,7 @@ usageRouter.get(
       const end = req.query.end as string | undefined;
       const period = start && end ? { start, end } : undefined;
 
-      const metrics = await usageService.getUsageMetrics(req.tenantId!, period);
+      const metrics = await usageService.getUsageMetrics(req.tenantId!, period, req.dbClient);
       res.json({ success: true, data: metrics });
     } catch (err) {
       next(err);
@@ -51,7 +51,7 @@ usageRouter.get(
       const end = req.query.end as string | undefined;
       const period = start && end ? { start, end } : undefined;
 
-      const breakdown = await usageService.getCostBreakdown(req.tenantId!, period);
+      const breakdown = await usageService.getCostBreakdown(req.tenantId!, period, req.dbClient);
       res.json({ success: true, data: breakdown });
     } catch (err) {
       next(err);
@@ -67,7 +67,7 @@ usageRouter.get(
   '/suggestions',
   async (req: Request, res: Response<ApiResponse<OptimizationSuggestion[]>>, next: NextFunction) => {
     try {
-      const suggestions = await usageService.getOptimizationSuggestions(req.tenantId!);
+      const suggestions = await usageService.getOptimizationSuggestions(req.tenantId!, req.dbClient);
       res.json({ success: true, data: suggestions });
     } catch (err) {
       next(err);
@@ -94,6 +94,7 @@ usageRouter.get(
         req.tenantId!,
         granularity as typeof validGranularities[number],
         days,
+        req.dbClient,
       );
       res.json({ success: true, data: trends });
     } catch (err) {
@@ -121,7 +122,7 @@ usageRouter.post(
         period,
         includeBreakdown: includeBreakdown ?? true,
         includeSuggestions: includeSuggestions ?? true,
-      });
+      }, req.dbClient);
 
       res.setHeader('Content-Type', report.contentType);
       res.setHeader('Content-Disposition', `attachment; filename="${report.filename}"`);
