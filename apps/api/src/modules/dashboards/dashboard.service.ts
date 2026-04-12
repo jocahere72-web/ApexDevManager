@@ -3,6 +3,8 @@
 // ---------------------------------------------------------------------------
 
 import { pool } from '../../config/database.js';
+import { PoolClient } from 'pg';
+import { tenantQuery } from '../../lib/tenant-db.js';
 import { logger } from '../../lib/logger.js';
 import { NotFoundError, ValidationError } from '../../lib/errors.js';
 import type {
@@ -71,12 +73,12 @@ function rowToIncident(row: Record<string, unknown>, timeline: IncidentTimelineE
  * Aggregate all dashboard data: connections health, AI usage, deployments,
  * test coverage, active users, and recent activity.
  */
-export async function getDashboardData(tenantId: string): Promise<DashboardOverview> {
+export async function getDashboardData(tenantId: string, client?: PoolClient): Promise<DashboardOverview> {
   logger.info({ tenantId }, 'Fetching dashboard overview');
 
   // 1. Connection health
-  const connResult = await pool.query(
-    `SELECT id, name, status, last_tested_at, response_time_ms, error_message
+  const connResult = await tenantQuery(client,
+    `SELECT id, name, status, last_check_at, last_latency_ms, last_error
      FROM connections WHERE tenant_id = $1`,
     [tenantId],
   );
@@ -85,12 +87,12 @@ export async function getDashboardData(tenantId: string): Promise<DashboardOverv
     connectionId: row.id as string,
     connectionName: row.name as string,
     status: (row.status as HealthStatus) ?? 'unknown',
-    responseTimeMs: (row.response_time_ms as number) ?? 0,
-    lastCheckedAt: row.last_tested_at ? (row.last_tested_at as Date).toISOString() : new Date().toISOString(),
-    lastCheckAt: row.last_tested_at ? (row.last_tested_at as Date).toISOString() : new Date().toISOString(),
-    lastLatencyMs: (row.response_time_ms as number) ?? 0,
+    responseTimeMs: (row.last_latency_ms as number) ?? 0,
+    lastCheckedAt: row.last_check_at ? (row.last_check_at as Date).toISOString() : new Date().toISOString(),
+    lastCheckAt: row.last_check_at ? (row.last_check_at as Date).toISOString() : new Date().toISOString(),
+    lastLatencyMs: (row.last_latency_ms as number) ?? 0,
     consecutiveFailures: 0,
-    errorMessage: (row.error_message as string) ?? undefined,
+    errorMessage: (row.last_error as string) ?? undefined,
   })) as ConnectionHealth[];
 
   // 2. AI usage stats
@@ -101,18 +103,18 @@ export async function getDashboardData(tenantId: string): Promise<DashboardOverv
   monthStart.setHours(0, 0, 0, 0);
 
   const [aiTodayResult, aiMonthResult, convTodayResult] = await Promise.all([
-    pool.query(
+    tenantQuery(client,
       `SELECT COALESCE(SUM(total_tokens), 0)::bigint AS tokens, COALESCE(SUM(estimated_cost_usd), 0)::numeric AS cost
        FROM ai_token_usage WHERE tenant_id = $1 AND created_at >= $2`,
       [tenantId, todayStart.toISOString()],
     ),
-    pool.query(
+    tenantQuery(client,
       `SELECT COALESCE(SUM(total_tokens), 0)::bigint AS tokens, COALESCE(SUM(estimated_cost_usd), 0)::numeric AS cost,
               mode() WITHIN GROUP (ORDER BY model) AS top_model
        FROM ai_token_usage WHERE tenant_id = $1 AND created_at >= $2`,
       [tenantId, monthStart.toISOString()],
     ),
-    pool.query(
+    tenantQuery(client,
       `SELECT COUNT(*)::int AS count FROM ai_conversations WHERE tenant_id = $1 AND created_at >= $2`,
       [tenantId, todayStart.toISOString()],
     ),
@@ -128,7 +130,7 @@ export async function getDashboardData(tenantId: string): Promise<DashboardOverv
   };
 
   // 3. Deployment stats (from audit_log or deployment table)
-  const deployResult = await pool.query(
+  const deployResult = await tenantQuery(client,
     `SELECT
        COUNT(*)::int AS total,
        COUNT(*) FILTER (WHERE status = 'success')::int AS successful,
@@ -152,7 +154,7 @@ export async function getDashboardData(tenantId: string): Promise<DashboardOverv
   } as any as DeploymentStatus;
 
   // 4. Test coverage
-  const testResult = await pool.query(
+  const testResult = await tenantQuery(client,
     `SELECT
        COUNT(*)::int AS total_suites,
        COALESCE(AVG(coverage_percent), 0)::numeric AS avg_coverage,
@@ -174,22 +176,22 @@ export async function getDashboardData(tenantId: string): Promise<DashboardOverv
 
   // 5. Active users
   const [usersToday, usersWeek, usersMonth] = await Promise.all([
-    pool.query(
+    tenantQuery(client,
       `SELECT COUNT(DISTINCT user_id)::int AS count FROM audit_events WHERE tenant_id = $1 AND created_at >= $2`,
       [tenantId, todayStart.toISOString()],
     ),
-    pool.query(
+    tenantQuery(client,
       `SELECT COUNT(DISTINCT user_id)::int AS count FROM audit_events WHERE tenant_id = $1 AND created_at >= $2`,
       [tenantId, new Date(Date.now() - 7 * 86400000).toISOString()],
     ),
-    pool.query(
+    tenantQuery(client,
       `SELECT COUNT(DISTINCT user_id)::int AS count FROM audit_events WHERE tenant_id = $1 AND created_at >= $2`,
       [tenantId, monthStart.toISOString()],
     ),
   ]);
 
   // 6. Recent activity
-  const activityResult = await pool.query(
+  const activityResult = await tenantQuery(client,
     `SELECT id, event_type, action, entity_type, entity_id, event_payload, user_id, created_at
      FROM audit_events
      WHERE tenant_id = $1
@@ -233,6 +235,7 @@ export async function getDashboardData(tenantId: string): Promise<DashboardOverv
 export async function getAlerts(
   tenantId: string,
   acknowledged?: boolean,
+  client?: PoolClient,
 ): Promise<Alert[]> {
   const conditions = ['tenant_id = $1', 'resolved_at IS NULL'];
   const params: unknown[] = [tenantId];
@@ -242,7 +245,7 @@ export async function getAlerts(
     params.push(acknowledged);
   }
 
-  const result = await pool.query(
+  const result = await tenantQuery(client,
     `SELECT * FROM alerts WHERE ${conditions.join(' AND ')} ORDER BY created_at DESC`,
     params,
   );
@@ -260,6 +263,7 @@ export async function getAlerts(
 export async function getIncidents(
   tenantId: string,
   status?: IncidentStatus,
+  client?: PoolClient,
 ): Promise<Incident[]> {
   const conditions = ['i.tenant_id = $1'];
   const params: unknown[] = [tenantId];
@@ -269,14 +273,14 @@ export async function getIncidents(
     params.push(status);
   }
 
-  const result = await pool.query(
+  const result = await tenantQuery(client,
     `SELECT i.* FROM incidents i WHERE ${conditions.join(' AND ')} ORDER BY i.created_at DESC`,
     params,
   );
 
   const incidents: Incident[] = [];
   for (const row of result.rows) {
-    const timelineResult = await pool.query(
+    const timelineResult = await tenantQuery(client,
       `SELECT * FROM incident_timeline WHERE incident_id = $1 ORDER BY timestamp ASC`,
       [row.id],
     );
@@ -303,8 +307,9 @@ export async function createIncident(
   request: CreateIncidentRequest,
   tenantId: string,
   userId: string,
+  client?: PoolClient,
 ): Promise<Incident> {
-  const result = await pool.query(
+  const result = await tenantQuery(client,
     `INSERT INTO incidents (tenant_id, title, description, severity, status, assigned_to, alert_ids)
      VALUES ($1, $2, $3, $4, 'open', $5, $6)
      RETURNING *`,
@@ -321,7 +326,7 @@ export async function createIncident(
   const incidentId = result.rows[0].id as string;
 
   // Add initial timeline entry
-  await pool.query(
+  await tenantQuery(client,
     `INSERT INTO incident_timeline (incident_id, status, message, user_id)
      VALUES ($1, 'open', 'Incident created', $2)`,
     [incidentId, userId],
@@ -349,8 +354,9 @@ export async function resolveIncident(
   request: ResolveIncidentRequest,
   tenantId: string,
   userId: string,
+  client?: PoolClient,
 ): Promise<Incident> {
-  const result = await pool.query(
+  const result = await tenantQuery(client,
     `UPDATE incidents
      SET status = 'resolved', root_cause = $1, resolution = $2, resolved_at = NOW(), updated_at = NOW()
      WHERE id = $3 AND tenant_id = $4
@@ -363,14 +369,14 @@ export async function resolveIncident(
   }
 
   // Add timeline entry
-  await pool.query(
+  await tenantQuery(client,
     `INSERT INTO incident_timeline (incident_id, status, message, user_id)
      VALUES ($1, 'resolved', $2, $3)`,
     [incidentId, `Resolved: ${request.resolution}`, userId],
   );
 
   // Fetch full incident with timeline
-  const timelineResult = await pool.query(
+  const timelineResult = await tenantQuery(client,
     `SELECT * FROM incident_timeline WHERE incident_id = $1 ORDER BY timestamp ASC`,
     [incidentId],
   );

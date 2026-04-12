@@ -6,6 +6,7 @@ import * as mcpAdapter from '../../integrations/mcp/mcp-apex-adapter.js';
 import * as ordsFallback from '../../integrations/mcp/ords-fallback.js';
 import { ExplorerCacheService } from './explorer.cache.js';
 import { decryptCredentials } from '../connections/encryption.service.js';
+import { getConnectionForTenant, type ResolvedConnection } from '../connections/connections.repository.js';
 import type {
   ApexApplication,
   ApexPage,
@@ -31,20 +32,6 @@ export interface SyncStatus {
   error?: string;
 }
 
-interface ConnectionRow {
-  id: string;
-  tenant_id: string;
-  type: 'ords' | 'jdbc';
-  config: Record<string, unknown>;
-  encrypted_credentials: {
-    iv: string;
-    encrypted: string;
-    authTag: string;
-    keyId: string;
-  };
-  workspace_id?: number;
-}
-
 // ── Sync tracking ────────────────────────────────────────────────────────────
 
 const syncTracking = new Map<string, {
@@ -62,52 +49,40 @@ const cache = new ExplorerCacheService();
 async function getConnectionDetails(
   tenantId: string,
   connectionId: string,
-): Promise<ConnectionRow> {
-  const result = await pool.query(
-    `SELECT id, tenant_id, type, config, encrypted_credentials
-     FROM connections
-     WHERE tenant_id = $1 AND id = $2 AND deleted_at IS NULL AND is_active = true`,
-    [tenantId, connectionId],
-  );
-
-  if (result.rowCount === 0) {
-    throw new NotFoundError('Connection not found or inactive');
-  }
-
-  return result.rows[0] as ConnectionRow;
+): Promise<ResolvedConnection> {
+  const conn = await getConnectionForTenant(tenantId, connectionId);
+  if (!conn) throw new NotFoundError('Connection not found or inactive');
+  return conn;
 }
 
-function buildMCPConfig(conn: ConnectionRow): MCPConnectionConfig {
-  const creds = decryptCredentials(conn.encrypted_credentials, conn.tenant_id);
-  const config = conn.config as Record<string, unknown>;
+function buildMCPConfig(conn: ResolvedConnection): MCPConnectionConfig {
+  const creds = decryptCredentials(conn.encryptedCredentials, conn.tenantId);
 
   // MCP server URL is expected in the connection config
-  const mcpBaseUrl = (config.mcpBaseUrl ?? config.ordsBaseUrl ?? '') as string;
+  const mcpBaseUrl = (conn.config.ordsBaseUrl ?? '') as string;
 
   return {
     baseUrl: mcpBaseUrl,
     username: creds.username,
     password: creds.password,
-    schema: config.schema as string | undefined,
-    tenantId: conn.tenant_id,
+    schema: conn.config.schema,
+    tenantId: conn.tenantId,
     connectionId: conn.id,
   };
 }
 
-function buildOrdsConfig(conn: ConnectionRow): OrdsConnectionInfo {
-  const creds = decryptCredentials(conn.encrypted_credentials, conn.tenant_id);
-  const config = conn.config as Record<string, unknown>;
+function buildOrdsConfig(conn: ResolvedConnection): OrdsConnectionInfo {
+  const creds = decryptCredentials(conn.encryptedCredentials, conn.tenantId);
 
   return {
-    ordsBaseUrl: (config.ordsBaseUrl ?? '') as string,
+    ordsBaseUrl: (conn.config.ordsBaseUrl ?? '') as string,
     username: creds.username,
     password: creds.password,
   };
 }
 
-function getWorkspaceId(conn: ConnectionRow): number {
-  const config = conn.config as Record<string, unknown>;
-  return Number(config.workspaceId ?? config.workspace_id ?? 0);
+function getWorkspaceId(conn: ResolvedConnection): number {
+  return Number(conn.config.workspaceName ?? 0);
 }
 
 /**
@@ -115,7 +90,7 @@ function getWorkspaceId(conn: ConnectionRow): number {
  * Returns the result from whichever source succeeds.
  */
 async function withMcpFallback<T>(
-  conn: ConnectionRow,
+  conn: ResolvedConnection,
   mcpFn: (client: MCPClient) => Promise<T>,
   ordsFn: (ordsConn: OrdsConnectionInfo) => Promise<T>,
 ): Promise<T> {

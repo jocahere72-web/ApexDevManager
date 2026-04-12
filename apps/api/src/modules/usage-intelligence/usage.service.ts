@@ -3,6 +3,8 @@
 // ---------------------------------------------------------------------------
 
 import { pool } from '../../config/database.js';
+import { PoolClient } from 'pg';
+import { tenantQuery } from '../../lib/tenant-db.js';
 import { logger } from '../../lib/logger.js';
 import { claudeClient } from '../ai-studio/claude.client.js';
 import type {
@@ -27,6 +29,7 @@ import type {
 export async function getUsageMetrics(
   tenantId: string,
   period?: { start: string; end: string },
+  client?: PoolClient,
 ): Promise<UsageMetrics> {
   const start = period?.start ?? new Date(Date.now() - 30 * 86400000).toISOString();
   const end = period?.end ?? new Date().toISOString();
@@ -34,7 +37,7 @@ export async function getUsageMetrics(
   logger.info({ tenantId, start, end }, 'Fetching usage metrics');
 
   // AI token usage
-  const aiResult = await pool.query(
+  const aiResult = await tenantQuery(client,
     `SELECT
        COALESCE(SUM(total_tokens), 0)::bigint AS total_tokens,
        COALESCE(SUM(estimated_cost_usd), 0)::numeric AS ai_cost
@@ -44,7 +47,7 @@ export async function getUsageMetrics(
   );
 
   // API call counts
-  const apiResult = await pool.query(
+  const apiResult = await tenantQuery(client,
     `SELECT COUNT(*)::int AS total_calls
      FROM audit_events
      WHERE tenant_id = $1 AND created_at BETWEEN $2 AND $3`,
@@ -52,7 +55,7 @@ export async function getUsageMetrics(
   );
 
   // Active users
-  const usersResult = await pool.query(
+  const usersResult = await tenantQuery(client,
     `SELECT COUNT(DISTINCT user_id)::int AS active_users
      FROM audit_events
      WHERE tenant_id = $1 AND created_at BETWEEN $2 AND $3`,
@@ -60,7 +63,7 @@ export async function getUsageMetrics(
   );
 
   // Connection count for storage proxy
-  const connectionsResult = await pool.query(
+  const connectionsResult = await tenantQuery(client,
     `SELECT COUNT(*)::int AS conn_count FROM connections WHERE tenant_id = $1`,
     [tenantId],
   );
@@ -107,8 +110,9 @@ export async function getUsageMetrics(
 export async function getCostBreakdown(
   tenantId: string,
   period?: { start: string; end: string },
+  client?: PoolClient,
 ): Promise<CostBreakdown> {
-  const metrics = await getUsageMetrics(tenantId, period);
+  const metrics = await getUsageMetrics(tenantId, period, client);
 
   const items: CostLineItem[] = Object.entries(metrics.byResource).map(([category, data]) => ({
     category: category as ResourceType,
@@ -137,10 +141,11 @@ export async function getCostBreakdown(
  */
 export async function getOptimizationSuggestions(
   tenantId: string,
+  client?: PoolClient,
 ): Promise<OptimizationSuggestion[]> {
   logger.info({ tenantId }, 'Generating optimization suggestions');
 
-  const metrics = await getUsageMetrics(tenantId);
+  const metrics = await getUsageMetrics(tenantId, undefined, client);
 
   const prompt = `Analyze these usage metrics for an Oracle APEX development platform and suggest cost optimizations:
 
@@ -210,6 +215,7 @@ export async function getUsageTrends(
   tenantId: string,
   granularity: TimeGranularity = 'day',
   days = 30,
+  client?: PoolClient,
 ): Promise<UsageTrends> {
   const since = new Date(Date.now() - days * 86400000).toISOString();
 
@@ -218,7 +224,7 @@ export async function getUsageTrends(
     throw new Error(`Invalid granularity: ${granularity}. Must be one of: ${Object.keys(GRANULARITY_MAP).join(', ')}`);
   }
 
-  const result = await pool.query(
+  const result = await tenantQuery(client,
     `SELECT
        ${truncFn} AS date,
        COALESCE(SUM(estimated_cost_usd), 0)::numeric AS cost_usd,
@@ -231,7 +237,7 @@ export async function getUsageTrends(
   );
 
   // Get API calls trend
-  const apiResult = await pool.query(
+  const apiResult = await tenantQuery(client,
     `SELECT
        ${truncFn.replace('created_at', 'a.created_at')} AS date,
        COUNT(*)::int AS api_calls,
@@ -297,12 +303,13 @@ export async function getUsageTrends(
 export async function exportReport(
   tenantId: string,
   request: ExportReportRequest,
+  client?: PoolClient,
 ): Promise<{ content: string; contentType: string; filename: string }> {
   logger.info({ tenantId, format: request.format }, 'Exporting usage report');
 
-  const metrics = await getUsageMetrics(tenantId, request.period);
-  const breakdown = request.includeBreakdown ? await getCostBreakdown(tenantId, request.period) : null;
-  const suggestions = request.includeSuggestions ? await getOptimizationSuggestions(tenantId) : null;
+  const metrics = await getUsageMetrics(tenantId, request.period, client);
+  const breakdown = request.includeBreakdown ? await getCostBreakdown(tenantId, request.period, client) : null;
+  const suggestions = request.includeSuggestions ? await getOptimizationSuggestions(tenantId, client) : null;
 
   const reportData = {
     generatedAt: new Date().toISOString(),
