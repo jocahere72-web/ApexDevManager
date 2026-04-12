@@ -87,6 +87,7 @@ function rowToSession(row: Record<string, unknown>): PRDSession {
     id: row.id as string,
     tenantId: row.tenant_id as string,
     appId: (row.app_id as number) ?? undefined,
+    issueId: (row.issue_id as string) ?? undefined,
     title: row.title as string,
     status: row.status as PRDSession['status'],
     currentStage: row.current_stage as PRDStage,
@@ -185,13 +186,30 @@ export async function createSession(
   client?: PoolClient,
 ): Promise<PRDSession> {
   const result = await tenantQuery(client,
-    `INSERT INTO prd_sessions (tenant_id, app_id, title, created_by)
-     VALUES ($1, $2, $3, $4)
+    `INSERT INTO prd_sessions (tenant_id, app_id, title, issue_id, created_by)
+     VALUES ($1, $2, $3, $4, $5)
      RETURNING *`,
-    [tenantId, input.appId ?? null, input.title, userId],
+    [tenantId, input.appId ?? null, input.title, input.issueId ?? null, userId],
   );
 
-  logger.info({ sessionId: result.rows[0].id, tenantId }, 'PRD session created');
+  const sessionId = result.rows[0].id as string;
+
+  // If linked to an issue, log activity
+  if (input.issueId) {
+    const { logActivity } = await import('../issues/issues.service.js');
+    await logActivity(
+      tenantId,
+      input.issueId,
+      'prd_created',
+      `PRD session "${input.title}" created`,
+      'prd_session',
+      sessionId,
+      userId,
+      client,
+    );
+  }
+
+  logger.info({ sessionId, tenantId }, 'PRD session created');
   return rowToSession(result.rows[0]);
 }
 

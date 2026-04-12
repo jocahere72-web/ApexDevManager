@@ -182,6 +182,37 @@ export async function fetchIssuesByClient(
   return response.data.data ?? [];
 }
 
+// ---------------------------------------------------------------------------
+// Activity Types
+// ---------------------------------------------------------------------------
+
+export interface IssueActivity {
+  id: string;
+  tenantId: string;
+  issueId: string;
+  activityType: string;
+  description: string;
+  artifactType?: string;
+  artifactId?: string;
+  actorId?: string;
+  createdAt: string;
+}
+
+export async function fetchIssueActivities(
+  issueId: string,
+): Promise<IssueActivity[]> {
+  const response = await apiClient.get(`/issues/${issueId}/activities`);
+  return response.data.data ?? [];
+}
+
+export async function linkArtifactToIssue(
+  issueId: string,
+  artifactType: string,
+  artifactId: string,
+): Promise<void> {
+  await apiClient.post(`/issues/${issueId}/link`, { artifactType, artifactId });
+}
+
 export async function fetchIssueStats(clientId?: string): Promise<IssueStats> {
   const params: Record<string, string> = {};
   if (clientId) params.clientId = clientId;

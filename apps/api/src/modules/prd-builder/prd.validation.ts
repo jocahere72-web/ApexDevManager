@@ -10,6 +10,7 @@ export const CreateSessionSchema = z.object({
     .min(1, 'Title cannot be empty')
     .max(200, 'Title too long (max 200 characters)'),
   appId: z.coerce.number().int().positive().optional(),
+  issueId: z.string().uuid().optional(),
 });
 
 export type CreateSessionInput = z.infer<typeof CreateSessionSchema>;

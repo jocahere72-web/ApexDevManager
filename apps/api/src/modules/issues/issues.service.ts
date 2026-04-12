@@ -363,6 +363,160 @@ export async function getIssuesByClient(
   return result.rows.map(rowToIssue);
 }
 
+// ── Activity types ─────────────────────────────────────────────────────────
+export type ActivityType =
+  | 'status_change'
+  | 'prd_created'
+  | 'prd_exported'
+  | 'change_set_created'
+  | 'release_created'
+  | 'test_created'
+  | 'code_edited'
+  | 'comment'
+  | 'artifact_linked';
+
+export type ArtifactType =
+  | 'prd_session'
+  | 'change_set'
+  | 'release'
+  | 'test_suite'
+  | 'conversation'
+  | 'editor_session';
+
+export interface IssueActivity {
+  id: string;
+  tenantId: string;
+  issueId: string;
+  activityType: ActivityType;
+  description: string;
+  artifactType?: ArtifactType;
+  artifactId?: string;
+  actorId?: string;
+  createdAt: string;
+}
+
+function rowToActivity(row: Record<string, unknown>): IssueActivity {
+  return {
+    id: row.id as string,
+    tenantId: row.tenant_id as string,
+    issueId: row.issue_id as string,
+    activityType: row.activity_type as ActivityType,
+    description: row.description as string,
+    artifactType: (row.artifact_type as ArtifactType) ?? undefined,
+    artifactId: (row.artifact_id as string) ?? undefined,
+    actorId: (row.actor_id as string) ?? undefined,
+    createdAt: (row.created_at as Date).toISOString(),
+  };
+}
+
+// ── Log Activity ───────────────────────────────────────────────────────────
+export async function logActivity(
+  tenantId: string,
+  issueId: string,
+  activityType: ActivityType,
+  description: string,
+  artifactType?: ArtifactType,
+  artifactId?: string,
+  actorId?: string,
+  client?: PoolClient,
+): Promise<void> {
+  await tenantQuery(
+    client,
+    `INSERT INTO issue_activities (tenant_id, issue_id, activity_type, description, artifact_type, artifact_id, actor_id)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+    [tenantId, issueId, activityType, description, artifactType ?? null, artifactId ?? null, actorId ?? null],
+  );
+  logger.info({ tenantId, issueId, activityType }, 'Issue activity logged');
+}
+
+// ── Get Activities ─────────────────────────────────────────────────────────
+export async function getActivities(
+  tenantId: string,
+  issueId: string,
+  client?: PoolClient,
+): Promise<IssueActivity[]> {
+  // Ensure issue exists
+  await getIssueById(tenantId, issueId, client);
+
+  const result = await tenantQuery(
+    client,
+    `SELECT * FROM issue_activities
+     WHERE tenant_id = $1 AND issue_id = $2
+     ORDER BY created_at DESC`,
+    [tenantId, issueId],
+  );
+
+  return result.rows.map(rowToActivity);
+}
+
+// ── Link Artifact ──────────────────────────────────────────────────────────
+const ARTIFACT_TABLE_MAP: Record<ArtifactType, string> = {
+  prd_session: 'prd_sessions',
+  change_set: 'change_sets',
+  release: 'releases',
+  test_suite: 'test_suites',
+  conversation: 'ai_conversations',
+  editor_session: 'editor_sessions',
+};
+
+export async function linkArtifact(
+  tenantId: string,
+  issueId: string,
+  artifactType: ArtifactType,
+  artifactId: string,
+  actorId: string,
+  client?: PoolClient,
+): Promise<void> {
+  // Ensure issue exists
+  await getIssueById(tenantId, issueId, client);
+
+  const tableName = ARTIFACT_TABLE_MAP[artifactType];
+  if (!tableName) {
+    throw new ValidationError(`Unknown artifact type: ${artifactType}`);
+  }
+
+  // Update the artifact table to set issue_id
+  const result = await tenantQuery(
+    client,
+    `UPDATE ${tableName} SET issue_id = $3 WHERE tenant_id = $1 AND id = $2`,
+    [tenantId, artifactId, issueId],
+  );
+
+  if (result.rowCount === 0) {
+    throw new NotFoundError(`${artifactType} not found`);
+  }
+
+  // Also update the issue's reference column if applicable
+  const issueColumnMap: Partial<Record<ArtifactType, string>> = {
+    prd_session: 'prd_session_id',
+    change_set: 'change_set_id',
+    release: 'release_id',
+    test_suite: 'test_suite_id',
+  };
+
+  const issueColumn = issueColumnMap[artifactType];
+  if (issueColumn) {
+    await tenantQuery(
+      client,
+      `UPDATE issues SET ${issueColumn} = $3, updated_at = NOW() WHERE tenant_id = $1 AND id = $2`,
+      [tenantId, issueId, artifactId],
+    );
+  }
+
+  await logActivity(
+    tenantId,
+    issueId,
+    'artifact_linked',
+    `Linked ${artifactType.replace('_', ' ')} ${artifactId.slice(0, 8)}...`,
+    artifactType,
+    artifactId,
+    actorId,
+    client,
+  );
+
+  logger.info({ tenantId, issueId, artifactType, artifactId }, 'Artifact linked to issue');
+}
+
 // ── Get Issue Stats ─────────────────────────────────────────────────────────
 export async function getIssueStats(
   tenantId: string,

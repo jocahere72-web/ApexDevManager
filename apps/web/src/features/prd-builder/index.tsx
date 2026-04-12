@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { AppPage, AppPageHeader, AppCard, AppEmptyState, AppStatusPill } from '@/components/ui/AppTemplate';
 import { apiClient } from '@/lib/api-client';
+import { fetchIssues, type IssueSummary } from '@/services/issues.api';
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -39,6 +40,8 @@ export default function PRDBuilderPage() {
   const [error, setError] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [newTitle, setNewTitle] = useState('');
+  const [selectedIssueId, setSelectedIssueId] = useState('');
+  const [issueOptions, setIssueOptions] = useState<IssueSummary[]>([]);
   const [textInput, setTextInput] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -73,13 +76,24 @@ export default function PRDBuilderPage() {
     loadSessionDetail(session.id);
   }, [loadSessionDetail]);
 
+  // ── Load issues for selector ────────────────────────────────────────────
+  const loadIssuesForSelector = useCallback(async () => {
+    try {
+      const result = await fetchIssues({ pageSize: 100 });
+      setIssueOptions(result.data);
+    } catch { /* ignore - selector will just be empty */ }
+  }, []);
+
   // ── Create session ──────────────────────────────────────────────────────
   const handleCreate = async () => {
     if (!newTitle.trim()) return;
     setActionLoading('create');
     try {
-      const res = await apiClient.post('/prd/sessions', { title: newTitle.trim() });
+      const body: Record<string, unknown> = { title: newTitle.trim() };
+      if (selectedIssueId) body.issueId = selectedIssueId;
+      const res = await apiClient.post('/prd/sessions', body);
       setNewTitle('');
+      setSelectedIssueId('');
       setShowCreate(false);
       openSession(res.data.data);
       loadSessions();
@@ -190,7 +204,7 @@ export default function PRDBuilderPage() {
       <AppPage>
         <AppPageHeader eyebrow="Product Requirements" title="PRD Builder"
           description="Create, refine and export Product Requirements Documents."
-          actions={<button onClick={() => setShowCreate(true)} className="app-button app-button-primary">+ New PRD</button>}
+          actions={<button onClick={() => { setShowCreate(true); loadIssuesForSelector(); }} className="app-button app-button-primary">+ New PRD</button>}
         />
         {error && <div className="app-alert app-alert-danger" style={{ marginBottom: 12 }}>{error}</div>}
         {loading ? <AppEmptyState>Loading...</AppEmptyState> :
@@ -214,8 +228,20 @@ export default function PRDBuilderPage() {
             <div className="app-modal">
               <h3 className="app-card-title" style={{ marginBottom: 12 }}>New PRD Session</h3>
               <input type="text" placeholder="PRD title..." value={newTitle} onChange={e => setNewTitle(e.target.value)} autoFocus className="app-input" style={{ marginBottom: 12 }} />
+              <label className="app-label" style={{ fontSize: '0.8rem', marginBottom: 4 }}>Link to Issue (optional)</label>
+              <select
+                value={selectedIssueId}
+                onChange={e => setSelectedIssueId(e.target.value)}
+                className="app-select"
+                style={{ marginBottom: 12, width: '100%' }}
+              >
+                <option value="">None</option>
+                {issueOptions.map(issue => (
+                  <option key={issue.id} value={issue.id}>{issue.code}: {issue.title}</option>
+                ))}
+              </select>
               <div className="app-toolbar" style={{ justifyContent: 'flex-end' }}>
-                <button onClick={() => { setShowCreate(false); setNewTitle(''); }} className="app-button">Cancel</button>
+                <button onClick={() => { setShowCreate(false); setNewTitle(''); setSelectedIssueId(''); }} className="app-button">Cancel</button>
                 <button onClick={handleCreate} disabled={!!actionLoading || !newTitle.trim()} className="app-button app-button-primary">{actionLoading === 'create' ? 'Creating...' : 'Create'}</button>
               </div>
             </div>
