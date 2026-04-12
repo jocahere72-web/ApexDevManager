@@ -2,6 +2,85 @@
 
 ---
 
+## User Input — Review Findings Context
+**Timestamp**: 2026-04-12T10:53:58Z
+**User Input**: "# Review findings:
+
+## Finding 1 (apps/api/src/modules/ai-studio/rate-limiter.ts:70-76) [added]
+[P1] Rate limiter aun usa pool.query directo
+
+Este rate limiter sigue leyendo `ai_token_usage` con `pool.query()` en vez de usar el cliente tenant-scoped del request. Si la tabla depende de RLS por `app.current_tenant`, esta consulta no participa del mismo contexto que el resto de la ruta autenticada.
+
+## Finding 2 (apps/api/src/modules/schema-inspector/schema.service.ts:100-112) [added]
+[P1] Schema Inspector no propaga req.dbClient en consultas Oracle
+
+El helper ya acepta `client`, pero `getSchema()` no lo recibe ni lo pasa a `executeSqlViaOrds()`. El mismo patrón queda en `getTable`, `getTableDDL`, `createSnapshot` y `generateERD`, y el controller tampoco pasa `req.dbClient` en varias rutas. La resolución de conexiones puede caer al fallback de `pool.query()` y no usar el contexto RLS del request.
+
+## Finding 3 (apps/api/src/modules/explorer/explorer.service.ts:84-85) [added]
+[P1] Explorer convierte workspaceName a WORKSPACE_ID
+
+El repositorio solo mapea `workspace_name` a `config.workspaceName`, pero Explorer hace `Number(conn.config.workspaceName ?? 0)` y lo pasa a consultas que filtran por `WORKSPACE_ID`. Si el valor es un nombre de workspace, termina como `NaN` y el listado de aplicaciones puede quedar vacio o fallar.
+
+## Finding 4 (apps/api/src/modules/usage-intelligence/usage.service.ts:37-43) [added]
+[P1] RLS sigue aplicado parcialmente
+
+Este servicio sigue consultando con `pool.query()` directo. Como el tenant resolver setea `app.current_tenant` sobre `req.dbClient`, estas queries no garantizan usar el cliente tenant-scoped; dashboards y otros servicios tienen el mismo problema.
+
+## Finding 5 (apps/api/src/modules/schema-inspector/schema.service.ts:192) [added]
+[P1] Table detail falla con schema vacio
+
+`getTable` llama `getTableColumns` con schema vacio, pero el helper nuevo `assertOracleIdentifier` rechaza strings vacios. La ruta de detalle de tabla va a fallar incluso con un `tableName` valido.
+
+## Finding 6 (apps/api/package.json:11) [added]
+[P1] Tests API siguen sin ejecutarse
+
+El script de test sigue buscando `src/**/*.test.ts`, mientras los tests reales están en `apps/api/test`. La suite backend todavía puede dar una señal falsa.
+
+## Finding 7 (apps/api/src/modules/auth/auth.service.ts:38) [added]
+[P1] Auditoría sigue escribiendo tabla inexistente
+
+Los servicios siguen insertando en `audit_logs`, mientras las migraciones definen `audit_events`. La corrección todavía no llegó a auth/users/connections y el audit trail funcional sigue perdiéndose.
+
+## Finding 8 (apps/web/package.json:14) [added]
+[P1] Dependencia compartida omitida afecta muchos módulos
+
+Decenas de imports usan `@apex-dev-manager/shared-types`, pero API y web no lo declaran como dependencia workspace. El problema no se limita a Explorer: impacta múltiples módulos backend y frontend en instalación limpia.
+
+## Finding 9 (apps/api/src/app.ts:20) [added]
+[P1] CORS inseguro con credenciales
+
+La configuración permite `origin: '*'` cuando no hay `CORS_ORIGIN`, pero también habilita `credentials: true`. Es inválido para navegadores y no cumple la baseline de seguridad para endpoints autenticados; debe usar allowlist explícita por ambiente.
+
+## Finding 10 (apps/web/src/features/explorer/index.tsx:126) [added]
+[P1] Expansion de Explorer no carga hijos
+
+`handleExpandNode()` solo marca el nodo como loading; no usa los hooks importados para páginas/componentes ni inserta hijos en el árbol. La navegación del árbol queda como prototipo, no como flujo funcional.
+
+## Finding 11 (apps/web/src/features/connections/components/ConnectionDetail.tsx:283) [added]
+[P2] Placeholder visual visible en detalle
+
+La UI muestra un placeholder literal de gráfica de latencia aunque ya muestra que hay data points disponibles. Esto hace que la pantalla parezca terminada pero entregue una experiencia incompleta.
+
+## Finding 12 (apps/web/src/lib/api-client.ts:30) [added]
+[P1] Interceptor 401 expulsa ante cualquier request fallido
+
+En la corrida Playwright sin API mockeada, rutas como `/connections`, `/explorer` y `/ai-studio` terminaron en login porque una llamada inicial devolvió 401 y este interceptor borra sesión y redirige globalmente. Conviene distinguir token expirado de permisos insuficientes o endpoints opcionales, para no sacar al usuario de toda la app por un fetch de datos.
+
+## My request for Codex:
+"
+**AI Response**: "Used as additional review context while implementing the app-wide visual template requested in the previous message."
+**Context**: Frontend Design System - Context-only review findings.
+
+---
+
+## User Request — Application Visual Template
+**Timestamp**: 2026-04-12T10:53:58Z
+**User Input**: "hazme un template o diseno para aplicar a toda  la aplicacion y que sea vea muy limpia y visualmente agradable"
+**AI Response**: "Created a reusable application visual template with global CSS tokens/classes, UI template components, a redesigned responsive MainLayout, and a dashboard example that uses the new template. Ran web typecheck, build, and tests successfully."
+**Context**: Frontend Design System - App-wide visual template implementation.
+
+---
+
 ## User Request — Run Frontend Tests And Visual Analysis
 **Timestamp**: 2026-04-12T05:35:31Z
 **User Input**: "haz las pruebas y analiza las interfaces graficas"

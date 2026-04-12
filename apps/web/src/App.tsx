@@ -24,6 +24,8 @@ const UsageIntelligencePage = lazy(() => import('@/features/usage-intelligence')
 const DashboardsPage = lazy(() => import('@/features/dashboards'));
 const CodeFactoryPage = lazy(() => import('@/features/code-factory'));
 const MarketplacePage = lazy(() => import('@/features/marketplace'));
+const ClientsPage = lazy(() => import('@/features/clients'));
+const IssuesPage = lazy(() => import('@/features/issues'));
 const AdminPage = lazy(() => import('@/features/admin'));
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -50,6 +52,8 @@ function App() {
         }
       >
         <Route path="/" element={<DashboardPage />} />
+        <Route path="/clients/*" element={<Suspense fallback={<Loading />}><ClientsPage /></Suspense>} />
+        <Route path="/issues/*" element={<Suspense fallback={<Loading />}><IssuesPage /></Suspense>} />
         <Route path="/connections/*" element={<Suspense fallback={<Loading />}><ConnectionsPage /></Suspense>} />
         <Route path="/explorer" element={<Suspense fallback={<Loading />}><ExplorerPage /></Suspense>} />
         <Route path="/editor" element={<Suspense fallback={<Loading />}><EditorPage /></Suspense>} />
