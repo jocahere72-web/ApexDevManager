@@ -112,6 +112,7 @@ function mapComponent(row: Record<string, unknown>, componentType: string): Apex
       row.REGION_NAME ?? row.ITEM_NAME ?? '',
     ),
     componentType,
+    regionId: row.region_id ?? row.REGION_ID ?? undefined,
     pageId: 0,
     applicationId: 0,
     displaySequence: null,

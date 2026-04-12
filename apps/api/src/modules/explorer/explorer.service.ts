@@ -212,7 +212,8 @@ export async function listComponents(
   tenantId: string,
   connectionId: string,
   pageId: number,
-  type: ApexComponentType = 'regions',
+  type?: ApexComponentType,
+  appId?: number,
   client?: PoolClient,
 ): Promise<ApexComponent[]> {
   // Check cache
@@ -227,7 +228,7 @@ export async function listComponents(
   const components = await withMcpFallback(
     conn,
     (client) => mcpAdapter.listComponents(client, pageId, type),
-    (ordsConn) => ordsFallback.listComponents(ordsConn, 0, Number(pageId), type),
+    (ordsConn) => ordsFallback.listComponents(ordsConn, appId ?? 0, Number(pageId), type),
   );
 
   // Cache result

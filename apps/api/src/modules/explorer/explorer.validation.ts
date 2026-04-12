@@ -45,7 +45,7 @@ export type ListComponentsParams = z.infer<typeof ListComponentsParamsSchema>;
 
 // ── List Components Query (optional type filter) ────────────────────────────
 export const ListComponentsQuerySchema = z.object({
-  type: z.enum(COMPONENT_TYPES).optional().default('regions'),
+  type: z.enum(COMPONENT_TYPES).optional(),
 });
 
 export type ListComponentsQuery = z.infer<typeof ListComponentsQuerySchema>;

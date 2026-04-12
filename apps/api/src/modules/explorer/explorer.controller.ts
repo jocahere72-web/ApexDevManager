@@ -78,11 +78,13 @@ explorerRouter.get(
         throw new ValidationError('Invalid query parameters', queryParsed.error.flatten().fieldErrors);
       }
 
+      const appId = req.query.appId ? Number(req.query.appId) : undefined;
       const components = await explorerService.listComponents(
         req.tenantId!,
         paramsParsed.data.connectionId,
         paramsParsed.data.pageId,
         queryParsed.data.type,
+        appId,
         req.dbClient,
       );
 

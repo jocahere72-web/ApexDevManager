@@ -18,32 +18,38 @@ export type CreateSessionInput = z.infer<typeof CreateSessionSchema>;
 // Upload Source
 // ---------------------------------------------------------------------------
 
+const ALLOWED_MIME_TYPES = [
+  'application/pdf',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'text/plain',
+  'text/markdown',
+  'image/png',
+  'image/jpeg',
+  'image/webp',
+];
+
 export const UploadSourceSchema = z.object({
   filename: z
     .string({ required_error: 'Filename is required' })
     .min(1)
     .max(500),
   mimeType: z
-    .string({ required_error: 'MIME type is required' })
+    .string()
     .refine(
-      (v) =>
-        [
-          'application/pdf',
-          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-          'text/plain',
-          'text/markdown',
-        ].includes(v),
-      { message: 'Unsupported file type. Accepted: PDF, DOCX, TXT, MD' },
-    ),
+      (v) => ALLOWED_MIME_TYPES.includes(v),
+      { message: 'Unsupported file type. Accepted: PDF, DOCX, TXT, MD, PNG, JPEG, WebP' },
+    )
+    .default('text/plain'),
   fileSize: z.coerce
     .number()
     .int()
     .positive()
-    .max(50 * 1024 * 1024, 'File too large (max 50MB)'),
+    .max(25 * 1024 * 1024, 'File too large (max 25MB)'),
   storageKey: z
     .string({ required_error: 'Storage key is required' })
     .min(1)
     .max(1000),
+  content: z.string().max(500_000).optional(),
 });
 
 export type UploadSourceInput = z.infer<typeof UploadSourceSchema>;
