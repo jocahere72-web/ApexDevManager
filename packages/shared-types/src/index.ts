@@ -51,5 +51,8 @@ export * from './marketplace.js';
 export * from './client.js';
 export * from './issue.js';
 
+// LLM Providers
+export * from './llm-provider.js';
+
 // SaaS (U13)
 export * from './saas.js';

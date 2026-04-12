@@ -27,6 +27,7 @@ const MarketplacePage = lazy(() => import('@/features/marketplace'));
 const ClientsPage = lazy(() => import('@/features/clients'));
 const IssuesPage = lazy(() => import('@/features/issues'));
 const AdminPage = lazy(() => import('@/features/admin'));
+const LLMProvidersPage = lazy(() => import('@/features/admin/components/LLMProviders'));
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuth();
@@ -73,6 +74,7 @@ function App() {
         <Route path="/code-factory" element={<Suspense fallback={<Loading />}><CodeFactoryPage /></Suspense>} />
         <Route path="/marketplace" element={<Suspense fallback={<Loading />}><MarketplacePage /></Suspense>} />
         <Route path="/admin/*" element={<Suspense fallback={<Loading />}><AdminPage /></Suspense>} />
+        <Route path="/llm-providers" element={<Suspense fallback={<Loading />}><LLMProvidersPage /></Suspense>} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

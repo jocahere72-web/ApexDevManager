@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import type { MessageParam, ContentBlock } from '@anthropic-ai/sdk/resources/messages';
 import { logger } from '../../lib/logger.js';
+import { getActiveProvider, getDecryptedApiKey } from '../llm-providers/llm-providers.service.js';
 
 // ---------------------------------------------------------------------------
 // Configuration
@@ -17,7 +18,14 @@ interface ClaudeConfig {
   maxTokens: number;
 }
 
+/** Cached config so we don't query DB on every request. */
+let cachedConfig: ClaudeConfig | null = null;
+let cachedConfigTimestamp = 0;
+const CONFIG_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
 function loadConfig(): ClaudeConfig {
+  // Synchronous fallback — used only during construction.
+  // The async loadConfigFromDb() is preferred and called before first use.
   const apiKey = process.env.ANTHROPIC_API_KEY ?? '';
   if (!apiKey && process.env.NODE_ENV === 'production') {
     throw new Error('ANTHROPIC_API_KEY environment variable is required');
@@ -27,6 +35,68 @@ function loadConfig(): ClaudeConfig {
     model: process.env.ANTHROPIC_MODEL ?? DEFAULT_MODEL,
     maxTokens: parseInt(process.env.ANTHROPIC_MAX_TOKENS ?? '4096', 10),
   };
+}
+
+/**
+ * Load config from the DB (active LLM provider for a tenant), falling back
+ * to the ANTHROPIC_API_KEY env var, and finally to a dev/test placeholder.
+ */
+async function loadConfigFromDb(tenantId?: string): Promise<ClaudeConfig> {
+  // Return cached config if still fresh
+  if (cachedConfig && Date.now() - cachedConfigTimestamp < CONFIG_CACHE_TTL_MS) {
+    return cachedConfig;
+  }
+
+  // Try DB-based provider if tenantId available
+  if (tenantId) {
+    try {
+      const activeProvider = await getActiveProvider(tenantId);
+      if (activeProvider) {
+        const apiKey = await getDecryptedApiKey(tenantId, activeProvider.id);
+        cachedConfig = {
+          apiKey,
+          model: activeProvider.defaultModel,
+          maxTokens: activeProvider.maxTokensPerRequest,
+        };
+        cachedConfigTimestamp = Date.now();
+        logger.debug({ tenantId, provider: activeProvider.providerName }, 'Loaded LLM config from DB');
+        return cachedConfig;
+      }
+    } catch (err) {
+      logger.warn({ tenantId, err }, 'Failed to load LLM provider from DB, falling back to env');
+    }
+  }
+
+  // Fallback to env var
+  const apiKey = process.env.ANTHROPIC_API_KEY ?? '';
+  if (apiKey) {
+    cachedConfig = {
+      apiKey,
+      model: process.env.ANTHROPIC_MODEL ?? DEFAULT_MODEL,
+      maxTokens: parseInt(process.env.ANTHROPIC_MAX_TOKENS ?? '4096', 10),
+    };
+    cachedConfigTimestamp = Date.now();
+    return cachedConfig;
+  }
+
+  // Dev/test mode placeholder
+  if (process.env.NODE_ENV !== 'production') {
+    cachedConfig = {
+      apiKey: 'test-placeholder-key',
+      model: DEFAULT_MODEL,
+      maxTokens: 4096,
+    };
+    cachedConfigTimestamp = Date.now();
+    return cachedConfig;
+  }
+
+  throw new Error('No LLM provider configured and ANTHROPIC_API_KEY is not set');
+}
+
+/** Invalidate the cached config (e.g., when a provider is activated). */
+export function invalidateConfigCache(): void {
+  cachedConfig = null;
+  cachedConfigTimestamp = 0;
 }
 
 // ---------------------------------------------------------------------------
@@ -75,6 +145,18 @@ export class ClaudeClient {
     this.client = new Anthropic({
       apiKey: this.config.apiKey,
     });
+  }
+
+  /**
+   * Refresh config from DB for the given tenant, re-creating the Anthropic
+   * client if the API key has changed.
+   */
+  async refreshConfig(tenantId?: string): Promise<void> {
+    const newConfig = await loadConfigFromDb(tenantId);
+    if (newConfig.apiKey !== this.config.apiKey) {
+      this.client = new Anthropic({ apiKey: newConfig.apiKey });
+    }
+    this.config = newConfig;
   }
 
   /**

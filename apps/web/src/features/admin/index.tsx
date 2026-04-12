@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { AppPage, AppPageHeader } from '@/components/ui/AppTemplate';
 import { TenantManagement } from './components/TenantManagement';
 import { SSOConfigPanel } from './components/SSOConfig';
+import { LLMProviders } from './components/LLMProviders';
 
-type Tab = 'tenants' | 'sso';
+type Tab = 'tenants' | 'sso' | 'llm-providers';
 
 export function AdminPage() {
   const [activeTab, setActiveTab] = useState<Tab>('tenants');
@@ -30,8 +31,19 @@ export function AdminPage() {
         >
           SSO & Identity
         </button>
+        <button
+          type="button"
+          className={`app-tab${activeTab === 'llm-providers' ? ' app-tab-active' : ''}`}
+          onClick={() => setActiveTab('llm-providers')}
+        >
+          LLM Providers
+        </button>
       </div>
-      <div>{activeTab === 'tenants' ? <TenantManagement /> : <SSOConfigPanel />}</div>
+      <div>
+        {activeTab === 'tenants' && <TenantManagement />}
+        {activeTab === 'sso' && <SSOConfigPanel />}
+        {activeTab === 'llm-providers' && <LLMProviders />}
+      </div>
     </AppPage>
   );
 }

@@ -227,8 +227,8 @@ export async function listComponents(
 
   const components = await withMcpFallback(
     conn,
-    (client) => mcpAdapter.listComponents(client, pageId, type),
-    (ordsConn) => ordsFallback.listComponents(ordsConn, appId ?? 0, Number(pageId), type),
+    (client) => mcpAdapter.listComponents(client, pageId, type as any),
+    (ordsConn) => ordsFallback.listComponents(ordsConn, appId ?? 0, Number(pageId), type as any),
   );
 
   // Cache result
@@ -271,6 +271,7 @@ export async function getApplicationTree(
           connectionId,
           page.pageId,
           'regions',
+          undefined,
           client,
         );
         return { ...page, components };
