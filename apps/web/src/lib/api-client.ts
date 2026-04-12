@@ -51,6 +51,15 @@ apiClient.interceptors.response.use(
       return Promise.reject(error);
     }
 
+    // Only attempt token refresh for auth-related 401 codes.
+    // Other 401s (e.g. permission denied) are rejected so the caller can handle them.
+    const AUTH_ERROR_CODES = ['TOKEN_EXPIRED', 'INVALID_TOKEN', 'AUTHENTICATION_REQUIRED'];
+    const errorCode =
+      error?.response?.data?.error?.code ?? error?.response?.data?.code;
+    if (errorCode && !AUTH_ERROR_CODES.includes(errorCode)) {
+      return Promise.reject(error);
+    }
+
     // Try refresh
     if (isRefreshing) {
       return new Promise((resolve, reject) => {

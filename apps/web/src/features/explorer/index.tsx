@@ -1,10 +1,11 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { AppPage, AppPageHeader } from '@/components/ui/AppTemplate';
 import { apiClient } from '@/lib/api-client';
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
-interface Connection { id: string; name: string; }
+interface Connection { id: string; name: string; ordsBaseUrl?: string; }
 interface ApexApp {
   applicationId: number;
   applicationName: string;
@@ -167,76 +168,44 @@ export default function ExplorerPage() {
 
   const connName = connections.find(c => c.id === selectedConnId)?.name ?? '';
 
+  const breadcrumbParts: string[] = [connName || t('explorer.selectConnection')];
+  if (selectedApp) breadcrumbParts.push(selectedApp.applicationName);
+  if (selectedPage) breadcrumbParts.push(`Page ${selectedPage.pageId} - ${selectedPage.pageName}`);
+
   return (
-    <div style={{ minHeight: 'calc(100vh - var(--app-topbar-height))', background: 'var(--app-bg)', color: 'var(--app-text)' }}>
-      {/* Top bar */}
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 12, padding: '10px 20px',
-        borderBottom: '1px solid var(--app-border)', background: 'var(--app-surface)',
-      }}>
-        <span style={{ fontWeight: 800, color: 'var(--app-danger)', fontSize: '1.1rem' }}>APEX</span>
-        <span style={{ color: 'var(--app-muted)' }}>›</span>
+    <AppPage>
+      <AppPageHeader
+        eyebrow="APEX Explorer"
+        title={breadcrumbParts.join(' > ')}
+        description={
+          <div className="app-toolbar" style={{ gap: 12, marginTop: 4 }}>
+            <select
+              className="app-select"
+              value={selectedConnId}
+              onChange={e => { setSelectedConnId(e.target.value); setView('apps'); setSelectedApp(null); }}
+              style={{ maxWidth: 260 }}
+            >
+              <option value="">{t('explorer.selectConnection')}</option>
+              {connections.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
 
-        <select
-          value={selectedConnId}
-          onChange={e => { setSelectedConnId(e.target.value); setView('apps'); setSelectedApp(null); }}
-          style={{
-            background: 'var(--app-border)', color: 'var(--app-text)', border: '1px solid var(--app-border-strong)',
-            borderRadius: 4, padding: '4px 8px', fontSize: '0.85rem',
-          }}
-        >
-          <option value="">{t('explorer.selectConnection')}</option>
-          {connections.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-        </select>
+            {view !== 'apps' && (
+              <button className="app-button" type="button" onClick={goBack}>
+                &larr; Back
+              </button>
+            )}
 
-        {selectedApp && (
-          <>
-            <span style={{ color: 'var(--app-muted)' }}>›</span>
-            <button onClick={goBack} style={{
-              background: 'none', border: 'none', color: 'var(--app-accent)', cursor: 'pointer',
-              fontSize: '0.85rem', padding: 0,
-            }}>
-              Applications
-            </button>
-            <span style={{ color: 'var(--app-muted)' }}>›</span>
-            <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>
-              {selectedApp.applicationName}
-            </span>
-          </>
-        )}
-
-        {selectedPage && (
-          <>
-            <span style={{ color: 'var(--app-muted)' }}>›</span>
-            <button onClick={() => { setView('pages'); setSelectedPage(null); }} style={{
-              background: 'none', border: 'none', color: 'var(--app-accent)', cursor: 'pointer',
-              fontSize: '0.85rem', padding: 0,
-            }}>
-              Pages
-            </button>
-            <span style={{ color: 'var(--app-muted)' }}>›</span>
-            <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>
-              Page {selectedPage.pageId} - {selectedPage.pageName}
-            </span>
-          </>
-        )}
-
-        <div style={{ flex: 1 }} />
-
-        <div style={{ position: 'relative' }}>
-          <input
-            type="text"
-            placeholder={t('explorer.search')}
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            style={{
-              background: 'var(--app-border)', color: 'var(--app-text)', border: '1px solid var(--app-border-strong)',
-              borderRadius: 4, padding: '6px 12px 6px 30px', fontSize: '0.85rem', width: 200,
-            }}
-          />
-          <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--app-muted)', fontSize: '0.8rem' }}>🔍</span>
-        </div>
-      </div>
+            <input
+              type="text"
+              className="app-input"
+              placeholder={t('explorer.search')}
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              style={{ maxWidth: 220 }}
+            />
+          </div>
+        }
+      />
 
       {/* Action bar (pages/components view) */}
       {view !== 'apps' && selectedApp && (
@@ -246,7 +215,11 @@ export default function ExplorerPage() {
         }}>
           {view === 'pages' && (
             <>
-              <ActionButton icon="▶" label="Run Application" onClick={() => window.open(`http://99.0.5.232:8031/ords/r/infortributos/f${selectedApp.applicationId}`, '_blank')} />
+              <ActionButton icon="▶" label="Run Application" onClick={() => {
+                const conn = connections.find(c => c.id === selectedConnId);
+                const base = conn?.ordsBaseUrl;
+                if (base) window.open(`${base.replace(/\/+$/, '')}/f${selectedApp.applicationId}`, '_blank');
+              }} />
               <ActionButton icon="🔧" label="Supporting Objects" />
               <ActionButton icon="🧩" label="Shared Components" />
               <ActionButton icon="🛠" label="Utilities" />
@@ -254,7 +227,11 @@ export default function ExplorerPage() {
           )}
           {view === 'components' && selectedPage && (
             <>
-              <ActionButton icon="▶" label="Run Page" onClick={() => window.open(`http://99.0.5.232:8031/ords/r/infortributos/f${selectedApp.applicationId}/page${selectedPage.pageId}`, '_blank')} />
+              <ActionButton icon="▶" label="Run Page" onClick={() => {
+                const conn = connections.find(c => c.id === selectedConnId);
+                const base = conn?.ordsBaseUrl;
+                if (base) window.open(`${base.replace(/\/+$/, '')}/f${selectedApp.applicationId}/page${selectedPage.pageId}`, '_blank');
+              }} />
               <ActionButton icon="🔄" label="Refresh" onClick={() => loadPageComponents(selectedPage)} />
             </>
           )}
@@ -274,10 +251,10 @@ export default function ExplorerPage() {
             {filteredApps.map(app => (
               <div
                 key={app.applicationId}
+                className="app-card app-card-pad"
                 onClick={() => openApp(app)}
                 style={{
-                  background: 'var(--app-surface)', borderRadius: 8, padding: 16, cursor: 'pointer',
-                  border: '1px solid transparent', transition: 'border-color 0.15s, transform 0.1s',
+                  cursor: 'pointer', transition: 'border-color 0.15s, transform 0.1s',
                   display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
                   textAlign: 'center', minHeight: 120,
                 }}
@@ -286,7 +263,7 @@ export default function ExplorerPage() {
                   (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)';
                 }}
                 onMouseLeave={e => {
-                  (e.currentTarget as HTMLElement).style.borderColor = 'transparent';
+                  (e.currentTarget as HTMLElement).style.borderColor = 'var(--app-border)';
                   (e.currentTarget as HTMLElement).style.transform = 'none';
                 }}
               >
@@ -319,14 +296,14 @@ export default function ExplorerPage() {
             {filteredPages.map(page => (
               <div
                 key={page.pageId}
+                className="app-card app-card-pad"
                 onClick={() => openPage(page)}
                 style={{
-                  background: 'var(--app-surface)', borderRadius: 8, padding: 14, cursor: 'pointer',
-                  border: '1px solid transparent', transition: 'border-color 0.15s',
+                  cursor: 'pointer', transition: 'border-color 0.15s',
                   textAlign: 'center',
                 }}
                 onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = 'var(--app-border-strong)'}
-                onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = 'transparent'}
+                onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = 'var(--app-border)'}
               >
                 <div style={{
                   width: 40, height: 40, borderRadius: 6, margin: '0 auto 8px',
@@ -410,17 +387,16 @@ export default function ExplorerPage() {
         )}
 
         {!selectedConnId && !loading && (
-          <div style={{
-            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-            minHeight: 300, color: 'var(--app-muted)', textAlign: 'center',
-          }}>
-            <div style={{ fontSize: '3rem', marginBottom: 12 }}>⚡</div>
-            <h2 style={{ margin: '0 0 8px', color: 'var(--app-text)', fontWeight: 700 }}>{t('explorer.title')}</h2>
-            <p style={{ fontSize: '0.9rem' }}>{t('explorer.selectConnectionHint')}</p>
+          <div className="app-empty">
+            <div>
+              <div style={{ fontSize: '3rem', marginBottom: 12 }}>⚡</div>
+              <h2 style={{ margin: '0 0 8px', color: 'var(--app-text)', fontWeight: 700 }}>{t('explorer.title')}</h2>
+              <p style={{ fontSize: '0.9rem' }}>{t('explorer.selectConnectionHint')}</p>
+            </div>
           </div>
         )}
       </div>
-    </div>
+    </AppPage>
   );
 }
 

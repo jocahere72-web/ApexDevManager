@@ -187,16 +187,54 @@ export default function ConnectionDetail() {
         </div>
       </AppCard>
 
-      {/* Latency Chart Placeholder */}
+      {/* Latency History */}
       <AppCard>
         <h3 className="conn-section-title">Latency History</h3>
-        <div className="app-empty">
-          Latency chart placeholder -- integrate charting library here
-        </div>
-        {healthHistory && healthHistory.length > 0 && (
-          <p className="conn-chart-meta">
-            {healthHistory.length} data points available
-          </p>
+        {healthHistory && healthHistory.length > 0 ? (
+          <>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'flex-end',
+                gap: 2,
+                height: 80,
+                padding: '8px 0',
+              }}
+            >
+              {(() => {
+                const maxLatency = Math.max(
+                  ...healthHistory.map((h: any) => h.latencyMs ?? 0),
+                  1,
+                );
+                return healthHistory.map((h: any, i: number) => {
+                  const value = h.latencyMs ?? 0;
+                  const heightPct = (value / maxLatency) * 100;
+                  return (
+                    <div
+                      key={h.id ?? i}
+                      title={`${value}ms`}
+                      style={{
+                        flex: 1,
+                        minWidth: 4,
+                        maxWidth: 18,
+                        height: `${Math.max(heightPct, 4)}%`,
+                        background: value > maxLatency * 0.75
+                          ? 'var(--app-danger)'
+                          : 'var(--app-accent)',
+                        borderRadius: 2,
+                        transition: 'height 0.2s ease',
+                      }}
+                    />
+                  );
+                });
+              })()}
+            </div>
+            <p className="conn-chart-meta">
+              {healthHistory.length} data points available
+            </p>
+          </>
+        ) : (
+          <p className="conn-muted-text">No latency checks recorded yet.</p>
         )}
       </AppCard>
     </div>
