@@ -1,4 +1,3 @@
-import { pool, getClient } from '../../config/database.js';
 import { tenantQuery } from '../../lib/tenant-db.js';
 import type { PoolClient } from 'pg';
 import { logger } from '../../lib/logger.js';
@@ -307,6 +306,15 @@ export async function uploadSource(
     throw new NotFoundError('PRD session not found');
   }
 
+  // Enforce maximum 10 files per session
+  const countResult = await tenantQuery(client,
+    'SELECT COUNT(*)::int AS cnt FROM prd_sources WHERE session_id = $1 AND tenant_id = $2',
+    [sessionId, tenantId],
+  );
+  if (countResult.rows[0].cnt >= 10) {
+    throw new ValidationError('Maximum 10 files per session');
+  }
+
   // If direct content is provided, store it immediately as parsed_text
   const directContent = (input as UploadSourceInput & { content?: string }).content;
 
@@ -349,19 +357,16 @@ export async function uploadSource(
  */
 async function parseSourceAsync(sourceId: string, tenantId: string, client?: PoolClient): Promise<void> {
   await initParsers();
-  const txClient = await getClient();
 
   try {
-    await txClient.query('BEGIN');
-
     // Mark as parsing
-    await txClient.query(
+    await tenantQuery(client,
       `UPDATE prd_sources SET parse_status = 'parsing' WHERE id = $1 AND tenant_id = $2`,
       [sourceId, tenantId],
     );
 
     // Fetch source details
-    const sourceResult = await txClient.query(
+    const sourceResult = await tenantQuery(client,
       `SELECT * FROM prd_sources WHERE id = $1 AND tenant_id = $2`,
       [sourceId, tenantId],
     );
@@ -442,18 +447,15 @@ async function parseSourceAsync(sourceId: string, tenantId: string, client?: Poo
     }
 
     // Update source with parsed content
-    await txClient.query(
+    await tenantQuery(client,
       `UPDATE prd_sources
        SET parsed_text = $1, chunk_count = $2, parse_status = 'parsed'
        WHERE id = $3 AND tenant_id = $4`,
       [parsedText, chunkCount, sourceId, tenantId],
     );
 
-    await txClient.query('COMMIT');
     logger.info({ sourceId, chunkCount }, 'Source parsed successfully');
   } catch (err) {
-    await txClient.query('ROLLBACK');
-
     // Mark as error
     await tenantQuery(client,
       `UPDATE prd_sources SET parse_status = 'error', parse_error = $1 WHERE id = $2`,
@@ -461,8 +463,6 @@ async function parseSourceAsync(sourceId: string, tenantId: string, client?: Poo
     );
 
     throw err;
-  } finally {
-    txClient.release();
   }
 }
 
@@ -479,13 +479,9 @@ export async function extractRequirements(
   tenantId: string,
   client?: PoolClient,
 ): Promise<ExtractionData> {
-  const txClient = await getClient();
-
   try {
-    await txClient.query('BEGIN');
-
     // Verify session and get sources
-    const sessionResult = await txClient.query(
+    const sessionResult = await tenantQuery(client,
       `SELECT * FROM prd_sessions WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL`,
       [sessionId, tenantId],
     );
@@ -495,7 +491,7 @@ export async function extractRequirements(
     }
 
     // Get parsed sources
-    const sourcesResult = await txClient.query(
+    const sourcesResult = await tenantQuery(client,
       `SELECT parsed_text, filename FROM prd_sources
        WHERE session_id = $1 AND tenant_id = $2 AND parse_status = 'parsed'
        ORDER BY created_at ASC`,
@@ -507,13 +503,11 @@ export async function extractRequirements(
     }
 
     // Update status
-    await txClient.query(
+    await tenantQuery(client,
       `UPDATE prd_sessions SET status = 'extracting', current_stage = 2, updated_at = NOW()
        WHERE id = $1`,
       [sessionId],
     );
-
-    await txClient.query('COMMIT');
 
     // Build prompt for AI extraction
     const sourceTexts = sourcesResult.rows
@@ -583,8 +577,6 @@ ${sourceTexts}`;
     logger.info({ sessionId, tenantId }, 'Requirements extracted');
     return extractionData;
   } catch (err) {
-    await txClient.query('ROLLBACK').catch(() => {});
-
     // Set error status
     await tenantQuery(client,
       `UPDATE prd_sessions SET status = 'error', updated_at = NOW() WHERE id = $1`,
@@ -592,8 +584,6 @@ ${sourceTexts}`;
     );
 
     throw err;
-  } finally {
-    txClient.release();
   }
 }
 
@@ -643,24 +633,21 @@ export async function generateSections(
     ? input.customSections
     : templateMap[input.templateStyle];
 
-  // Mark existing current sections as non-current
+  // Mark existing current sections as non-current (inside the middleware transaction)
   await tenantQuery(client,
     `UPDATE prd_sections SET is_current = false WHERE session_id = $1 AND tenant_id = $2`,
     [sessionId, tenantId],
   );
 
   const sections: PRDSection[] = [];
-  const txClient = await getClient();
 
   try {
-    await txClient.query('BEGIN');
-
     for (let i = 0; i < sectionTitles.length; i++) {
       const sectionTitle = sectionTitles[i];
       const sectionNumber = i + 1;
 
       // Get max version for this section
-      const versionResult = await txClient.query(
+      const versionResult = await tenantQuery(client,
         `SELECT COALESCE(MAX(version), 0)::int AS max_version
          FROM prd_sections
          WHERE session_id = $1 AND section_number = $2`,
@@ -699,7 +686,7 @@ Write comprehensive content for this section.`;
 
       // Insert section
       const generatedBy = isAIAvailable() ? 'ai' : 'user';
-      const sectionResult = await txClient.query(
+      const sectionResult = await tenantQuery(client,
         `INSERT INTO prd_sections (session_id, tenant_id, section_number, title, content, version, is_current, generated_by)
          VALUES ($1, $2, $3, $4, $5, $6, true, $7)
          RETURNING *`,
@@ -710,13 +697,11 @@ Write comprehensive content for this section.`;
     }
 
     // Update session
-    await txClient.query(
+    await tenantQuery(client,
       `UPDATE prd_sessions SET status = 'draft', current_stage = 3, updated_at = NOW()
        WHERE id = $1`,
       [sessionId],
     );
-
-    await txClient.query('COMMIT');
 
     logger.info(
       { sessionId, tenantId, sectionCount: sections.length },
@@ -725,16 +710,12 @@ Write comprehensive content for this section.`;
 
     return sections;
   } catch (err) {
-    await txClient.query('ROLLBACK');
-
     await tenantQuery(client,
       `UPDATE prd_sessions SET status = 'error', updated_at = NOW() WHERE id = $1`,
       [sessionId],
     );
 
     throw err;
-  } finally {
-    txClient.release();
   }
 }
 
@@ -751,73 +732,60 @@ export async function updateSection(
   tenantId: string,
   client?: PoolClient,
 ): Promise<PRDSection> {
-  const txClient = await getClient();
+  // Get existing section
+  const existing = await tenantQuery(client,
+    `SELECT * FROM prd_sections WHERE id = $1 AND tenant_id = $2`,
+    [sectionId, tenantId],
+  );
 
-  try {
-    await txClient.query('BEGIN');
-
-    // Get existing section
-    const existing = await txClient.query(
-      `SELECT * FROM prd_sections WHERE id = $1 AND tenant_id = $2`,
-      [sectionId, tenantId],
-    );
-
-    if (existing.rowCount === 0) {
-      throw new NotFoundError('Section not found');
-    }
-
-    const row = existing.rows[0];
-    const sessionId = row.session_id as string;
-    const sectionNumber = row.section_number as number;
-
-    // Get max version
-    const versionResult = await txClient.query(
-      `SELECT COALESCE(MAX(version), 0)::int AS max_version
-       FROM prd_sections
-       WHERE session_id = $1 AND section_number = $2`,
-      [sessionId, sectionNumber],
-    );
-    const newVersion = (versionResult.rows[0].max_version as number) + 1;
-
-    // Mark old versions as non-current
-    await txClient.query(
-      `UPDATE prd_sections SET is_current = false
-       WHERE session_id = $1 AND section_number = $2 AND tenant_id = $3`,
-      [sessionId, sectionNumber, tenantId],
-    );
-
-    // Insert new version
-    const result = await txClient.query(
-      `INSERT INTO prd_sections (session_id, tenant_id, section_number, title, content, version, is_current, generated_by)
-       VALUES ($1, $2, $3, $4, $5, $6, true, $7)
-       RETURNING *`,
-      [
-        sessionId,
-        tenantId,
-        sectionNumber,
-        input.title ?? row.title,
-        input.content ?? row.content,
-        newVersion,
-        input.generatedBy ?? 'user',
-      ],
-    );
-
-    // Update session timestamp
-    await txClient.query(
-      `UPDATE prd_sessions SET updated_at = NOW() WHERE id = $1`,
-      [sessionId],
-    );
-
-    await txClient.query('COMMIT');
-
-    logger.info({ sectionId: result.rows[0].id, sessionId, newVersion }, 'Section updated');
-    return rowToSection(result.rows[0]);
-  } catch (err) {
-    await txClient.query('ROLLBACK');
-    throw err;
-  } finally {
-    txClient.release();
+  if (existing.rowCount === 0) {
+    throw new NotFoundError('Section not found');
   }
+
+  const row = existing.rows[0];
+  const sessionId = row.session_id as string;
+  const sectionNumber = row.section_number as number;
+
+  // Get max version
+  const versionResult = await tenantQuery(client,
+    `SELECT COALESCE(MAX(version), 0)::int AS max_version
+     FROM prd_sections
+     WHERE session_id = $1 AND section_number = $2`,
+    [sessionId, sectionNumber],
+  );
+  const newVersion = (versionResult.rows[0].max_version as number) + 1;
+
+  // Mark old versions as non-current
+  await tenantQuery(client,
+    `UPDATE prd_sections SET is_current = false
+     WHERE session_id = $1 AND section_number = $2 AND tenant_id = $3`,
+    [sessionId, sectionNumber, tenantId],
+  );
+
+  // Insert new version
+  const result = await tenantQuery(client,
+    `INSERT INTO prd_sections (session_id, tenant_id, section_number, title, content, version, is_current, generated_by)
+     VALUES ($1, $2, $3, $4, $5, $6, true, $7)
+     RETURNING *`,
+    [
+      sessionId,
+      tenantId,
+      sectionNumber,
+      input.title ?? row.title,
+      input.content ?? row.content,
+      newVersion,
+      input.generatedBy ?? 'user',
+    ],
+  );
+
+  // Update session timestamp
+  await tenantQuery(client,
+    `UPDATE prd_sessions SET updated_at = NOW() WHERE id = $1`,
+    [sessionId],
+  );
+
+  logger.info({ sectionId: result.rows[0].id, sessionId, newVersion }, 'Section updated');
+  return rowToSection(result.rows[0]);
 }
 
 // ---------------------------------------------------------------------------

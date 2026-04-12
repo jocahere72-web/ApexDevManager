@@ -263,9 +263,12 @@ export function PRDWorkspace({ sessionId }: PRDWorkspaceProps) {
   );
 
   const handleRegenerateSection = useCallback(
-    (section: PRDSection) => {
-      // For simplicity, regenerate all sections (AI will update).
-      // In production, a per-section regeneration endpoint would be preferred.
+    (_section: PRDSection) => {
+      // No per-section regeneration endpoint exists yet — this regenerates ALL sections.
+      const confirmed = window.confirm(
+        'This will regenerate ALL sections, not just this one. Any manual edits to other sections will be overwritten. Continue?',
+      );
+      if (!confirmed) return;
       generateSections.mutate({ templateStyle });
     },
     [generateSections, templateStyle],
@@ -603,7 +606,7 @@ export function PRDWorkspace({ sessionId }: PRDWorkspaceProps) {
                           onClick={() => handleRegenerateSection(section)}
                           disabled={generateSections.isPending}
                         >
-                          Regenerate
+                          Regenerate All Sections
                         </button>
                         <button
                           type="button"
