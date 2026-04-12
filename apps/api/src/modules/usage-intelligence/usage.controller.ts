@@ -83,12 +83,16 @@ usageRouter.get(
   '/trends',
   async (req: Request, res: Response<ApiResponse<UsageTrends>>, next: NextFunction) => {
     try {
+      const validGranularities = ['hour', 'day', 'week', 'month'] as const;
       const granularity = (req.query.granularity as string) ?? 'day';
+      if (!validGranularities.includes(granularity as typeof validGranularities[number])) {
+        return res.status(400).json({ success: false, error: { code: 'VALIDATION_ERROR', message: 'granularity must be hour, day, week, or month' } });
+      }
       const days = req.query.days ? parseInt(req.query.days as string, 10) : 30;
 
       const trends = await usageService.getUsageTrends(
         req.tenantId!,
-        granularity as any,
+        granularity as typeof validGranularities[number],
         days,
       );
       res.json({ success: true, data: trends });

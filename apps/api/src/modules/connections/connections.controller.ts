@@ -29,6 +29,7 @@ connectionsRouter.post(
         req.tenantId!,
         parsed.data,
         req.userId!,
+        req.dbClient,
       );
 
       res.status(201).json({ success: true, data: connection });
@@ -51,6 +52,7 @@ connectionsRouter.get(
       const { connections, total } = await connectionsService.listConnections(
         req.tenantId!,
         parsed.data,
+        req.dbClient,
       );
       const { page, limit } = parsed.data;
       const totalPages = Math.ceil(total / limit);
@@ -81,6 +83,7 @@ connectionsRouter.get(
       const connection = await connectionsService.getConnectionById(
         req.tenantId!,
         req.params.id,
+        req.dbClient,
       );
 
       res.json({ success: true, data: connection });
@@ -106,6 +109,7 @@ connectionsRouter.patch(
         req.params.id,
         parsed.data,
         req.userId!,
+        req.dbClient,
       );
 
       res.json({ success: true, data: connection });
@@ -125,6 +129,7 @@ connectionsRouter.delete(
         req.tenantId!,
         req.params.id,
         req.userId!,
+        req.dbClient,
       );
 
       res.json({ success: true, data: { message: 'Connection deleted successfully' } });
@@ -145,7 +150,7 @@ connectionsRouter.post(
         throw new ValidationError('Invalid connection ID', parsed.error.flatten().fieldErrors);
       }
 
-      const result = await connectionsService.testConnection(req.tenantId!, parsed.data.id);
+      const result = await connectionsService.testConnection(req.tenantId!, parsed.data.id, req.dbClient);
 
       res.json({ success: true, data: result });
     } catch (err) {
@@ -159,7 +164,7 @@ connectionsRouter.get(
   '/:id/health',
   async (req: Request, res: Response<ApiResponse<ConnectionHealth>>, next: NextFunction) => {
     try {
-      const health = await connectionsService.getHealthStatus(req.tenantId!, req.params.id);
+      const health = await connectionsService.getHealthStatus(req.tenantId!, req.params.id, req.dbClient);
 
       res.json({ success: true, data: health });
     } catch (err) {

@@ -16,7 +16,11 @@ export function createApp(): express.Express {
   app.use(helmet());
 
   // CORS
-  const allowedOrigins = process.env.CORS_ORIGINS?.split(',').map(s => s.trim()).filter(Boolean);
+  const rawOrigins = process.env.CORS_ORIGINS?.split(',').map(s => s.trim()).filter(Boolean);
+  const allowedOrigins = rawOrigins?.filter(o => o !== '*');
+  if (rawOrigins?.includes('*') && process.env.NODE_ENV === 'production') {
+    throw new Error('CORS_ORIGINS cannot be "*" in production with credentials enabled');
+  }
   app.use(
     cors({
       origin: allowedOrigins && allowedOrigins.length > 0 ? allowedOrigins : false,

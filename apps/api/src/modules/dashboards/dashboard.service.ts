@@ -175,23 +175,23 @@ export async function getDashboardData(tenantId: string): Promise<DashboardOverv
   // 5. Active users
   const [usersToday, usersWeek, usersMonth] = await Promise.all([
     pool.query(
-      `SELECT COUNT(DISTINCT user_id)::int AS count FROM audit_log WHERE tenant_id = $1 AND created_at >= $2`,
+      `SELECT COUNT(DISTINCT user_id)::int AS count FROM audit_events WHERE tenant_id = $1 AND created_at >= $2`,
       [tenantId, todayStart.toISOString()],
     ),
     pool.query(
-      `SELECT COUNT(DISTINCT user_id)::int AS count FROM audit_log WHERE tenant_id = $1 AND created_at >= $2`,
+      `SELECT COUNT(DISTINCT user_id)::int AS count FROM audit_events WHERE tenant_id = $1 AND created_at >= $2`,
       [tenantId, new Date(Date.now() - 7 * 86400000).toISOString()],
     ),
     pool.query(
-      `SELECT COUNT(DISTINCT user_id)::int AS count FROM audit_log WHERE tenant_id = $1 AND created_at >= $2`,
+      `SELECT COUNT(DISTINCT user_id)::int AS count FROM audit_events WHERE tenant_id = $1 AND created_at >= $2`,
       [tenantId, monthStart.toISOString()],
     ),
   ]);
 
   // 6. Recent activity
   const activityResult = await pool.query(
-    `SELECT id, action_type AS type, description AS title, details AS description, user_id, created_at
-     FROM audit_log
+    `SELECT id, event_type, action, entity_type, entity_id, event_payload, user_id, created_at
+     FROM audit_events
      WHERE tenant_id = $1
      ORDER BY created_at DESC
      LIMIT 20`,
@@ -200,9 +200,9 @@ export async function getDashboardData(tenantId: string): Promise<DashboardOverv
 
   const recentActivity: ActivityItem[] = activityResult.rows.map((row) => ({
     id: row.id as string,
-    type: (row.type as ActivityItem['type']) ?? 'alert',
-    title: row.title as string,
-    description: (row.description as string) ?? '',
+    type: (row.event_type as ActivityItem['type']) ?? 'alert',
+    title: `${(row.action as string) ?? 'action'} ${(row.entity_type as string) ?? ''}`.trim(),
+    description: ((row.event_payload as Record<string, unknown>)?.description as string) ?? '',
     userId: (row.user_id as string) ?? undefined,
     timestamp: (row.created_at as Date).toISOString(),
   }));

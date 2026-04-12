@@ -1,9 +1,10 @@
-import { pool } from '../../config/database.js';
 import { logger } from '../../lib/logger.js';
+import { tenantQuery } from '../../lib/tenant-db.js';
 import { NotFoundError, ConflictError, ValidationError } from '../../lib/errors.js';
 import { hashPassword } from '../auth/password.service.js';
 import type { CreateUserInput, UpdateUserInput, ListUsersQuery } from './users.validation.js';
 import type { UserProfile, Role } from '../auth/auth.types.js';
+import type { PoolClient } from 'pg';
 
 // ── Audit Logging ────────────────────────────────────────────────────────────
 async function logAudit(
@@ -12,9 +13,11 @@ async function logAudit(
   action: string,
   targetId: string,
   details?: Record<string, unknown>,
+  client?: PoolClient,
 ): Promise<void> {
   try {
-    await pool.query(
+    await tenantQuery(
+      client,
       `INSERT INTO audit_events (tenant_id, user_id, event_type, action, entity_type, entity_id, event_payload, created_at)
        VALUES ($1, $2, 'user_management', $3, 'user', $4, $5, NOW())`,
       [tenantId, actorId, action, targetId, details ? JSON.stringify(details) : null],
@@ -43,9 +46,11 @@ export async function createUser(
   tenantId: string,
   data: CreateUserInput,
   actorId: string,
+  client?: PoolClient,
 ): Promise<UserProfile> {
   // Check for duplicate email within the tenant
-  const existing = await pool.query(
+  const existing = await tenantQuery(
+    client,
     `SELECT id FROM users WHERE tenant_id = $1 AND email = $2 AND deleted_at IS NULL`,
     [tenantId, data.email],
   );
@@ -56,7 +61,8 @@ export async function createUser(
 
   const passwordHash = await hashPassword(data.password);
 
-  const result = await pool.query(
+  const result = await tenantQuery(
+    client,
     `INSERT INTO users (tenant_id, email, display_name, password_hash, roles, is_active, created_at, updated_at)
      VALUES ($1, $2, $3, $4, $5, true, NOW(), NOW())
      RETURNING id, tenant_id, email, display_name, roles, is_active, created_at, updated_at`,
@@ -68,7 +74,7 @@ export async function createUser(
   await logAudit(tenantId, actorId, 'user.created', user.id, {
     email: data.email,
     roles: data.roles,
-  });
+  }, client);
 
   logger.info({ tenantId, userId: user.id, email: data.email }, 'User created');
 
@@ -79,6 +85,7 @@ export async function createUser(
 export async function listUsers(
   tenantId: string,
   query: ListUsersQuery,
+  client?: PoolClient,
 ): Promise<{ users: UserProfile[]; total: number }> {
   const conditions: string[] = ['tenant_id = $1', 'deleted_at IS NULL'];
   const params: unknown[] = [tenantId];
@@ -106,7 +113,8 @@ export async function listUsers(
   const offset = (query.page - 1) * query.limit;
 
   const [dataResult, countResult] = await Promise.all([
-    pool.query(
+    tenantQuery(
+      client,
       `SELECT id, tenant_id, email, display_name, roles, is_active, created_at, updated_at
        FROM users
        WHERE ${whereClause}
@@ -114,7 +122,7 @@ export async function listUsers(
        LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
       [...params, query.limit, offset],
     ),
-    pool.query(`SELECT COUNT(*)::int AS total FROM users WHERE ${whereClause}`, params),
+    tenantQuery(client, `SELECT COUNT(*)::int AS total FROM users WHERE ${whereClause}`, params),
   ]);
 
   return {
@@ -124,8 +132,9 @@ export async function listUsers(
 }
 
 // ── Get User By ID ───────────────────────────────────────────────────────────
-export async function getUserById(tenantId: string, id: string): Promise<UserProfile> {
-  const result = await pool.query(
+export async function getUserById(tenantId: string, id: string, client?: PoolClient): Promise<UserProfile> {
+  const result = await tenantQuery(
+    client,
     `SELECT id, tenant_id, email, display_name, roles, is_active, created_at, updated_at
      FROM users
      WHERE tenant_id = $1 AND id = $2 AND deleted_at IS NULL`,
@@ -145,10 +154,12 @@ export async function updateUser(
   id: string,
   data: UpdateUserInput,
   actorId: string,
+  client?: PoolClient,
 ): Promise<UserProfile> {
   // Last-admin guard: prevent removing admin role if this is the last admin
   if (data.roles && !data.roles.includes('admin')) {
-    const currentUser = await pool.query(
+    const currentUser = await tenantQuery(
+      client,
       `SELECT roles FROM users WHERE tenant_id = $1 AND id = $2 AND deleted_at IS NULL`,
       [tenantId, id],
     );
@@ -159,7 +170,8 @@ export async function updateUser(
 
     const currentRoles = currentUser.rows[0].roles as string[];
     if (currentRoles.includes('admin')) {
-      const adminCount = await pool.query(
+      const adminCount = await tenantQuery(
+        client,
         `SELECT COUNT(*)::int AS count FROM users
          WHERE tenant_id = $1 AND 'admin' = ANY(roles) AND is_active = true AND deleted_at IS NULL`,
         [tenantId],
@@ -173,7 +185,8 @@ export async function updateUser(
 
   // Last-admin guard: prevent deactivating last admin
   if (data.isActive === false) {
-    const currentUser = await pool.query(
+    const currentUser = await tenantQuery(
+      client,
       `SELECT roles FROM users WHERE tenant_id = $1 AND id = $2 AND deleted_at IS NULL`,
       [tenantId, id],
     );
@@ -184,7 +197,8 @@ export async function updateUser(
 
     const currentRoles = currentUser.rows[0].roles as string[];
     if (currentRoles.includes('admin')) {
-      const adminCount = await pool.query(
+      const adminCount = await tenantQuery(
+        client,
         `SELECT COUNT(*)::int AS count FROM users
          WHERE tenant_id = $1 AND 'admin' = ANY(roles) AND is_active = true AND deleted_at IS NULL`,
         [tenantId],
@@ -218,7 +232,8 @@ export async function updateUser(
     paramIndex++;
   }
 
-  const result = await pool.query(
+  const result = await tenantQuery(
+    client,
     `UPDATE users SET ${setClauses.join(', ')}
      WHERE tenant_id = $1 AND id = $2 AND deleted_at IS NULL
      RETURNING id, tenant_id, email, display_name, roles, is_active, created_at, updated_at`,
@@ -231,7 +246,7 @@ export async function updateUser(
 
   const user = rowToProfile(result.rows[0]);
 
-  await logAudit(tenantId, actorId, 'user.updated', id, data as Record<string, unknown>);
+  await logAudit(tenantId, actorId, 'user.updated', id, data as Record<string, unknown>, client);
 
   logger.info({ tenantId, userId: id }, 'User updated');
 
@@ -243,8 +258,10 @@ export async function softDeleteUser(
   tenantId: string,
   id: string,
   actorId: string,
+  client?: PoolClient,
 ): Promise<void> {
-  const result = await pool.query(
+  const result = await tenantQuery(
+    client,
     `UPDATE users SET deleted_at = NOW(), updated_at = NOW()
      WHERE tenant_id = $1 AND id = $2 AND deleted_at IS NULL
      RETURNING id`,
@@ -255,7 +272,7 @@ export async function softDeleteUser(
     throw new NotFoundError('User not found');
   }
 
-  await logAudit(tenantId, actorId, 'user.deleted', id);
+  await logAudit(tenantId, actorId, 'user.deleted', id, undefined, client);
 
   logger.info({ tenantId, userId: id }, 'User soft-deleted');
 }
@@ -265,8 +282,10 @@ export async function unlockUser(
   tenantId: string,
   id: string,
   actorId: string,
+  client?: PoolClient,
 ): Promise<void> {
-  const result = await pool.query(
+  const result = await tenantQuery(
+    client,
     `UPDATE users SET failed_attempts = 0, locked_until = NULL, updated_at = NOW()
      WHERE tenant_id = $1 AND id = $2 AND deleted_at IS NULL
      RETURNING id`,
@@ -277,7 +296,7 @@ export async function unlockUser(
     throw new NotFoundError('User not found');
   }
 
-  await logAudit(tenantId, actorId, 'user.unlocked', id);
+  await logAudit(tenantId, actorId, 'user.unlocked', id, undefined, client);
 
   logger.info({ tenantId, userId: id }, 'User account unlocked');
 }
