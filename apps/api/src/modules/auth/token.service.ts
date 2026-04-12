@@ -12,8 +12,12 @@ const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET && !process.env.JWT_PRIVATE_KEY) {
   throw new Error('JWT_SECRET or JWT_PRIVATE_KEY/JWT_PUBLIC_KEY must be configured');
 }
-const ACCESS_TOKEN_EXPIRY = '15m';
-const ACCESS_TOKEN_EXPIRY_SECONDS = 900; // 15 * 60
+const ACCESS_TOKEN_EXPIRY = process.env.JWT_EXPIRES_IN || '24h';
+const ACCESS_TOKEN_EXPIRY_SECONDS = ACCESS_TOKEN_EXPIRY.endsWith('h')
+  ? parseInt(ACCESS_TOKEN_EXPIRY) * 3600
+  : ACCESS_TOKEN_EXPIRY.endsWith('d')
+    ? parseInt(ACCESS_TOKEN_EXPIRY) * 86400
+    : parseInt(ACCESS_TOKEN_EXPIRY) * 60; // default minutes
 const REFRESH_TOKEN_EXPIRY_DAYS = 7;
 
 /** Determine signing configuration: prefer RS256 with PEM keys, fallback to HS256. */
