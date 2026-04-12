@@ -9,7 +9,7 @@ import type {
   CreateTestSuiteRequest,
 } from '@apex-dev-manager/shared-types';
 
-const BASE = '/api/v1/test-studio';
+const BASE = '/test-studio';
 
 /**
  * Generate tests via AI for a component.

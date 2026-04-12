@@ -7,7 +7,7 @@ import type {
   TimeGranularity,
 } from '@apex-dev-manager/shared-types';
 
-const BASE = '/api/v1/usage';
+const BASE = '/usage';
 
 /**
  * Get usage metrics.

@@ -10,8 +10,8 @@ import type {
   ConfigureSCIMRequest,
 } from '@apex-dev-manager/shared-types';
 
-const TENANT_BASE = '/api/v1/admin';
-const SSO_BASE = '/api/v1/admin';
+const TENANT_BASE = '/admin';
+const SSO_BASE = '/admin';
 
 // ---------------------------------------------------------------------------
 // Tenant Management

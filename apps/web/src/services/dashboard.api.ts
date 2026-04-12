@@ -8,7 +8,7 @@ import type {
   ResolveIncidentRequest,
 } from '@apex-dev-manager/shared-types';
 
-const BASE = '/api/v1/dashboard';
+const BASE = '/dashboard';
 
 /**
  * Get main dashboard overview.
