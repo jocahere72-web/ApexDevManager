@@ -8,7 +8,7 @@ interface PageProps {
 interface PageHeaderProps {
   eyebrow?: string;
   title: string;
-  description?: string;
+  description?: ReactNode;
   actions?: ReactNode;
 }
 
@@ -32,7 +32,7 @@ export function AppPageHeader({ eyebrow, title, description, actions }: PageHead
       <div>
         {eyebrow && <p className="app-eyebrow">{eyebrow}</p>}
         <h1 className="app-page-title">{title}</h1>
-        {description && <p className="app-page-description">{description}</p>}
+        {description && <div className="app-page-description">{description}</div>}
       </div>
       {actions && <div className="app-toolbar">{actions}</div>}
     </header>

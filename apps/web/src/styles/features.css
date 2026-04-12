@@ -510,3 +510,14 @@
   flex: 1;
   overflow: hidden;
 }
+
+/* ---------------------------------------------------------------------------
+   Responsive: collapse fixed grid columns on small screens
+   --------------------------------------------------------------------------- */
+
+@media (max-width: 768px) {
+  /* Override inline fixed grid layouts in feature components */
+  [style*="grid-template-columns"] {
+    grid-template-columns: 1fr !important;
+  }
+}
