@@ -1,4 +1,5 @@
 import { type FormEvent, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuth';
 import { apiClient } from '../lib/api-client';
 
@@ -8,6 +9,7 @@ function LoginPage() {
   const [tenantSlug, setTenantSlug] = useState('apex-demo');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const { t } = useTranslation();
   const { login } = useAuth();
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -49,11 +51,10 @@ function LoginPage() {
   return (
     <main className="app-login-shell">
       <section className="app-login-copy" aria-label="Workspace overview">
-        <p className="app-login-kicker">APEX Dev Manager</p>
-        <h1 className="app-login-title">A clean workspace for APEX delivery.</h1>
+        <p className="app-login-kicker">{t('app.name')}</p>
+        <h1 className="app-login-title">{t('auth.heroTitle')}</h1>
         <p className="app-login-text">
-          Keep client context, issues, connections, schema insight, releases, and AI-assisted
-          delivery in one calm place.
+          {t('auth.heroText')}
         </p>
       </section>
 
@@ -61,14 +62,14 @@ function LoginPage() {
         <div className="app-login-brand">
           <span className="app-brand-mark">A</span>
           <div>
-            <p className="app-login-brand-title">Welcome back</p>
-            <p className="app-login-brand-subtitle">Sign in to your workspace</p>
+            <p className="app-login-brand-title">{t('auth.welcome')}</p>
+            <p className="app-login-brand-subtitle">{t('auth.subtitle')}</p>
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="app-login-form">
           <label className="app-field" htmlFor="tenant">
-            <span className="app-label">Organization</span>
+            <span className="app-label">{t('auth.organization')}</span>
             <input
               id="tenant"
               type="text"
@@ -82,7 +83,7 @@ function LoginPage() {
           </label>
 
           <label className="app-field" htmlFor="email">
-            <span className="app-label">Email</span>
+            <span className="app-label">{t('auth.email')}</span>
             <input
               id="email"
               type="email"
@@ -96,7 +97,7 @@ function LoginPage() {
           </label>
 
           <label className="app-field" htmlFor="password">
-            <span className="app-label">Password</span>
+            <span className="app-label">{t('auth.password')}</span>
             <input
               id="password"
               type="password"
@@ -120,10 +121,10 @@ function LoginPage() {
             disabled={loading}
             className="app-button app-button-primary"
           >
-            {loading ? 'Signing in...' : 'Sign in'}
+            {loading ? t('auth.signingIn') : t('auth.signIn')}
           </button>
 
-          <p className="app-login-help">Default: admin@apex.local / Admin123!</p>
+          <p className="app-login-help">{t('auth.defaultCredentials')}</p>
         </form>
       </section>
     </main>
