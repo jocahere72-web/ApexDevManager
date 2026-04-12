@@ -143,12 +143,27 @@ export default function PRDBuilderPage() {
     if (!file || !activeSession) return;
     setActionLoading('upload');
     try {
-      const text = await file.text();
       const mimeType = file.type || 'text/plain';
+      const isText = mimeType.startsWith('text/') || file.name.endsWith('.md') || file.name.endsWith('.txt');
+
+      let content: string;
+      let encoding: string | undefined;
+
+      if (isText) {
+        content = await file.text();
+        encoding = undefined;
+      } else {
+        // PDF, DOCX, DOC — send as base64
+        const buffer = await file.arrayBuffer();
+        content = btoa(String.fromCharCode(...new Uint8Array(buffer)));
+        encoding = 'base64';
+      }
+
       await apiClient.post(`/prd/sessions/${activeSession.id}/sources`, {
         filename: file.name,
         mimeType,
-        content: text,
+        content,
+        encoding,
         fileSize: file.size,
       });
       await loadSessionDetail(activeSession.id);

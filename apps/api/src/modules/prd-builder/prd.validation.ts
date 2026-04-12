@@ -23,6 +23,7 @@ export type CreateSessionInput = z.infer<typeof CreateSessionSchema>;
 const ALLOWED_MIME_TYPES = [
   'application/pdf',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/msword',
   'text/plain',
   'text/markdown',
   'image/png',
@@ -39,19 +40,20 @@ export const UploadSourceSchema = z.object({
     .string()
     .refine(
       (v) => ALLOWED_MIME_TYPES.includes(v),
-      { message: 'Unsupported file type. Accepted: PDF, DOCX, TXT, MD, PNG, JPEG, WebP' },
+      { message: 'Unsupported file type. Accepted: PDF, DOCX, DOC, TXT, MD, PNG, JPEG, WebP' },
     )
     .default('text/plain'),
   fileSize: z.coerce
     .number()
     .int()
-    .positive()
-    .max(25 * 1024 * 1024, 'File too large (max 25MB)'),
+    .max(25 * 1024 * 1024, 'File too large (max 25MB)')
+    .optional(),
   storageKey: z
-    .string({ required_error: 'Storage key is required' })
-    .min(1)
-    .max(1000),
-  content: z.string().max(500_000).optional(),
+    .string()
+    .max(1000)
+    .optional(),
+  content: z.string().max(10_000_000).optional(),
+  encoding: z.enum(['base64']).optional(),
 });
 
 export type UploadSourceInput = z.infer<typeof UploadSourceSchema>;

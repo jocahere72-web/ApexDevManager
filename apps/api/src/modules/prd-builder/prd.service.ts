@@ -336,18 +336,71 @@ export async function uploadSource(
     throw new ValidationError('Maximum 10 files per session');
   }
 
-  // If direct content is provided, store it immediately as parsed_text
-  const directContent = (input as UploadSourceInput & { content?: string }).content;
+  // Extract content and encoding from input
+  const extInput = input as UploadSourceInput & { content?: string; encoding?: string };
+  const rawContent = extInput.content;
+  const encoding = extInput.encoding;
+  const mimeType = input.mimeType ?? 'text/plain';
+  const isTextMime = mimeType.startsWith('text/') || mimeType === 'application/json';
+
+  // For text content: store as parsed_text directly
+  // For binary (base64): decode and parse with appropriate library
+  let parsedText: string | null = null;
+  let parseStatus = 'pending';
+  let chunkCount = 0;
+
+  if (rawContent && isTextMime && encoding !== 'base64') {
+    // Plain text — store directly
+    parsedText = rawContent;
+    parseStatus = 'parsed';
+    chunkCount = chunkText(rawContent).length;
+  } else if (rawContent && encoding === 'base64') {
+    // Binary file sent as base64 — decode and parse
+    try {
+      const buffer = Buffer.from(rawContent, 'base64');
+
+      if (mimeType === 'application/pdf') {
+        await initParsers();
+        if (PDFParseClass) {
+          const parser = new PDFParseClass({ data: new Uint8Array(buffer) });
+          const textResult = await parser.getText();
+          parsedText = textResult.text;
+          await parser.destroy();
+        } else {
+          parsedText = `[PDF: ${input.filename} — pdf-parse no disponible]`;
+        }
+      } else if (
+        mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+        mimeType === 'application/msword' ||
+        input.filename?.endsWith('.docx') || input.filename?.endsWith('.doc')
+      ) {
+        await initParsers();
+        if (mammoth) {
+          const result = await mammoth.extractRawText({ buffer });
+          parsedText = result.value;
+        } else {
+          parsedText = `[DOCX: ${input.filename} — mammoth no disponible]`;
+        }
+      } else {
+        parsedText = `[Archivo binario: ${input.filename} — tipo ${mimeType}]`;
+      }
+
+      parseStatus = parsedText ? 'parsed' : 'error';
+      chunkCount = parsedText ? chunkText(parsedText).length : 0;
+    } catch (err) {
+      logger.error({ err, filename: input.filename }, 'Failed to parse uploaded binary file');
+      parsedText = `[Error al parsear ${input.filename}]`;
+      parseStatus = 'error';
+    }
+  }
 
   const result = await tenantQuery(client,
     `INSERT INTO prd_sources (session_id, tenant_id, filename, mime_type, file_size, storage_key, parsed_text, parse_status, chunk_count)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
      RETURNING *`,
     [
-      sessionId, tenantId, input.filename, input.mimeType, input.fileSize, input.storageKey,
-      directContent ?? null,
-      directContent ? 'parsed' : 'pending',
-      directContent ? chunkText(directContent).length : 0,
+      sessionId, tenantId, input.filename, mimeType, input.fileSize, input.storageKey,
+      parsedText, parseStatus, chunkCount,
     ],
   );
 
@@ -359,13 +412,6 @@ export async function uploadSource(
      WHERE id = $1`,
     [sessionId],
   );
-
-  // Trigger async parsing only if no direct content was provided
-  if (!directContent) {
-    parseSourceAsync(source.id, tenantId).catch((err) => {
-      logger.error({ err, sourceId: source.id }, 'Source parsing failed');
-    });
-  }
 
   logger.info({ sourceId: source.id, sessionId, tenantId }, 'PRD source uploaded');
   return source;
