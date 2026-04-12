@@ -34,6 +34,7 @@ export interface PRDSession {
   id: string;
   tenantId: string;
   appId?: number;
+  issueId?: string;
   title: string;
   status: PRDStatus;
   currentStage: PRDStage;

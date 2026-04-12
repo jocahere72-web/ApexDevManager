@@ -4,11 +4,13 @@ import {
   UpdateIssueSchema,
   ListIssuesSchema,
   TransitionSchema,
+  LinkArtifactSchema,
 } from './issues.validation.js';
 import * as issuesService from './issues.service.js';
 import { ValidationError } from '../../lib/errors.js';
 import type { ApiResponse, PaginatedResponse } from '../../types/index.js';
 import type { Issue, IssueStatus } from '@apex-dev-manager/shared-types';
+import type { IssueActivity } from './issues.service.js';
 
 export const issuesRouter = Router();
 
@@ -121,6 +123,50 @@ issuesRouter.get(
       );
 
       res.json({ success: true, data: issue });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// ── GET /:id/activities — Get issue activity timeline ──────────────────────
+issuesRouter.get(
+  '/:id/activities',
+  async (req: Request, res: Response<ApiResponse<IssueActivity[]>>, next: NextFunction) => {
+    try {
+      const activities = await issuesService.getActivities(
+        req.tenantId!,
+        req.params.id,
+        req.dbClient,
+      );
+
+      res.json({ success: true, data: activities });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// ── POST /:id/link — Link an artifact to the issue ───────────────────────
+issuesRouter.post(
+  '/:id/link',
+  async (req: Request, res: Response<ApiResponse<{ linked: true }>>, next: NextFunction) => {
+    try {
+      const parsed = LinkArtifactSchema.safeParse(req.body);
+      if (!parsed.success) {
+        throw new ValidationError('Invalid link data', parsed.error.flatten().fieldErrors);
+      }
+
+      await issuesService.linkArtifact(
+        req.tenantId!,
+        req.params.id,
+        parsed.data.artifactType,
+        parsed.data.artifactId,
+        req.userId!,
+        req.dbClient,
+      );
+
+      res.json({ success: true, data: { linked: true } });
     } catch (err) {
       next(err);
     }

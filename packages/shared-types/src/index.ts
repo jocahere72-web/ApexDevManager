@@ -54,5 +54,8 @@ export * from './issue.js';
 // LLM Providers
 export * from './llm-provider.js';
 
+// Prompt Templates
+export * from './prompt-template.js';
+
 // SaaS (U13)
 export * from './saas.js';

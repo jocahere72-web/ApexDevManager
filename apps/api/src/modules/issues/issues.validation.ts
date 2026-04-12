@@ -47,6 +47,21 @@ export const ListIssuesSchema = z.object({
 
 export type ListIssuesQuery = z.infer<typeof ListIssuesSchema>;
 
+// ── Link Artifact ─────────────────────────────────────────────────────────
+export const LinkArtifactSchema = z.object({
+  artifactType: z.enum([
+    'prd_session',
+    'change_set',
+    'release',
+    'test_suite',
+    'conversation',
+    'editor_session',
+  ]),
+  artifactId: z.string().uuid('Invalid artifact ID'),
+});
+
+export type LinkArtifactInput = z.infer<typeof LinkArtifactSchema>;
+
 // ── Transition Issue ───────────────────────────────────────────────────────
 export const TransitionSchema = z.object({
   status: z.enum(['intake', 'prd', 'design', 'build', 'review', 'test', 'deploy', 'done']),

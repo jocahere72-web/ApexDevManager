@@ -3,8 +3,9 @@ import { AppPage, AppPageHeader } from '@/components/ui/AppTemplate';
 import { TenantManagement } from './components/TenantManagement';
 import { SSOConfigPanel } from './components/SSOConfig';
 import { LLMProviders } from './components/LLMProviders';
+import { PromptTemplates } from './components/PromptTemplates';
 
-type Tab = 'tenants' | 'sso' | 'llm-providers';
+type Tab = 'tenants' | 'sso' | 'llm-providers' | 'prompt-templates';
 
 export function AdminPage() {
   const [activeTab, setActiveTab] = useState<Tab>('tenants');
@@ -38,11 +39,19 @@ export function AdminPage() {
         >
           LLM Providers
         </button>
+        <button
+          type="button"
+          className={`app-tab${activeTab === 'prompt-templates' ? ' app-tab-active' : ''}`}
+          onClick={() => setActiveTab('prompt-templates')}
+        >
+          Prompt Templates
+        </button>
       </div>
       <div>
         {activeTab === 'tenants' && <TenantManagement />}
         {activeTab === 'sso' && <SSOConfigPanel />}
         {activeTab === 'llm-providers' && <LLMProviders />}
+        {activeTab === 'prompt-templates' && <PromptTemplates />}
       </div>
     </AppPage>
   );

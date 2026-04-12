@@ -4,11 +4,13 @@ import {
   fetchIssue,
   updateIssue,
   transitionIssue,
+  fetchIssueActivities,
   ISSUE_STATUSES,
   STATUS_LABELS,
   type Issue,
   type IssuePriority,
   type IssueType,
+  type IssueActivity,
 } from '@/services/issues.api';
 import IssuePipeline from './IssuePipeline';
 
@@ -25,6 +27,27 @@ const PRIORITY_COLORS: Record<string, string> = {
   low: 'var(--app-muted)',
 };
 
+const ACTIVITY_COLORS: Record<string, string> = {
+  status_change: 'var(--app-accent)',
+  prd_created: 'var(--app-success, #22c55e)',
+  prd_exported: 'var(--app-success, #22c55e)',
+  change_set_created: 'var(--app-warm, #f59e0b)',
+  release_created: 'var(--app-accent-strong)',
+  test_created: 'var(--app-accent)',
+  code_edited: 'var(--app-muted)',
+  comment: 'var(--app-muted)',
+  artifact_linked: 'var(--app-accent-strong)',
+};
+
+const ARTIFACT_PATHS: Record<string, string> = {
+  prd_session: '/prd',
+  change_set: '/change-manager',
+  release: '/releases',
+  test_suite: '/test-studio',
+  conversation: '/ai-studio',
+  editor_session: '/code-editor',
+};
+
 const TYPE_ICONS: Record<string, string> = {
   feature: '\u2B50',
   bug: '\uD83D\uDC1B',
@@ -37,6 +60,7 @@ export default function IssueDetail({ issueId, onClose, onUpdated }: IssueDetail
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [advancing, setAdvancing] = useState(false);
+  const [activities, setActivities] = useState<IssueActivity[]>([]);
 
   // Edit form state
   const [editTitle, setEditTitle] = useState('');
@@ -48,8 +72,12 @@ export default function IssueDetail({ issueId, onClose, onUpdated }: IssueDetail
   const loadIssue = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await fetchIssue(issueId);
+      const [data, acts] = await Promise.all([
+        fetchIssue(issueId),
+        fetchIssueActivities(issueId),
+      ]);
       setIssue(data);
+      setActivities(acts);
     } catch (err) {
       console.error('Failed to load issue', err);
     } finally {
@@ -394,14 +422,61 @@ export default function IssueDetail({ issueId, onClose, onUpdated }: IssueDetail
           </div>
         </div>
 
-        {/* Activity / Transitions */}
+        {/* Activity Timeline */}
         <div>
           <div style={{ ...labelStyle, marginBottom: '8px' }}>Activity</div>
-          {issue.transitions && issue.transitions.length > 0 ? (
+          {activities.length > 0 || (issue.transitions && issue.transitions.length > 0) ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {issue.transitions.map((t, i) => (
+              {/* Issue activities from API */}
+              {activities.map((a) => (
                 <div
-                  key={i}
+                  key={a.id}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '8px',
+                    fontSize: '0.78rem',
+                    color: 'var(--app-text)',
+                  }}
+                >
+                  <div
+                    style={{
+                      width: '8px',
+                      height: '8px',
+                      borderRadius: '50%',
+                      backgroundColor: ACTIVITY_COLORS[a.activityType] || 'var(--app-accent)',
+                      flexShrink: 0,
+                      marginTop: '4px',
+                    }}
+                  />
+                  <div style={{ flex: 1 }}>
+                    <span>{a.description}</span>
+                    {a.artifactType && a.artifactId && (
+                      <a
+                        href={ARTIFACT_PATHS[a.artifactType] ? `${ARTIFACT_PATHS[a.artifactType]}/${a.artifactId}` : '#'}
+                        style={{
+                          marginLeft: '6px',
+                          color: 'var(--app-accent-strong)',
+                          textDecoration: 'none',
+                          fontSize: '0.72rem',
+                          fontWeight: 600,
+                        }}
+                      >
+                        View
+                      </a>
+                    )}
+                  </div>
+                  <span
+                    style={{ color: 'var(--app-muted)', fontSize: '0.7rem', whiteSpace: 'nowrap' }}
+                  >
+                    {new Date(a.createdAt).toLocaleString()}
+                  </span>
+                </div>
+              ))}
+              {/* Legacy transitions */}
+              {issue.transitions && issue.transitions.map((t, i) => (
+                <div
+                  key={`t-${i}`}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
