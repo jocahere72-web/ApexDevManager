@@ -2,6 +2,8 @@ import apiClient from '../lib/api-client';
 import type {
   DependencyGraph,
   ImpactAssessment,
+  PRDImpactRequest,
+  PRDImpactAnalysis,
 } from '@apex-dev-manager/shared-types';
 
 // ---------------------------------------------------------------------------
@@ -60,4 +62,18 @@ export async function exportGraph(
     { graph, format },
   );
   return data.data.content;
+}
+
+// ---------------------------------------------------------------------------
+// PRD Impact Analysis
+// ---------------------------------------------------------------------------
+
+export async function analyzePRDImpact(
+  request: PRDImpactRequest,
+): Promise<PRDImpactAnalysis> {
+  const { data } = await apiClient.post<{ data: PRDImpactAnalysis }>(
+    '/dependencies/prd-impact',
+    request,
+  );
+  return data.data;
 }

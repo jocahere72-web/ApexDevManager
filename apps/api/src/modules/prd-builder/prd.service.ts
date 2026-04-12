@@ -408,7 +408,7 @@ export async function uploadSource(
 
   // Update session status
   await tenantQuery(client,
-    `UPDATE prd_sessions SET status = 'uploading', current_stage = 1, updated_at = NOW()
+    `UPDATE prd_sessions SET status = 'ingesting', current_stage = 1, updated_at = NOW()
      WHERE id = $1`,
     [sessionId],
   );

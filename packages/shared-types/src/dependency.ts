@@ -39,3 +39,54 @@ export interface ImpactAssessment {
     reason: string;
   }[];
 }
+
+// ---------------------------------------------------------------------------
+// PRD Impact Analysis types
+// ---------------------------------------------------------------------------
+
+export interface PRDImpactRequest {
+  issueId: string;
+  connectionId: string;
+  // Optional user-provided context for precision
+  applicationId?: number;
+  pageIds?: number[];
+  affectedTables?: string[];
+  affectedObjects?: string[];
+  notes?: string;
+}
+
+export interface PRDImpactAnalysis {
+  issueCode: string;
+  issueTitle: string;
+  prdTitle: string;
+  connectionName: string;
+  userContext: {
+    applicationName?: string;
+    pageNames?: string[];
+    tables?: string[];
+    objects?: string[];
+    notes?: string;
+  };
+  summary: {
+    totalAffectedPages: number;
+    totalAffectedTables: number;
+    totalNewPages: number;
+    totalNewTables: number;
+    riskLevel: 'low' | 'medium' | 'high' | 'critical';
+    riskScore: number;
+  };
+  functionalImpact: {
+    newPages: Array<{ name: string; type: string; description: string }>;
+    modifiedPages: Array<{ pageId: number; pageName: string; reason: string; affectedRegions: string[] }>;
+    affectedFlows: Array<{ flowName: string; impact: string }>;
+  };
+  databaseImpact: {
+    newTables: Array<{ name: string; description: string; columns: string[] }>;
+    modifiedTables: Array<{ name: string; reason: string; changes: string[] }>;
+    affectedIndexes: string[];
+    affectedTriggers: string[];
+  };
+  dependencies: Array<{ sourceType: string; sourceName: string; targetType: string; targetName: string; impact: string }>;
+  recommendations: string[];
+  analyzedAt: string;
+}

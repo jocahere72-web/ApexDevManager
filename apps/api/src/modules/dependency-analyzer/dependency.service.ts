@@ -10,7 +10,13 @@ import type {
   DependencyEdge,
   DependencyGraph,
   ImpactAssessment,
+  PRDImpactRequest,
+  PRDImpactAnalysis,
 } from '@apex-dev-manager/shared-types';
+import { getIssueById } from '../issues/issues.service.js';
+import { getSession as getPRDSession } from '../prd-builder/prd.service.js';
+import { listApplications, listPages, listComponents } from '../explorer/explorer.service.js';
+import { getConnectionById } from '../connections/connections.service.js';
 
 // ── Oracle identifier validation ────────────────────────────────────────────
 
@@ -333,4 +339,319 @@ export async function exportGraph(
 
 function sanitizeMermaidId(id: string): string {
   return id.replace(/[^a-zA-Z0-9_]/g, '_');
+}
+
+// ── PRD Impact Analysis ────────────────────────────────────────────────────
+
+function normalizeForComparison(name: string): string {
+  return name.toUpperCase().replace(/[^A-Z0-9]/g, '');
+}
+
+function nameSimilarity(a: string, b: string): boolean {
+  const na = normalizeForComparison(a);
+  const nb = normalizeForComparison(b);
+  return na === nb || na.includes(nb) || nb.includes(na);
+}
+
+function calculateRiskScore(params: {
+  newTables: number;
+  modifiedTables: number;
+  modifiedPages: number;
+  dependencies: number;
+}): number {
+  const score =
+    params.newTables * 5 +
+    params.modifiedTables * 10 +
+    params.modifiedPages * 8 +
+    params.dependencies * 3;
+  return Math.min(score, 100);
+}
+
+function riskLevelFromScore(score: number): 'low' | 'medium' | 'high' | 'critical' {
+  if (score <= 25) return 'low';
+  if (score <= 50) return 'medium';
+  if (score <= 75) return 'high';
+  return 'critical';
+}
+
+export async function analyzePRDImpact(
+  tenantId: string,
+  request: PRDImpactRequest,
+  client?: PoolClient,
+): Promise<PRDImpactAnalysis> {
+  logger.info({ tenantId, issueId: request.issueId }, 'Analyzing PRD impact');
+
+  // 1. Load issue
+  const issue = await getIssueById(tenantId, request.issueId, client);
+
+  // 2. Check PRD link
+  if (!issue.prdSessionId) {
+    throw new AppError('Issue has no linked PRD', 400, 'NO_PRD_LINKED');
+  }
+
+  // 3. Load PRD session (with sections and extraction data)
+  const prdSession = await getPRDSession(issue.prdSessionId, tenantId, client);
+  const extraction = prdSession.extractionData ?? {};
+
+  // 4. Load connection details (for name)
+  const connProfile = await getConnectionById(tenantId, request.connectionId, client);
+
+  // 5. Try to fetch existing APEX data via ORDS
+  let existingPages: Array<{ pageId: number; pageName: string }> = [];
+  let existingPageComponents: Map<number, string[]> = new Map();
+  let applicationName: string | undefined;
+
+  try {
+    if (request.applicationId) {
+      // Fetch pages for this app
+      const apexPages = await listPages(tenantId, request.connectionId, request.applicationId, client);
+      existingPages = apexPages.map((p) => ({ pageId: p.pageId, pageName: p.pageName }));
+
+      // Get app name
+      const apps = await listApplications(tenantId, request.connectionId, client);
+      const app = apps.find((a) => a.applicationId === request.applicationId);
+      applicationName = app?.applicationName;
+
+      // Fetch components for specific pages if provided
+      if (request.pageIds && request.pageIds.length > 0) {
+        for (const pageId of request.pageIds) {
+          try {
+            const components = await listComponents(tenantId, request.connectionId, pageId, undefined, request.applicationId, client);
+            existingPageComponents.set(pageId, components.map((c) => c.componentName ?? c.componentType));
+          } catch {
+            // Individual page component fetch failure is non-critical
+          }
+        }
+      }
+    } else {
+      // Fetch all apps for reference
+      try {
+        await listApplications(tenantId, request.connectionId, client);
+      } catch {
+        // Non-critical
+      }
+    }
+  } catch (err) {
+    logger.warn({ err }, 'ORDS fetch failed, proceeding with PRD data + user context only');
+  }
+
+  // 6. Cross-reference PRD extraction data with existing system + user context
+  const prdPages = extraction.apexPages ?? [];
+  const prdTables = extraction.genesysTables ?? [];
+  const prdFlows = extraction.flows ?? [];
+
+  const newPages: PRDImpactAnalysis['functionalImpact']['newPages'] = [];
+  const modifiedPages: PRDImpactAnalysis['functionalImpact']['modifiedPages'] = [];
+  const affectedFlows: PRDImpactAnalysis['functionalImpact']['affectedFlows'] = [];
+
+  const newTables: PRDImpactAnalysis['databaseImpact']['newTables'] = [];
+  const modifiedTables: PRDImpactAnalysis['databaseImpact']['modifiedTables'] = [];
+  const affectedIndexes: string[] = [];
+  const affectedTriggers: string[] = [];
+  const dependencies: PRDImpactAnalysis['dependencies'] = [];
+
+  // Match PRD apexPages against existing pages
+  for (const prdPage of prdPages) {
+    const match = existingPages.find((ep) => nameSimilarity(ep.pageName, prdPage.name));
+    if (match) {
+      const regions = existingPageComponents.get(match.pageId) ?? [];
+      modifiedPages.push({
+        pageId: match.pageId,
+        pageName: match.pageName,
+        reason: `PRD defines changes: ${prdPage.description}`,
+        affectedRegions: regions.length > 0 ? regions : prdPage.components ?? [],
+      });
+      dependencies.push({
+        sourceType: 'PRD Page',
+        sourceName: prdPage.name,
+        targetType: 'APEX Page',
+        targetName: match.pageName,
+        impact: 'Modification required',
+      });
+    } else {
+      newPages.push({
+        name: prdPage.name,
+        type: prdPage.type,
+        description: prdPage.description,
+      });
+    }
+  }
+
+  // If user provided pageIds, check those pages for potential modification
+  if (request.pageIds && request.pageIds.length > 0) {
+    for (const pageId of request.pageIds) {
+      const existingMatch = existingPages.find((ep) => ep.pageId === pageId);
+      if (existingMatch && !modifiedPages.some((mp) => mp.pageId === pageId)) {
+        const regions = existingPageComponents.get(pageId) ?? [];
+        modifiedPages.push({
+          pageId,
+          pageName: existingMatch.pageName,
+          reason: 'User indicated this page is affected',
+          affectedRegions: regions,
+        });
+      }
+    }
+  }
+
+  // Match PRD genesysTables against user-provided affectedTables
+  const userTables = (request.affectedTables ?? []).map((t) => t.trim().toUpperCase());
+
+  for (const prdTable of prdTables) {
+    const matchedByUser = userTables.some((ut) => nameSimilarity(ut, prdTable.name));
+    if (matchedByUser) {
+      modifiedTables.push({
+        name: prdTable.name,
+        reason: 'Exists in system and referenced in PRD',
+        changes: prdTable.columns.map((c) => `Column: ${c}`),
+      });
+      dependencies.push({
+        sourceType: 'PRD Table',
+        sourceName: prdTable.name,
+        targetType: 'DB Table',
+        targetName: prdTable.name,
+        impact: 'Schema modification',
+      });
+    } else {
+      newTables.push({
+        name: prdTable.name,
+        description: prdTable.description,
+        columns: prdTable.columns,
+      });
+    }
+  }
+
+  // If user provided affectedObjects, include them in dependencies
+  if (request.affectedObjects && request.affectedObjects.length > 0) {
+    for (const obj of request.affectedObjects) {
+      const trimmed = obj.trim();
+      if (!trimmed) continue;
+
+      const objUpper = trimmed.toUpperCase();
+      if (objUpper.startsWith('TRG_') || objUpper.startsWith('TRIGGER_')) {
+        affectedTriggers.push(trimmed);
+      } else if (objUpper.startsWith('IDX_') || objUpper.startsWith('IX_')) {
+        affectedIndexes.push(trimmed);
+      }
+
+      dependencies.push({
+        sourceType: 'User Context',
+        sourceName: trimmed,
+        targetType: 'DB Object',
+        targetName: trimmed,
+        impact: 'Potentially affected per user context',
+      });
+    }
+  }
+
+  // Process flows
+  for (const flow of prdFlows) {
+    affectedFlows.push({
+      flowName: flow.name,
+      impact: `Trigger: ${flow.triggerEvent}. Steps: ${flow.steps.length}`,
+    });
+
+    // Link flow to pages
+    for (const mp of modifiedPages) {
+      dependencies.push({
+        sourceType: 'Flow',
+        sourceName: flow.name,
+        targetType: 'APEX Page',
+        targetName: mp.pageName,
+        impact: 'Flow involves this page',
+      });
+    }
+  }
+
+  // 8. Calculate risk score
+  const riskScore = calculateRiskScore({
+    newTables: newTables.length,
+    modifiedTables: modifiedTables.length,
+    modifiedPages: modifiedPages.length,
+    dependencies: dependencies.length,
+  });
+  const riskLevel = riskLevelFromScore(riskScore);
+
+  // 9. Generate recommendations
+  const recommendations: string[] = [];
+
+  if (newTables.length > 0) {
+    recommendations.push(
+      `Create ${newTables.length} new table(s): ${newTables.map((t) => t.name).join(', ')}. Review column definitions and constraints before DDL execution.`,
+    );
+  }
+  if (modifiedTables.length > 0) {
+    recommendations.push(
+      `${modifiedTables.length} existing table(s) require schema changes. Generate ALTER scripts and test with production-like data volumes.`,
+    );
+  }
+  if (modifiedPages.length > 0) {
+    recommendations.push(
+      `${modifiedPages.length} existing page(s) will be modified. Back up current page definitions before applying changes.`,
+    );
+  }
+  if (newPages.length > 0) {
+    recommendations.push(
+      `${newPages.length} new page(s) to create. Use the PRD-to-Page generator to scaffold initial structure.`,
+    );
+  }
+  if (affectedTriggers.length > 0) {
+    recommendations.push(
+      `${affectedTriggers.length} trigger(s) may be affected. Verify firing order and logic after changes.`,
+    );
+  }
+  if (riskLevel === 'high' || riskLevel === 'critical') {
+    recommendations.push(
+      'High-risk change detected. Consider staging the deployment in phases and performing regression testing.',
+    );
+  }
+  if (dependencies.length > 10) {
+    recommendations.push(
+      'Large dependency chain detected. Map the deployment order carefully to avoid broken references.',
+    );
+  }
+  if (recommendations.length === 0) {
+    recommendations.push('Low-impact change. Standard review and testing procedures apply.');
+  }
+
+  // Resolve page names for user context
+  const userPageNames = (request.pageIds ?? []).map((pid) => {
+    const found = existingPages.find((ep) => ep.pageId === pid);
+    return found ? found.pageName : `Page ${pid}`;
+  });
+
+  return {
+    issueCode: issue.code,
+    issueTitle: issue.title,
+    prdTitle: prdSession.title,
+    connectionName: connProfile.name,
+    userContext: {
+      applicationName,
+      pageNames: userPageNames.length > 0 ? userPageNames : undefined,
+      tables: request.affectedTables,
+      objects: request.affectedObjects,
+      notes: request.notes,
+    },
+    summary: {
+      totalAffectedPages: modifiedPages.length,
+      totalAffectedTables: modifiedTables.length,
+      totalNewPages: newPages.length,
+      totalNewTables: newTables.length,
+      riskLevel,
+      riskScore,
+    },
+    functionalImpact: {
+      newPages,
+      modifiedPages,
+      affectedFlows,
+    },
+    databaseImpact: {
+      newTables,
+      modifiedTables,
+      affectedIndexes,
+      affectedTriggers,
+    },
+    dependencies,
+    recommendations,
+    analyzedAt: new Date().toISOString(),
+  };
 }

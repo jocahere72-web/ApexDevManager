@@ -1,7 +1,7 @@
 import { Router, type Request, type Response, type NextFunction } from 'express';
 import * as dependencyService from './dependency.service.js';
 import type { ApiResponse } from '../../types/index.js';
-import type { DependencyGraph, ImpactAssessment } from '@apex-dev-manager/shared-types';
+import type { DependencyGraph, ImpactAssessment, PRDImpactRequest, PRDImpactAnalysis } from '@apex-dev-manager/shared-types';
 
 export const dependencyRouter = Router();
 
@@ -54,6 +54,24 @@ dependencyRouter.post(
         req.dbClient,
       );
       res.json({ success: true, data: graph });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// ── POST /prd-impact ── PRD Impact Analysis ─────────────────────────────────
+dependencyRouter.post(
+  '/prd-impact',
+  async (req: Request, res: Response<ApiResponse<PRDImpactAnalysis>>, next: NextFunction) => {
+    try {
+      const body = req.body as PRDImpactRequest;
+      const analysis = await dependencyService.analyzePRDImpact(
+        req.tenantId!,
+        body,
+        req.dbClient,
+      );
+      res.json({ success: true, data: analysis });
     } catch (err) {
       next(err);
     }
