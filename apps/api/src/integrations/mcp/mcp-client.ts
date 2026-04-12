@@ -404,6 +404,77 @@ export class MCPClient {
     }
   }
 
+  // ── Tool Invocation ──────────────────────────────────────────────────────
+
+  /**
+   * Call a named tool on the MCP server.
+   * Returns the tool result as a parsed object.
+   */
+  async callTool(toolName: string, params: Record<string, unknown>): Promise<unknown> {
+    if (!this.connected) {
+      throw new AppError(
+        'MCP client is not connected',
+        500,
+        MCP_ERROR_CODES.DISCONNECTED,
+      );
+    }
+
+    const entry = tenantPools.get(this.poolKey);
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    };
+
+    if (entry?.sessionToken) {
+      headers['X-Session-Token'] = entry.sessionToken;
+    }
+
+    const credentials = Buffer.from(
+      `${this.config.username}:${this.config.password}`,
+    ).toString('base64');
+    headers['Authorization'] = `Basic ${credentials}`;
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
+
+    try {
+      const response = await fetch(`${this.baseUrl}/tools/${toolName}`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(params),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const body = await response.text().catch(() => '');
+        throw new AppError(
+          `MCP tool call failed: HTTP ${response.status} ${body}`,
+          502,
+          MCP_ERROR_CODES.QUERY_FAILED,
+        );
+      }
+
+      return await response.json();
+    } catch (err) {
+      clearTimeout(timeoutId);
+      if (err instanceof AppError) throw err;
+      throw mapErrorToAppError(err, `callTool(${toolName})`);
+    }
+  }
+
+  /**
+   * Execute a SQL statement via the MCP server.
+   * Convenience wrapper around query().
+   */
+  async executeSQL(sql: string, params?: unknown[]): Promise<MCPQueryResult> {
+    if (!this.connected) {
+      await this.connect();
+    }
+    return this.query(sql, params);
+  }
+
   // ── Accessors ────────────────────────────────────────────────────────────
 
   get isConnected(): boolean {

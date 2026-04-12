@@ -71,7 +71,7 @@ export interface ComponentSource {
 
 // ── Change Log ─────────────────────────────────────────────────────────────
 
-export interface ChangeLogEntry {
+export interface EditorChangeLogEntry {
   id: string;
   tenantId: string;
   connectionId: string;

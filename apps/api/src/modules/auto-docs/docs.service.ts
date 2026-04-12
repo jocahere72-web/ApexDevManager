@@ -46,15 +46,18 @@ async function executeSql(
   sql: string,
 ): Promise<Record<string, unknown>[]> {
   const conn = await getConnectionDetails(tenantId, connectionId);
-  const creds = decryptCredentials(conn.encrypted_credentials);
+  const creds = decryptCredentials(conn.encrypted_credentials, tenantId);
+  const config = conn.config as Record<string, unknown>;
   const mcpConfig: MCPConnectionConfig = {
-    type: conn.type,
-    config: conn.config,
-    credentials: creds,
+    baseUrl: (config.mcpBaseUrl ?? config.ordsBaseUrl ?? '') as string,
+    username: creds.username,
+    password: creds.password,
+    schema: config.schema as string | undefined,
   };
   const mcp = new MCPClient(mcpConfig);
   try {
-    const result = await mcp.executeSQL(sql);
+    await mcp.connect();
+    const result = await mcp.query(sql);
     return result.rows ?? [];
   } finally {
     await mcp.disconnect();
@@ -246,7 +249,7 @@ export async function exportDoc(
       return { content: doc.content, mimeType: 'text/markdown' };
 
     default:
-      throw new AppError(`Unsupported export format: ${format}`, 400);
+      throw new AppError(`Unsupported export format: ${format}`, 400, 'BAD_REQUEST');
   }
 }
 

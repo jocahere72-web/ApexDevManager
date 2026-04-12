@@ -25,7 +25,7 @@ const KEY_LENGTH = 32; // 256 bits
  * cannot be decrypted across tenants even with the same master key.
  */
 function deriveKey(masterKey: Buffer, tenantId: string): Buffer {
-  return crypto.hkdfSync('sha256', masterKey, tenantId, 'apex-credentials', KEY_LENGTH);
+  return Buffer.from(crypto.hkdfSync('sha256', masterKey, tenantId, 'apex-credentials', KEY_LENGTH));
 }
 
 /**

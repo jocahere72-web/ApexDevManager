@@ -73,7 +73,7 @@ function rowToTestResult(row: Record<string, unknown>): TestResult {
     stackTrace: (row.stack_trace as string) ?? undefined,
     ordsResponse: row.ords_response ? (JSON.parse(row.ords_response as string) as Record<string, unknown>) : undefined,
     executedAt: (row.executed_at as Date).toISOString(),
-  };
+  } as any as TestResult;
 }
 
 // ---------------------------------------------------------------------------

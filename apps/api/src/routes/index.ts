@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { healthRouter } from './health.js';
-import { authRouter } from '../modules/auth/auth.router.js';
+import { router as authRouter } from '../modules/auth/index.js';
 import { usersRouter } from '../modules/users/index.js';
 import { connectionsRouter } from '../modules/connections/index.js';
 import { explorerRouter } from '../modules/explorer/index.js';

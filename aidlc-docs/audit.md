@@ -2,6 +2,123 @@
 
 ---
 
+## User Request — Backend Re-review
+**Timestamp**: 2026-04-12T03:20:21Z
+**User Input**: "# Review findings:
+
+## Finding 1 (apps/web/package.json:14) [added]
+[P1] Web aún no declara shared-types
+
+API ya agregó `@apex-dev-manager/shared-types`, pero web todavía importa ese paquete en muchos servicios/componentes sin declararlo en `dependencies`. En una instalación limpia, el workspace web sigue pudiendo fallar al resolver el paquete.
+
+## Finding 2 (apps/api/package.json:11) [added]
+[P1] Script de test API sigue apuntando mal
+
+El script continúa buscando `src/**/*.test.ts`, pero los tests existentes están bajo `apps/api/test`. Este hallazgo no está corregido todavía y puede dejar la suite sin ejecutar.
+
+## Finding 3 (package.json:9) [added]
+[P1] Filtro test:web apunta a package inexistente
+
+El root script usa `--filter=@apex-dev/web`, pero el package real se llama `@apex-dev-manager/web`. Aunque arreglen los tests internos, `npm/pnpm run test:web` no seleccionará el workspace correcto.
+
+## Finding 4 (apps/api/src/routes/index.ts:33) [added]
+[P1] RLS tenant resolver sigue sin montarse
+
+Las rutas protegidas siguen montando solo `authenticate()`. `tenantResolver()` existe, pero no está en la cadena de middleware, así que el aislamiento por tenant/RLS sigue sin activarse de forma confiable.
+
+## Finding 5 (apps/api/src/modules/auth/auth.service.ts:38) [added]
+[P1] Auditoría sigue escribiendo tabla inexistente
+
+Los servicios siguen insertando en `audit_logs`, mientras las migraciones definen `audit_events`. La corrección todavía no llegó a auth/users/connections y el audit trail funcional sigue perdiéndose.
+
+## My request for Codex:
+revisa el backend de nuevo"
+**AI Response**: Starting backend-only re-review focused on API, migrations, services, middleware, tests, and backend scripts.
+**Context**: Code Review - Backend revalidation.
+
+---
+
+## Code Review — Backend Revalidation Results
+**Timestamp**: 2026-04-12T03:21:48Z
+**User Input**: "revisa el backend de nuevo"
+**AI Response**: Completed backend-only static re-review. Confirmed corrected items: duplicate ` 2` files under `apps/api` are removed; auth router import now uses the auth barrel; API package now declares previously missing dependencies. Remaining or newly identified issues: API test script still targets `src/**/*.test.ts`; protected routes still omit `tenantResolver`; services still use `audit_logs`; connection-related services still use columns `type` and `last_health_check` while migrations define `connection_type` and `last_check_at`; user creation now hashes with scrypt while login still verifies with bcrypt; MCP pool key still does not include tenant/connection identity; several backend routes interpolate request-controlled values into SQL sent to Oracle/Postgres; CORS wildcard with credentials remains. Could not execute typecheck/tests because `node` is not available in PATH."
+**Context**: Code Review - Backend revalidation results and residual findings.
+
+---
+
+## User Request — Re-review Corrections
+**Timestamp**: 2026-04-12T03:15:11Z
+**User Input**: "# Review findings:
+
+## Finding 1 (apps/api/tsconfig.json:25) [added]
+[P0] Copias ` 2` entran al build
+
+Hay directorios y archivos duplicados dentro de `src` (`db 2`, `lib 2`, `middleware 2`, `ai 2.ts`, `editor 2.ts`). Como el tsconfig incluye `src/**/*.ts`, esas copias pueden compilarse y empaquetarse aunque no sean la fuente canónica, dejando código stale dentro del artefacto.
+
+## Finding 2 (apps/api/src/modules/marketplace/marketplace.controller 2.ts:1) [added]
+[P1] Controllers/services duplicados
+
+Existen copias ` 2.ts` de controllers y services en módulos como governance, auto-docs, code-factory, dependency-analyzer, marketplace, release-manager y saas. Aunque no se importen desde los barrels, siguen bajo `src` y participan en typecheck/build, lo que puede ocultar código generado accidental o divergente.
+
+## Finding 3 (apps/api/package.json:11) [added]
+[P1] Tests existentes no se ejecutan
+
+El script de test busca `src/**/*.test.ts`, pero los tests reales están bajo `apps/api/test`. Esto puede dejar la suite vacía o incompleta y dar una señal verde falsa.
+
+## Finding 4 (apps/web/package.json:14) [added]
+[P1] Dependencia compartida omitida afecta muchos módulos
+
+Decenas de imports usan `@apex-dev-manager/shared-types`, pero API y web no lo declaran como dependencia workspace. El problema no se limita a Explorer: impacta múltiples módulos backend y frontend en instalación limpia.
+
+## My request for Codex:
+revisa todo de nuevoa ver si estan corrigiendo los errores"
+**AI Response**: Starting re-review to verify whether previously reported findings are being corrected in the current working tree.
+**Context**: Code Review - Revalidation of remediation progress.
+
+---
+
+## Code Review — Revalidation Results
+**Timestamp**: 2026-04-12T03:16:44Z
+**User Input**: "revisa todo de nuevoa ver si estan corrigiendo los errores"
+**AI Response**: Revalidated current working tree. Confirmed some remediation progress: duplicate ` 2` files under `apps/api/src`, `packages/shared-types/src`, and `apps/api/migrations` are removed; API auth router import is fixed; API now declares several previously missing runtime dependencies including `@apex-dev-manager/shared-types`. Remaining issues: web still lacks `@apex-dev-manager/shared-types`; API test script still targets `src/**/*.test.ts` while tests live under `test/`; root `test:web` filter references `@apex-dev/web` instead of `@apex-dev-manager/web`; CORS wildcard with credentials remains; tenantResolver remains unused; services still write to `audit_logs`; connection service still uses schema fields that do not match migrations. Verification by Turbo typecheck/test could not run because `node` is not available in PATH (`exec: node: not found`)."
+**Context**: Code Review - Revalidation of remediation progress and residual findings.
+
+---
+
+## User Request — Final Review
+**Timestamp**: 2026-04-12T03:05:14Z
+**User Input**: "ultims revision"
+**AI Response**: Starting final review pass across the repository to identify remaining high-impact issues not covered in prior review findings.
+**Context**: Code Review - Final static analysis pass.
+
+---
+
+## Code Review — Final Findings
+**Timestamp**: 2026-04-12T03:06:41Z
+**User Input**: "ultims revision"
+**AI Response**: Completed final static review pass. Added final findings related to duplicate copied source trees, test script coverage gap, and unresolved shared-types dependency fan-out.
+**Context**: Code Review - Final static analysis findings.
+
+### Final Findings Logged
+
+1. **[P0] Directorios duplicados con sufijo ` 2` entran al build**
+   - **Files**: `apps/api/src/db 2`, `apps/api/src/lib 2`, `apps/api/src/middleware 2`, `packages/shared-types/src/ai 2.ts`, `packages/shared-types/src/editor 2.ts`
+   - **Finding**: Los `tsconfig` incluyen `src/**/*.ts`, por lo que estas copias pueden ser compiladas/empaquetadas aunque no sean fuentes canónicas. Esto aumenta el riesgo de código stale, rutas de salida extrañas y validaciones contradictorias.
+
+2. **[P1] Hay controllers/servicios duplicados en módulos API**
+   - **Files**: `apps/api/src/modules/*/* 2.ts`
+   - **Finding**: Existen copias ` 2.ts` de controllers y services de governance, auto-docs, code-factory, dependency-analyzer, marketplace, release-manager y saas. Aunque no se importen por barrel, siguen viviendo dentro de `src` y pueden participar en typecheck/build.
+
+3. **[P1] Script de test de API no apunta a la carpeta real de tests**
+   - **File**: `apps/api/package.json`
+   - **Finding**: El script `test` ejecuta `mocha --require tsx 'src/**/*.test.ts'`, pero los tests están bajo `apps/api/test`. La suite puede no ejecutar los tests existentes y dar falsa confianza.
+
+4. **[P1] Dependencia shared-types faltante tiene impacto masivo**
+   - **Files**: `apps/api/package.json`, `apps/web/package.json`
+   - **Finding**: Decenas de imports usan `@apex-dev-manager/shared-types`, pero ni API ni web lo declaran como dependencia workspace. El hallazgo previo no afecta solo Explorer; impacta múltiples módulos backend y frontend.
+
+---
+
 ## Workspace Detection
 **Timestamp**: 2026-04-10T00:00:00Z
 **User Input**: "Actúa como una oficina completa de Product Engineering AI-DLC compuesta por: Chief Product Officer, Enterprise Solution Architect, Oracle APEX Lead Architect, OCI Cloud Architect, Oracle DBA Architect, DevOps & Release Manager, QA Director, FinOps Lead, Security & Compliance Architect, AI Product Architect, UX/UI Enterprise Designer, Technical Documentation Lead, CTO Advisor. Tu misión es diseñar el producto enterprise completo llamado: APEX Dev Manager. IMPORTANTE: No quiero un MVP. No quiero una propuesta comercial. No quiero texto superficial. Quiero una ESPECIFICACIÓN ENTERPRISE COMPLETA, ACCIONABLE Y LISTA PARA EJECUCIÓN bajo metodología AI-DLC. La salida debe estar orientada a construcción real de software. [...complete prompt with 10 sections covering context, vision, problems, modules A-I, 50 deliverables, quality requirements, architecture, dashboard, AI-DLC approach, and final block...]"
@@ -74,5 +191,194 @@
 **Timestamp**: 2026-04-11T00:00:00Z
 **AI Response**: Generated construction artifacts for all 13 units (U1-U13). Each unit has functional-design.md and code-generation-plan.md. U1 also has infrastructure-design.md and code-summary.md. U2 also has code-summary.md. Total: 28 construction files + 5 build-and-test files = 33 Construction Phase files.
 **Context**: CONSTRUCTION - All per-unit loops and Build and Test complete.
+
+---
+
+## User Request — Architectural Analysis
+**Timestamp**: 2026-04-11T14:20:40Z
+**User Input**: "analiza ese proyecto como arquitecto de sw"
+**AI Response**: Starting AI-DLC workspace detection/session continuity and architectural analysis of the APEX Dev Manager project.
+**Context**: INCEPTION/Architecture Review - User requested software architecture analysis of existing project artifacts and workspace.
+
+---
+
+## Architectural Analysis Findings
+**Timestamp**: 2026-04-11T14:23:04Z
+**AI Response**: Completed architectural review of APEX Dev Manager artifacts and implementation. Findings: workspace now contains TypeScript monorepo code despite stale state; implemented scope mainly covers U1-U3 slices, not all U1-U13; Terraform modules database/redis/load-balancer/logging/devops/dr are misplaced under "terraform/modules 2" while environment files reference "terraform/modules"; backend audit services write to audit_logs while migrations define audit_events; API and frontend route contracts diverge for explorer and connection operations; CORS wildcard with credentials and JWT HS256 fallback conflict with enabled Security Baseline; live secret found in .env; validation could not run because node/npm/pnpm are unavailable in this shell.
+**Context**: Architecture Review - Findings logged with SECURITY extension compliance concerns.
+
+---
+
+## User Request — Code Quality Review
+**Timestamp**: 2026-04-11T14:24:53Z
+**User Input**: "ahora revisa la calidad del codigo generado"
+**AI Response**: Starting code quality review of generated implementation, prioritizing runtime defects, contract mismatches, security baseline compliance, and maintainability risks.
+**Context**: Code Review - Generated code quality assessment.
+
+---
+
+## Code Quality Review Findings
+**Timestamp**: 2026-04-11T14:28:15Z
+**User Input**: "
+# Review findings:
+
+## Finding 1 (apps/api/src/routes/index.ts:3) [added]
+[P0] Import inexistente rompe el build de API
+
+El router importa `../modules/auth/auth.router.js`, pero en `modules/auth` solo existe `auth.controller.ts` y el barrel exporta `router` desde ahí. Con NodeNext/tsc esto falla antes de arrancar la API. Debe importar desde `../modules/auth/index.js` o exportar un `authRouter` real.
+
+## Finding 2 (apps/api/package.json:16) [added]
+[P0] Dependencias usadas no están declaradas
+
+El código importa `jsonwebtoken`, `bcrypt`, `bullmq`, `rate-limiter-flexible` y las pruebas importan `supertest`, pero `apps/api/package.json` no las declara. El build/test no puede resolver esos módulos en una instalación limpia. Lo mismo aplica en web para imports desde `@apex-dev-manager/shared-types`, que no está listado como dependencia workspace.
+
+## Finding 3 (apps/api/src/modules/connections/connections.service.ts:130) [added]
+[P0] Servicio de conexiones no coincide con la tabla migrada
+
+El INSERT usa columnas `type` y `last_health_check`, pero la migración base creó `connection_type` y `last_health_check_at`, y la extensión 009 agrega `last_check_at`, no `last_health_check`. Esto hace que crear o consultar conexiones falle en runtime contra la DB real.
+
+## Finding 4 (apps/api/src/modules/auth/auth.service.ts:38) [added]
+[P1] Auditoría escribe a una tabla inexistente
+
+Las migraciones definen `audit_events`, pero los servicios escriben a `audit_logs`. Aunque el catch no bloquee la operación, toda la auditoría funcional de auth/users/connections se pierde y el sistema aparenta cumplir audit trail sin persistir eventos.
+
+## Finding 5 (apps/api/src/routes/index.ts:16) [added]
+[P1] RLS/tenant resolver no se usa en las rutas protegidas
+
+Solo se monta `authenticate()`, pero no `tenantResolver()`. Además los servicios usan `pool.query()` directo, no `req.dbClient`, así que las políticas RLS basadas en `app.current_tenant` no se activan de forma confiable. Esto contradice el diseño de aislamiento multi-tenant.
+
+## Finding 6 (apps/web/src/services/explorer.api.ts:25) [added]
+[P1] Frontend y backend exponen contratos distintos
+
+El cliente llama explorer bajo `/connections/:id/applications`, mientras el backend expone `/api/v1/explorer/apps/:connectionId`. En conexiones también hay divergencias: el frontend usa `PUT /connections/:id` y `POST /connections/test`, pero la API define `PATCH /:id` y `POST /:id/test`. Estas pantallas no van a funcionar aunque ambos lados compilen.
+
+## Finding 7 (apps/api/test/modules/auth/auth.middleware.test.ts:13) [added]
+[P1] Las pruebas no ejercitan el código real
+
+Este test define implementaciones de referencia dentro del propio archivo en vez de importar `auth.middleware.ts`. Puede pasar aunque el middleware real tenga bugs o cambie su contrato, así que da falsa confianza sobre autenticación/autorización.
+
+## Finding 8 (apps/web/src/pages/LoginPage.tsx:7) [added]
+[P1] Login UI está desconectado del auth hook
+
+El submit solo hace `console.log` y no llama `useAuth().login`; además `useAuth` espera `{ token, user }`, pero el backend devuelve `{ accessToken, refreshToken, expiresIn, user }` dentro de `data`. El flujo de login no autentica realmente al usuario.
+
+## Finding 9 (apps/api/src/app.ts:20) [added]
+[P1] CORS inseguro con credenciales
+
+La configuración permite `origin: '*'` cuando no hay `CORS_ORIGIN`, pero también habilita `credentials: true`. Es inválido para navegadores y no cumple la baseline de seguridad para endpoints autenticados; debe usar allowlist explícita por ambiente.
+
+## My request for Codex:
+coloca todos esos findins en el audit
+"
+**AI Response**: Logged all nine code review findings in audit.md with priorities, file references, and descriptions.
+**Context**: Code Review - Findings audit logging requested by user.
+
+### Findings Logged
+
+1. **[P0] Import inexistente rompe el build de API**
+   - **File**: `apps/api/src/routes/index.ts:3`
+   - **Finding**: El router importa `../modules/auth/auth.router.js`, pero en `modules/auth` solo existe `auth.controller.ts` y el barrel exporta `router` desde ahí. Con NodeNext/tsc esto falla antes de arrancar la API. Debe importar desde `../modules/auth/index.js` o exportar un `authRouter` real.
+
+2. **[P0] Dependencias usadas no están declaradas**
+   - **File**: `apps/api/package.json:16`
+   - **Finding**: El código importa `jsonwebtoken`, `bcrypt`, `bullmq`, `rate-limiter-flexible` y las pruebas importan `supertest`, pero `apps/api/package.json` no las declara. El build/test no puede resolver esos módulos en una instalación limpia. Lo mismo aplica en web para imports desde `@apex-dev-manager/shared-types`, que no está listado como dependencia workspace.
+
+3. **[P0] Servicio de conexiones no coincide con la tabla migrada**
+   - **File**: `apps/api/src/modules/connections/connections.service.ts:130`
+   - **Finding**: El INSERT usa columnas `type` y `last_health_check`, pero la migración base creó `connection_type` y `last_health_check_at`, y la extensión 009 agrega `last_check_at`, no `last_health_check`. Esto hace que crear o consultar conexiones falle en runtime contra la DB real.
+
+4. **[P1] Auditoría escribe a una tabla inexistente**
+   - **File**: `apps/api/src/modules/auth/auth.service.ts:38`
+   - **Finding**: Las migraciones definen `audit_events`, pero los servicios escriben a `audit_logs`. Aunque el catch no bloquee la operación, toda la auditoría funcional de auth/users/connections se pierde y el sistema aparenta cumplir audit trail sin persistir eventos.
+
+5. **[P1] RLS/tenant resolver no se usa en las rutas protegidas**
+   - **File**: `apps/api/src/routes/index.ts:16`
+   - **Finding**: Solo se monta `authenticate()`, pero no `tenantResolver()`. Además los servicios usan `pool.query()` directo, no `req.dbClient`, así que las políticas RLS basadas en `app.current_tenant` no se activan de forma confiable. Esto contradice el diseño de aislamiento multi-tenant.
+
+6. **[P1] Frontend y backend exponen contratos distintos**
+   - **File**: `apps/web/src/services/explorer.api.ts:25`
+   - **Finding**: El cliente llama explorer bajo `/connections/:id/applications`, mientras el backend expone `/api/v1/explorer/apps/:connectionId`. En conexiones también hay divergencias: el frontend usa `PUT /connections/:id` y `POST /connections/test`, pero la API define `PATCH /:id` y `POST /:id/test`. Estas pantallas no van a funcionar aunque ambos lados compilen.
+
+7. **[P1] Las pruebas no ejercitan el código real**
+   - **File**: `apps/api/test/modules/auth/auth.middleware.test.ts:13`
+   - **Finding**: Este test define implementaciones de referencia dentro del propio archivo en vez de importar `auth.middleware.ts`. Puede pasar aunque el middleware real tenga bugs o cambie su contrato, así que da falsa confianza sobre autenticación/autorización.
+
+8. **[P1] Login UI está desconectado del auth hook**
+   - **File**: `apps/web/src/pages/LoginPage.tsx:7`
+   - **Finding**: El submit solo hace `console.log` y no llama `useAuth().login`; además `useAuth` espera `{ token, user }`, pero el backend devuelve `{ accessToken, refreshToken, expiresIn, user }` dentro de `data`. El flujo de login no autentica realmente al usuario.
+
+9. **[P1] CORS inseguro con credenciales**
+   - **File**: `apps/api/src/app.ts:20`
+   - **Finding**: La configuración permite `origin: '*'` cuando no hay `CORS_ORIGIN`, pero también habilita `credentials: true`. Es inválido para navegadores y no cumple la baseline de seguridad para endpoints autenticados; debe usar allowlist explícita por ambiente.
+
+---
+
+## User Request — Remediation Plan
+**Timestamp**: 2026-04-11T14:29:05Z
+**User Input**: "cual es el plan de accion para corregirlos"
+**AI Response**: Preparing prioritized remediation plan for the nine logged code quality findings.
+**Context**: Code Review - Remediation planning.
+
+---
+
+## User Request — Additional Code Analysis
+**Timestamp**: 2026-04-12T02:37:18Z
+**User Input**: "analiza el codigo  que no has analizado "
+**AI Response**: Starting additional code analysis of previously less-reviewed areas: MCP/ORDS integrations, explorer frontend, migrations/seed, deploy scripts, Helm, Terraform, and scripts.
+**Context**: Code Review - Additional static analysis.
+
+---
+
+## Code Review — Additional Findings
+**Timestamp**: 2026-04-12T02:40:12Z
+**User Input**: "analiza el codigo  que no has analizado "
+**AI Response**: Completed additional static analysis of previously less-reviewed areas and identified high-impact findings across migrations, seed scripts, MCP/ORDS integration, explorer UI, Docker/build pipeline, Helm, deploy scripts, and Terraform.
+**Context**: Code Review - Additional static analysis findings.
+
+### Additional Findings Logged
+
+1. **[P0] Migraciones duplicadas con sufijo ` 2.ts` pueden romper `migrate up`**
+   - **Files**: `apps/api/migrations/001_create-extensions 2.ts` through `apps/api/migrations/007_create-environments 2.ts`
+   - **Finding**: Hay copias duplicadas de las migraciones 001-007 junto a los archivos originales. El runner apunta al directorio completo de migraciones, por lo que puede intentar aplicar scripts equivalentes dos veces y fallar por objetos ya existentes.
+
+2. **[P0] Seed script usa columnas y constraints obsoletos**
+   - **File**: `apps/api/src/db/seed.ts`
+   - **Finding**: El seed inserta usuarios con `name`, `role`, `status` y `ON CONFLICT (email)`, pero el esquema migrado usa otros campos/constraints; también inserta conexiones con `type`, `host`, `database_name`, incompatibles con `connection_type` y el modelo actual.
+
+3. **[P1] Pool MCP no aísla por tenant ni conexión**
+   - **File**: `apps/api/src/integrations/mcp/mcp-client.ts`
+   - **Finding**: La clave del pool se construye solo con `baseUrl` y `username`. Si dos tenants usan el mismo endpoint/usuario, pueden reutilizar sesión MCP entre contextos, debilitando el aislamiento multi-tenant.
+
+4. **[P1] Contrato Explorer backend no coincide con tipos compartidos ni UI**
+   - **Files**: `apps/api/src/modules/explorer/explorer.service.ts`, `apps/web/src/features/explorer/index.tsx`
+   - **Finding**: El backend devuelve formas como `{ application, pages }` y campos `applicationName`, mientras los tipos/UI esperan `ApplicationTree` con `root`, `fetchedAt` y nodos con `id/name`. El árbol y el detalle pueden renderizar valores `undefined`.
+
+5. **[P1] Explorer UI sigue en modo stub/incompleto**
+   - **File**: `apps/web/src/features/explorer/index.tsx`
+   - **Finding**: La pantalla usa conexiones hardcodeadas y `handleExpandNode` solo marca loading, sin invocar hooks para cargar páginas/componentes ni completar hijos; la experiencia no navega realmente el árbol.
+
+6. **[P1] Health check offline apunta a ruta/método no soportados**
+   - **File**: `apps/web/src/features/explorer/hooks/useOfflineMode.ts`
+   - **Finding**: El probe usa `HEAD /api/v1/health`, pero la API define health endpoints en raíz (`/health`, `/ready`) y no se confirmó soporte para HEAD. El frontend puede marcar offline aunque el backend esté disponible.
+
+7. **[P0] Docker build usa contexto incorrecto**
+   - **Files**: `build_spec.yaml`, `apps/api/Dockerfile`, `apps/web/Dockerfile`
+   - **Finding**: La build usa `docker build ... apps/api` y `docker build ... apps/web`, pero ambos Dockerfiles copian `pnpm-workspace.yaml`, `package.json`, `pnpm-lock.yaml` y `packages/` desde la raíz del monorepo. Con ese contexto, Docker no puede acceder a esos paths.
+
+8. **[P0] Templates Helm de Service tienen sintaxis inválida**
+   - **File**: `deploy/helm/apex-api/templates/service.yaml`
+   - **Finding**: El template usa `{ { ... } }` en vez de `{{ ... }}`, por lo que Helm/YAML no renderiza correctamente el Service. El mismo patrón debe revisarse en los templates equivalentes de web.
+
+9. **[P0] Pre-deploy llama package/script inexistentes**
+   - **File**: `deploy/scripts/pre-deploy.sh`
+   - **Finding**: Ejecuta `pnpm --filter @apex/api db:migrate`, pero el package se llama `@apex-dev/api` y el script existente es `migrate`, no `db:migrate`. El pre-deploy falla antes de verificar salud.
+
+10. **[P0] Terraform dev no coincide con el contrato del módulo database**
+    - **Files**: `terraform/environments/dev/main.tf`, `terraform/modules/database/variables.tf`
+    - **Finding**: El entorno `dev` pasa `admin_password`, pero el módulo `database` no declara esa variable y exige `db_credential_secret_id`. `terraform plan` fallaría por argumento no soportado y por variable requerida sin valor.
+
+11. **[P1] Baseline de supply chain y headers no está completa**
+    - **Files**: `apps/api/Dockerfile`, `apps/web/Dockerfile`, `apps/web/nginx.conf`
+    - **Finding**: Los Dockerfiles usan `pnpm@latest`/tags no fijados y NGINX no presenta una política CSP/HSTS clara. Esto incumple controles esperados de reproducibilidad y hardening web.
 
 ---

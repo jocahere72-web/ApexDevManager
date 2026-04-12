@@ -8,7 +8,7 @@ import { NotFoundError } from '../../lib/errors.js';
 import { claudeClient } from '../ai-studio/claude.client.js';
 import type {
   KnowledgeArticle,
-  SearchResult,
+  KnowledgeSearchResult,
   ContextualHelp,
   LearningPath,
   LearningResource,
@@ -78,7 +78,7 @@ async function generateEmbedding(text: string): Promise<number[]> {
 export async function search(
   request: KnowledgeSearchRequest,
   tenantId: string,
-): Promise<SearchResult[]> {
+): Promise<KnowledgeSearchResult[]> {
   logger.info({ query: request.query, tenantId }, 'Knowledge search');
 
   const embedding = await generateEmbedding(request.query);

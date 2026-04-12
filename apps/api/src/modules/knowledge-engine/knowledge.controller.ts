@@ -9,7 +9,7 @@ import { ValidationError } from '../../lib/errors.js';
 import type { ApiResponse } from '../../types/index.js';
 import type {
   KnowledgeArticle,
-  SearchResult,
+  KnowledgeSearchResult,
   ContextualHelp,
   LearningPath,
 } from '@apex-dev-manager/shared-types';
@@ -22,7 +22,7 @@ export const knowledgeRouter = Router();
 
 knowledgeRouter.get(
   '/search',
-  async (req: Request, res: Response<ApiResponse<SearchResult[]>>, next: NextFunction) => {
+  async (req: Request, res: Response<ApiResponse<KnowledgeSearchResult[]>>, next: NextFunction) => {
     try {
       const query = req.query.q as string;
       if (!query) {

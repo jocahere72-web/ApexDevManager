@@ -238,7 +238,7 @@ export function MarketplaceGrid() {
   }, []);
 
   const renderStars = (rating: number) => {
-    const stars = [];
+    const stars: JSX.Element[] = [];
     for (let i = 1; i <= 5; i++) {
       stars.push(
         <span key={i} style={{ ...starStyle, opacity: i <= Math.round(rating) ? 1 : 0.3 }}>

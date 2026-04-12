@@ -1,7 +1,7 @@
 import { useState, useCallback, type CSSProperties } from 'react';
 import type {
   TenantOnboarding,
-  TenantStatus,
+  SaaSTenantStatus,
   CreateTenantRequest,
   UpdateTenantConfigRequest,
 } from '@apex-dev-manager/shared-types';
@@ -91,7 +91,7 @@ const badgeBase: CSSProperties = {
   fontWeight: 600,
 };
 
-const statusColors: Record<TenantStatus, { bg: string; color: string }> = {
+const statusColors: Record<SaaSTenantStatus, { bg: string; color: string }> = {
   provisioning: { bg: '#dbeafe', color: '#1e40af' },
   active: { bg: '#dcfce7', color: '#166534' },
   suspended: { bg: '#fefce8', color: '#854d0e' },
