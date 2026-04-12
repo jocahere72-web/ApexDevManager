@@ -8,7 +8,10 @@ import type { JwtPayload, Role, TokenPair } from './auth.types.js';
 
 const JWT_PRIVATE_KEY = process.env.JWT_PRIVATE_KEY ?? null;
 const JWT_PUBLIC_KEY = process.env.JWT_PUBLIC_KEY ?? null;
-const JWT_SECRET = process.env.JWT_SECRET ?? '';
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET && !process.env.JWT_PRIVATE_KEY) {
+  throw new Error('JWT_SECRET or JWT_PRIVATE_KEY/JWT_PUBLIC_KEY must be configured');
+}
 const ACCESS_TOKEN_EXPIRY = '15m';
 const ACCESS_TOKEN_EXPIRY_SECONDS = 900; // 15 * 60
 const REFRESH_TOKEN_EXPIRY_DAYS = 7;
@@ -18,7 +21,7 @@ function getSigningConfig(): { algorithm: jwt.Algorithm; secret: jwt.Secret } {
   if (JWT_PRIVATE_KEY) {
     return { algorithm: 'RS256', secret: JWT_PRIVATE_KEY };
   }
-  return { algorithm: 'HS256', secret: JWT_SECRET };
+  return { algorithm: 'HS256', secret: JWT_SECRET! };
 }
 
 function getVerifyConfig(): { algorithms: jwt.Algorithm[]; secret: jwt.Secret | jwt.GetPublicKeyOrSecret } {
@@ -29,7 +32,7 @@ function getVerifyConfig(): { algorithms: jwt.Algorithm[]; secret: jwt.Secret | 
     // RS256 with private key can still verify (contains public component)
     return { algorithms: ['RS256'], secret: JWT_PRIVATE_KEY };
   }
-  return { algorithms: ['HS256'], secret: JWT_SECRET };
+  return { algorithms: ['HS256'], secret: JWT_SECRET! };
 }
 
 // ── Access Token ─────────────────────────────────────────────────────────────

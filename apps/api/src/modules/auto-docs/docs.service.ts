@@ -9,6 +9,20 @@ import type {
   DocExportFormat,
 } from '@apex-dev-manager/shared-types';
 
+// ── Oracle identifier validation ────────────────────────────────────────────
+
+const VALID_ORACLE_TYPES = ['TABLE', 'VIEW', 'PACKAGE', 'PACKAGE BODY', 'PROCEDURE', 'FUNCTION', 'TRIGGER', 'SEQUENCE', 'INDEX', 'SYNONYM', 'TYPE', 'TYPE BODY'];
+function assertOracleIdentifier(name: string): string {
+  const normalized = name.toUpperCase().replace(/[^A-Z0-9_$#]/g, '');
+  if (!normalized || normalized.length > 128) throw new Error(`Invalid Oracle identifier: ${name}`);
+  return normalized;
+}
+function assertOracleType(type: string): string {
+  const normalized = type.toUpperCase();
+  if (!VALID_ORACLE_TYPES.includes(normalized)) throw new Error(`Invalid Oracle type: ${type}`);
+  return normalized;
+}
+
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 interface ConnectionRow {
@@ -53,6 +67,8 @@ async function executeSql(
     username: creds.username,
     password: creds.password,
     schema: config.schema as string | undefined,
+    tenantId,
+    connectionId,
   };
   const mcp = new MCPClient(mcpConfig);
   try {
@@ -83,7 +99,7 @@ export async function generateDocs(
   let sourceCode = '';
   try {
     const rows = await executeSql(tenantId, request.connectionId, `
-      SELECT DBMS_METADATA.GET_DDL('${request.objectType.toUpperCase()}', '${request.objectName.toUpperCase()}') AS ddl
+      SELECT DBMS_METADATA.GET_DDL('${assertOracleType(request.objectType)}', '${assertOracleIdentifier(request.objectName)}') AS ddl
       FROM DUAL
     `);
     sourceCode = (rows[0]?.ddl as string) ?? '';
@@ -92,9 +108,9 @@ export async function generateDocs(
     // Fallback: try fetching from all_source for PL/SQL objects
     const rows = await executeSql(tenantId, request.connectionId, `
       SELECT text FROM all_source
-      WHERE owner = '${request.schema.toUpperCase()}'
-        AND name = '${request.objectName.toUpperCase()}'
-        AND type = '${request.objectType.toUpperCase()}'
+      WHERE owner = '${assertOracleIdentifier(request.schema)}'
+        AND name = '${assertOracleIdentifier(request.objectName)}'
+        AND type = '${assertOracleType(request.objectType)}'
       ORDER BY line
     `);
     sourceCode = rows.map((r) => r.text as string).join('');

@@ -10,6 +10,20 @@ import type {
   ImpactAssessment,
 } from '@apex-dev-manager/shared-types';
 
+// ── Oracle identifier validation ────────────────────────────────────────────
+
+const VALID_ORACLE_TYPES = ['TABLE', 'VIEW', 'PACKAGE', 'PACKAGE BODY', 'PROCEDURE', 'FUNCTION', 'TRIGGER', 'SEQUENCE', 'INDEX', 'SYNONYM', 'TYPE', 'TYPE BODY'];
+function assertOracleIdentifier(name: string): string {
+  const normalized = name.toUpperCase().replace(/[^A-Z0-9_$#]/g, '');
+  if (!normalized || normalized.length > 128) throw new Error(`Invalid Oracle identifier: ${name}`);
+  return normalized;
+}
+function assertOracleType(type: string): string {
+  const normalized = type.toUpperCase();
+  if (!VALID_ORACLE_TYPES.includes(normalized)) throw new Error(`Invalid Oracle type: ${type}`);
+  return normalized;
+}
+
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 interface ConnectionRow {
@@ -54,6 +68,8 @@ async function executeSql(
     username: creds.username,
     password: creds.password,
     schema: config.schema as string | undefined,
+    tenantId,
+    connectionId,
   };
   const mcp = new MCPClient(mcpConfig);
   try {
@@ -164,8 +180,8 @@ export async function getDependencyGraph(
     FROM all_dependencies d
     WHERE d.owner = SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA')
       AND (
-        (d.name = '${objectId.toUpperCase()}' AND d.type = '${objectType.toUpperCase()}')
-        OR (d.referenced_name = '${objectId.toUpperCase()}' AND d.referenced_type = '${objectType.toUpperCase()}')
+        (d.name = '${assertOracleIdentifier(objectId)}' AND d.type = '${assertOracleType(objectType)}')
+        OR (d.referenced_name = '${assertOracleIdentifier(objectId)}' AND d.referenced_type = '${assertOracleType(objectType)}')
       )
   `);
 

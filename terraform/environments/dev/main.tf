@@ -156,7 +156,7 @@ module "database" {
   subnet_id           = module.networking.db_subnet_id
   nsg_ids             = [module.networking.nsg_ids["db"]]
   db_name             = "apexdevdb"
-  admin_password      = var.db_admin_password
+  db_credential_secret_id = module.vault.db_password_secret_id
   instance_ocpus      = 1
   instance_memory_gb  = 16
   storage_gb          = 50

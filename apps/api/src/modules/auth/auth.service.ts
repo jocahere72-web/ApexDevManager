@@ -35,9 +35,9 @@ async function writeAuditLog(
 ): Promise<void> {
   try {
     await pool.query(
-      `INSERT INTO audit_logs (id, action, user_id, tenant_id, meta, created_at)
-       VALUES (gen_random_uuid(), $1, $2, $3, $4, NOW())`,
-      [action, userId, tenantId, meta ? JSON.stringify(meta) : null],
+      `INSERT INTO audit_events (id, tenant_id, user_id, event_type, action, event_payload, created_at)
+       VALUES (gen_random_uuid(), $1, $2, 'auth', $3, $4, NOW())`,
+      [tenantId, userId, action, meta ? JSON.stringify(meta) : null],
     );
   } catch (err) {
     // Audit log failure should not block the operation

@@ -92,6 +92,8 @@ function buildMCPConfig(conn: ConnectionRow): MCPConnectionConfig {
     username: creds.username,
     password: creds.password,
     schema: config.schema as string | undefined,
+    tenantId: conn.tenant_id,
+    connectionId: conn.id,
   };
 }
 

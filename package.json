@@ -6,7 +6,7 @@
   "scripts": {
     "test": "turbo run test",
     "test:api": "turbo run test --filter=@apex-dev/api",
-    "test:web": "turbo run test --filter=@apex-dev/web",
+    "test:web": "turbo run test --filter=@apex-dev-manager/web",
     "lint": "turbo run lint",
     "lint:fix": "turbo run lint -- --fix",
     "format": "prettier --check \"**/*.{ts,tsx,json,md}\"",

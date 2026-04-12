@@ -24,7 +24,7 @@ type ApexComponent = ApexRegion | ApexItem | ApexProcess | ApexDynamicAction;
 
 export async function fetchApplications(connectionId: string): Promise<ApexApplication[]> {
   const { data } = await apiClient.get<{ data: ApexApplication[] }>(
-    `/connections/${connectionId}/applications`,
+    `/explorer/apps/${connectionId}`,
   );
   return data.data;
 }
@@ -38,7 +38,7 @@ export async function fetchPages(
   appId: string,
 ): Promise<ApexPage[]> {
   const { data } = await apiClient.get<{ data: ApexPage[] }>(
-    `/connections/${connectionId}/applications/${appId}/pages`,
+    `/explorer/pages/${connectionId}/${appId}`,
   );
   return data.data;
 }
@@ -52,7 +52,7 @@ export async function fetchComponents(
   pageId: string,
 ): Promise<ApexComponent[]> {
   const { data } = await apiClient.get<{ data: ApexComponent[] }>(
-    `/connections/${connectionId}/pages/${pageId}/components`,
+    `/explorer/components/${connectionId}/${pageId}`,
   );
   return data.data;
 }
@@ -66,7 +66,7 @@ export async function fetchApplicationTree(
   appId: string,
 ): Promise<ApplicationTree> {
   const { data } = await apiClient.get<{ data: ApplicationTree }>(
-    `/connections/${connectionId}/applications/${appId}/tree`,
+    `/explorer/tree/${connectionId}/${appId}`,
   );
   return data.data;
 }
@@ -80,8 +80,8 @@ export async function searchExplorer(
   query: string,
 ): Promise<SearchResult> {
   const { data } = await apiClient.get<{ data: SearchResult }>(
-    `/connections/${connectionId}/explorer/search`,
-    { params: { q: query } },
+    `/explorer/search`,
+    { params: { q: query, connectionId } },
   );
   return data.data;
 }
@@ -92,14 +92,14 @@ export async function searchExplorer(
 
 export async function syncConnection(connectionId: string): Promise<SyncStatus> {
   const { data } = await apiClient.post<{ data: SyncStatus }>(
-    `/connections/${connectionId}/sync`,
+    `/explorer/sync/${connectionId}`,
   );
   return data.data;
 }
 
 export async function fetchSyncStatus(connectionId: string): Promise<SyncStatus> {
   const { data } = await apiClient.get<{ data: SyncStatus }>(
-    `/connections/${connectionId}/sync/status`,
+    `/explorer/sync-status/${connectionId}`,
   );
   return data.data;
 }

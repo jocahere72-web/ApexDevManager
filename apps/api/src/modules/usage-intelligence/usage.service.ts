@@ -199,6 +199,13 @@ Return only the JSON array.`;
 /**
  * Get usage trends over time.
  */
+const GRANULARITY_MAP: Record<string, string> = {
+  hour: "date_trunc('hour', created_at)",
+  day: "date_trunc('day', created_at)",
+  week: "date_trunc('week', created_at)",
+  month: "date_trunc('month', created_at)",
+};
+
 export async function getUsageTrends(
   tenantId: string,
   granularity: TimeGranularity = 'day',
@@ -206,7 +213,10 @@ export async function getUsageTrends(
 ): Promise<UsageTrends> {
   const since = new Date(Date.now() - days * 86400000).toISOString();
 
-  const truncFn = `date_trunc('${granularity}', created_at)`;
+  const truncFn = GRANULARITY_MAP[granularity];
+  if (!truncFn) {
+    throw new Error(`Invalid granularity: ${granularity}. Must be one of: ${Object.keys(GRANULARITY_MAP).join(', ')}`);
+  }
 
   const result = await pool.query(
     `SELECT

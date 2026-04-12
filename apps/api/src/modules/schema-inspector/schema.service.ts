@@ -53,6 +53,20 @@ function rowToSnapshot(row: SnapshotRow): SchemaSnapshot {
   };
 }
 
+// ── Oracle identifier validation ────────────────────────────────────────────
+
+const VALID_ORACLE_TYPES = ['TABLE', 'VIEW', 'PACKAGE', 'PACKAGE BODY', 'PROCEDURE', 'FUNCTION', 'TRIGGER', 'SEQUENCE', 'INDEX', 'SYNONYM', 'TYPE', 'TYPE BODY'];
+function assertOracleIdentifier(name: string): string {
+  const normalized = name.toUpperCase().replace(/[^A-Z0-9_$#]/g, '');
+  if (!normalized || normalized.length > 128) throw new Error(`Invalid Oracle identifier: ${name}`);
+  return normalized;
+}
+function assertOracleType(type: string): string {
+  const normalized = type.toUpperCase();
+  if (!VALID_ORACLE_TYPES.includes(normalized)) throw new Error(`Invalid Oracle type: ${type}`);
+  return normalized;
+}
+
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 async function getConnectionDetails(
@@ -84,6 +98,8 @@ async function executeSqlViaOrds(
     username: creds.username,
     password: creds.password,
     schema: config.schema as string | undefined,
+    tenantId,
+    connectionId,
   };
   const mcp = new MCPClient(mcpConfig);
   try {
@@ -147,7 +163,7 @@ async function getTableColumns(
   const rows = await executeSqlViaOrds(tenantId, connectionId, `
     SELECT column_name, data_type, nullable, data_default, column_id
     FROM all_tab_columns
-    WHERE owner = '${schema}' AND table_name = '${tableName}'
+    WHERE owner = '${assertOracleIdentifier(schema)}' AND table_name = '${assertOracleIdentifier(tableName)}'
     ORDER BY column_id
   `);
 
@@ -172,7 +188,7 @@ async function getTableIndexes(
            LISTAGG(ic.column_name, ',') WITHIN GROUP (ORDER BY ic.column_position) as columns
     FROM all_indexes i
     JOIN all_ind_columns ic ON i.index_name = ic.index_name AND i.owner = ic.index_owner
-    WHERE i.table_owner = '${schema}' AND i.table_name = '${tableName}'
+    WHERE i.table_owner = '${assertOracleIdentifier(schema)}' AND i.table_name = '${assertOracleIdentifier(tableName)}'
     GROUP BY i.index_name, i.uniqueness, i.index_type
   `);
 
@@ -201,7 +217,7 @@ export async function getTableDDL(
   tableName: string,
 ): Promise<DDLScript> {
   const rows = await executeSqlViaOrds(tenantId, connectionId, `
-    SELECT DBMS_METADATA.GET_DDL('TABLE', '${tableName.toUpperCase()}') AS ddl FROM DUAL
+    SELECT DBMS_METADATA.GET_DDL('TABLE', '${assertOracleIdentifier(tableName)}') AS ddl FROM DUAL
   `);
 
   return {

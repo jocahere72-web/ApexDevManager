@@ -48,7 +48,7 @@ export function useOfflineMode(connectionId: string): OfflineModeState {
   const checkBackend = useCallback(async () => {
     if (!connectionId) return;
     try {
-      const res = await fetch('/api/v1/health', { method: 'HEAD', cache: 'no-store' });
+      const res = await fetch('/health', { method: 'HEAD', cache: 'no-store' });
       setBackendReachable(res.ok);
     } catch {
       setBackendReachable(false);

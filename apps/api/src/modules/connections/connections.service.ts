@@ -49,8 +49,8 @@ async function logAudit(
 ): Promise<void> {
   try {
     await pool.query(
-      `INSERT INTO audit_logs (tenant_id, actor_id, action, target_type, target_id, details, created_at)
-       VALUES ($1, $2, $3, 'connection', $4, $5, NOW())`,
+      `INSERT INTO audit_events (tenant_id, user_id, event_type, action, entity_type, entity_id, event_payload, created_at)
+       VALUES ($1, $2, 'connection_management', $3, 'connection', $4, $5, NOW())`,
       [tenantId, actorId, action, targetId, details ? JSON.stringify(details) : null],
     );
   } catch (err) {
@@ -60,18 +60,24 @@ async function logAudit(
 
 // ── Row to Profile ───────────────────────────────────────────────────────────
 function rowToProfile(row: Record<string, unknown>): ConnectionProfile {
+  const connType = row.connection_type as 'ords' | 'jdbc';
+  const config: Record<string, unknown> =
+    connType === 'ords'
+      ? { ordsBaseUrl: row.ords_url }
+      : { host: row.db_host, serviceName: row.service_name };
+
   return {
     id: row.id as string,
     tenantId: row.tenant_id as string,
     name: row.name as string,
-    type: row.type as 'ords' | 'jdbc',
+    type: connType,
     environment: row.environment as string,
-    config: (row.config ?? {}) as Record<string, unknown>,
+    config,
     status: (row.status ?? 'unknown') as ConnectionStatus,
     tags: (row.tags ?? []) as string[],
     labels: (row.labels ?? {}) as Record<string, string>,
     isActive: row.is_active as boolean,
-    lastHealthCheck: (row.last_health_check as Date) ?? null,
+    lastHealthCheck: (row.last_check_at as Date) ?? null,
     lastLatencyMs: (row.last_latency_ms as number) ?? null,
     consecutiveFailures: (row.consecutive_failures as number) ?? 0,
     createdAt: row.created_at as Date,
@@ -101,12 +107,6 @@ export async function createConnection(
     tenantId,
   );
 
-  // Build config object (type-specific fields)
-  const config: Record<string, unknown> =
-    data.type === 'ords'
-      ? { ordsBaseUrl: data.ordsBaseUrl }
-      : { host: data.host, port: data.port, serviceName: data.serviceName };
-
   // Test the connection before saving
   let testResult: TestResult;
   if (data.type === 'ords') {
@@ -129,20 +129,22 @@ export async function createConnection(
 
   const result = await pool.query(
     `INSERT INTO connections (
-       tenant_id, name, type, environment, config, encrypted_credentials,
-       status, tags, labels, is_active, consecutive_failures,
-       last_health_check, last_latency_ms, change_log, created_at, updated_at
+       tenant_id, name, connection_type, environment, ords_url, db_host, service_name,
+       encrypted_credentials, status, tags, labels, is_active, consecutive_failures,
+       last_check_at, last_latency_ms, change_log, created_at, updated_at
      )
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, true, 0, NOW(), $10, $11, NOW(), NOW())
-     RETURNING id, tenant_id, name, type, environment, config, status, tags, labels,
-               is_active, last_health_check, last_latency_ms, consecutive_failures,
-               created_at, updated_at`,
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, true, 0, NOW(), $12, $13, NOW(), NOW())
+     RETURNING id, tenant_id, name, connection_type, environment, ords_url, db_host, service_name,
+               status, tags, labels, is_active, last_check_at, last_latency_ms,
+               consecutive_failures, created_at, updated_at`,
     [
       tenantId,
       data.name,
       data.type,
       data.environment,
-      JSON.stringify(config),
+      data.type === 'ords' ? data.ordsBaseUrl : null,
+      data.type === 'jdbc' ? data.host : null,
+      data.type === 'jdbc' ? data.serviceName : null,
       JSON.stringify(encryptedCreds),
       initialStatus,
       data.tags ?? [],
@@ -208,9 +210,9 @@ export async function listConnections(
 
   const [dataResult, countResult] = await Promise.all([
     pool.query(
-      `SELECT id, tenant_id, name, type, environment, config, status, tags, labels,
-              is_active, last_health_check, last_latency_ms, consecutive_failures,
-              created_at, updated_at
+      `SELECT id, tenant_id, name, connection_type, environment, ords_url, db_host, service_name,
+              status, tags, labels, is_active, last_check_at, last_latency_ms,
+              consecutive_failures, created_at, updated_at
        FROM connections
        WHERE ${whereClause}
        ORDER BY created_at DESC
@@ -232,9 +234,9 @@ export async function getConnectionById(
   id: string,
 ): Promise<ConnectionProfile> {
   const result = await pool.query(
-    `SELECT id, tenant_id, name, type, environment, config, status, tags, labels,
-            is_active, last_health_check, last_latency_ms, consecutive_failures,
-            created_at, updated_at
+    `SELECT id, tenant_id, name, connection_type, environment, ords_url, db_host, service_name,
+            status, tags, labels, is_active, last_check_at, last_latency_ms,
+            consecutive_failures, created_at, updated_at
      FROM connections
      WHERE tenant_id = $1 AND id = $2 AND deleted_at IS NULL`,
     [tenantId, id],
@@ -310,9 +312,9 @@ export async function updateConnection(
   const result = await pool.query(
     `UPDATE connections SET ${setClauses.join(', ')}
      WHERE tenant_id = $1 AND id = $2 AND deleted_at IS NULL
-     RETURNING id, tenant_id, name, type, environment, config, status, tags, labels,
-               is_active, last_health_check, last_latency_ms, consecutive_failures,
-               created_at, updated_at`,
+     RETURNING id, tenant_id, name, connection_type, environment, ords_url, db_host, service_name,
+               status, tags, labels, is_active, last_check_at, last_latency_ms,
+               consecutive_failures, created_at, updated_at`,
     params,
   );
 
@@ -357,7 +359,7 @@ export async function testConnection(
   id: string,
 ): Promise<TestResult> {
   const result = await pool.query(
-    `SELECT type, config, encrypted_credentials
+    `SELECT connection_type, ords_url, db_host, service_name, encrypted_credentials
      FROM connections
      WHERE tenant_id = $1 AND id = $2 AND deleted_at IS NULL`,
     [tenantId, id],
@@ -368,8 +370,7 @@ export async function testConnection(
   }
 
   const row = result.rows[0];
-  const type = row.type as 'ords' | 'jdbc';
-  const config = row.config as Record<string, unknown>;
+  const type = row.connection_type as 'ords' | 'jdbc';
   const encryptedCreds = row.encrypted_credentials as {
     iv: string;
     encrypted: string;
@@ -383,15 +384,15 @@ export async function testConnection(
 
   if (type === 'ords') {
     testResult = await testOrdsConnection({
-      ordsBaseUrl: config.ordsBaseUrl as string,
+      ordsBaseUrl: row.ords_url as string,
       username: creds.username,
       password: creds.password,
     });
   } else {
     testResult = await testJdbcConnection({
-      host: config.host as string,
-      port: config.port as number,
-      serviceName: config.serviceName as string,
+      host: row.db_host as string,
+      port: 1521,
+      serviceName: row.service_name as string,
       username: creds.username,
       password: creds.password,
     });
@@ -407,7 +408,7 @@ export async function testConnection(
 
   await pool.query(
     `UPDATE connections
-     SET status = $1, last_health_check = NOW(), last_latency_ms = $2,
+     SET status = $1, last_check_at = NOW(), last_latency_ms = $2,
          consecutive_failures = CASE WHEN $3 THEN 0 ELSE consecutive_failures + 1 END,
          updated_at = NOW()
      WHERE id = $4`,
@@ -423,7 +424,7 @@ export async function getHealthStatus(
   id: string,
 ): Promise<ConnectionHealth> {
   const result = await pool.query(
-    `SELECT id, status, last_health_check, last_latency_ms, consecutive_failures
+    `SELECT id, status, last_check_at, last_latency_ms, consecutive_failures
      FROM connections
      WHERE tenant_id = $1 AND id = $2 AND deleted_at IS NULL`,
     [tenantId, id],
@@ -438,7 +439,7 @@ export async function getHealthStatus(
   return {
     connectionId: row.id as string,
     status: (row.status ?? 'unknown') as ConnectionStatus,
-    lastHealthCheck: (row.last_health_check as Date) ?? null,
+    lastHealthCheck: (row.last_check_at as Date) ?? null,
     lastLatencyMs: (row.last_latency_ms as number) ?? null,
     consecutiveFailures: (row.consecutive_failures as number) ?? 0,
   };
