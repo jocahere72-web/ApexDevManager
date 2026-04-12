@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   AppPage,
   AppPageHeader,
@@ -31,6 +32,7 @@ const STATUS_TONE: Record<string, 'success' | 'warning' | 'accent' | 'neutral'> 
 };
 
 function DashboardPage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [stats, setStats] = useState<IssueStats | null>(null);
   const [recentIssues, setRecentIssues] = useState<IssueSummary[]>([]);
@@ -64,36 +66,36 @@ function DashboardPage() {
   const byStatus = stats?.byStatus ?? {};
   const summaryCards = stats
     ? [
-        { label: 'Total Issues', value: stats.total ?? 0, tone: 'accent' as const },
+        { label: t('dashboard.totalIssues'), value: stats.total ?? 0, tone: 'accent' as const },
         {
-          label: 'In Progress',
+          label: t('dashboard.inProgress'),
           value: (byStatus.build ?? 0) + (byStatus.review ?? 0) + (byStatus.test ?? 0),
           tone: 'warning' as const,
         },
-        { label: 'Done', value: byStatus.done ?? 0, tone: 'success' as const },
+        { label: t('dashboard.done'), value: byStatus.done ?? 0, tone: 'success' as const },
       ]
     : null;
 
   return (
     <AppPage>
       <AppPageHeader
-        eyebrow="Workspace"
-        title={`Welcome back, ${firstName}`}
-        description="Your delivery overview. Start with a connection, open the Explorer, then move through editor, documentation, tests, and release workflows."
+        eyebrow={t('dashboard.eyebrow')}
+        title={t('dashboard.greeting', { name: firstName })}
+        description={t('dashboard.description')}
         actions={
           <>
             <Link className="app-button app-button-primary" to="/connections">
-              New connection
+              {t('dashboard.newConnection')}
             </Link>
             <Link className="app-button" to="/explorer">
-              Open Explorer
+              {t('dashboard.openExplorer')}
             </Link>
           </>
         }
       />
 
       {loading && (
-        <div className="app-alert">Loading dashboard data...</div>
+        <div className="app-alert">{t('dashboard.loading')}</div>
       )}
 
       {summaryCards && (
@@ -103,7 +105,7 @@ function DashboardPage() {
               <p className="app-eyebrow">{card.label}</p>
               <p className="app-page-title">{card.value}</p>
               <AppStatusPill tone={card.tone}>
-                {card.tone === 'accent' ? 'All' : card.tone === 'warning' ? 'Active' : 'Completed'}
+                {card.tone === 'accent' ? t('dashboard.all') : card.tone === 'warning' ? t('dashboard.active') : t('dashboard.completed')}
               </AppStatusPill>
             </div>
           ))}
@@ -112,7 +114,7 @@ function DashboardPage() {
 
       {recentIssues.length > 0 && (
         <div className="app-stack app-mt">
-          <h2 className="app-card-title">Recent Issues</h2>
+          <h2 className="app-card-title">{t('dashboard.recentIssues')}</h2>
           <div className="app-stack">
             {recentIssues.map((issue) => (
               <Link
@@ -144,11 +146,9 @@ function DashboardPage() {
       {!loading && recentIssues.length === 0 && (
         <div className="app-empty app-mt">
           <div>
-            <h2 className="app-card-title">No issues yet</h2>
+            <h2 className="app-card-title">{t('dashboard.noIssues')}</h2>
             <p className="app-card-meta">
-              Create your first issue from the{' '}
-              <Link to="/issues" className="app-nav-link-active">Issues</Link>{' '}
-              page to get started.
+              {t('dashboard.noIssuesDesc')}
             </p>
           </div>
         </div>

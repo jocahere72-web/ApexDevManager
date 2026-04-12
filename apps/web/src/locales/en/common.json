@@ -1,0 +1,123 @@
+{
+  "app": { "name": "APEX Dev Manager", "subtitle": "APEX Development Platform" },
+  "nav": {
+    "dashboard": "Dashboard", "issues": "Issues", "clients": "Clients",
+    "connections": "Connections", "explorer": "Explorer", "editor": "Code Editor",
+    "aiStudio": "AI Studio", "prd": "PRD Builder", "pageGen": "PRD to Page",
+    "changeManager": "Change Manager", "schemaInspector": "Schema Inspector",
+    "releases": "Releases", "dependencies": "Dependencies", "autoDocs": "Auto Docs",
+    "testStudio": "Test Studio", "knowledge": "Knowledge Base",
+    "codeFactory": "Code Factory", "marketplace": "Marketplace",
+    "governance": "AI Governance", "usage": "Usage & Costs", "dashboards": "Observability",
+    "admin": "Admin Console", "llmProviders": "LLM Providers", "promptTemplates": "Prompt Templates"
+  },
+  "navGroups": {
+    "core": "Core", "development": "Development", "requirements": "Requirements",
+    "alm": "ALM", "analysis": "Analysis", "operations": "Operations", "admin": "Admin"
+  },
+  "auth": {
+    "signIn": "Sign in", "signOut": "Sign out", "email": "Email",
+    "password": "Password", "organization": "Organization", "signingIn": "Signing in...",
+    "welcome": "Welcome back", "subtitle": "Sign in to your workspace",
+    "defaultCredentials": "Default: admin@apex.local / Admin123!",
+    "heroTitle": "A clean workspace for APEX delivery.",
+    "heroText": "Manage Oracle APEX connections, explore applications, generate PRDs with AI, and deploy changes — all from a single platform."
+  },
+  "dashboard": {
+    "title": "Dashboard", "eyebrow": "Workspace",
+    "greeting": "Welcome back, {{name}}",
+    "description": "Your delivery overview. Start with a connection, open the Explorer, then move through editor, documentation, tests, and release workflows.",
+    "totalIssues": "Total Issues", "inProgress": "In Progress", "done": "Done",
+    "recentIssues": "Recent Issues", "noIssues": "No issues yet",
+    "noIssuesDesc": "Create your first issue from the Issues page to get started.",
+    "newConnection": "New connection", "openExplorer": "Open Explorer",
+    "loading": "Loading dashboard data...",
+    "all": "All", "active": "Active", "completed": "Completed"
+  },
+  "issues": {
+    "title": "Issues", "newIssue": "New Issue", "create": "Create",
+    "kanban": "Board", "list": "List", "search": "Search issues...",
+    "allClients": "All Clients", "allStatuses": "All Statuses",
+    "allPriorities": "All Priorities",
+    "noIssues": "No issues", "noIssuesDesc": "Create one to get started.",
+    "advance": "Advance →", "linkedArtifacts": "Linked Artifacts",
+    "activity": "Activity", "noActivity": "No activity recorded"
+  },
+  "issueStatus": {
+    "intake": "Intake", "prd": "PRD", "design": "Design", "build": "Build",
+    "review": "Review", "test": "Test", "deploy": "Deploy", "done": "Done"
+  },
+  "issuePriority": { "low": "Low", "medium": "Medium", "high": "High", "critical": "Critical" },
+  "issueType": { "feature": "Feature", "bug": "Bug", "enhancement": "Enhancement", "task": "Task" },
+  "clients": {
+    "title": "Clients", "newClient": "New Client", "create": "Create",
+    "name": "Name", "code": "Code", "description": "Description",
+    "connection": "Connection", "contactName": "Contact Name", "contactEmail": "Contact Email",
+    "noClients": "No clients", "active": "Active", "inactive": "Inactive",
+    "edit": "Edit", "deactivate": "Deactivate", "search": "Search clients..."
+  },
+  "connections": {
+    "title": "Connections", "newConnection": "New Connection", "create": "Create",
+    "name": "Name", "type": "Type", "environment": "Environment", "status": "Status",
+    "test": "Test", "edit": "Edit", "delete": "Delete",
+    "allEnvironments": "All Environments", "allStatuses": "All Statuses",
+    "noConnections": "No connections", "search": "Search connections..."
+  },
+  "explorer": {
+    "title": "Application Explorer", "selectConnection": "Select Connection...",
+    "search": "Search...", "noApps": "No applications found",
+    "pages": "pages", "runApp": "Run Application", "refresh": "Refresh",
+    "runPage": "Run Page", "regions": "Regions", "items": "Items",
+    "noComponents": "No components found"
+  },
+  "editor": {
+    "title": "Code Editor", "selectConnection": "Select Connection",
+    "componentName": "Component name...", "load": "Load", "loading": "Loading...",
+    "editing": "Editing", "viewOnly": "View Only", "editMode": "Edit Mode",
+    "viewMode": "View Mode", "modified": "Modified", "sourceLoaded": "Source loaded"
+  },
+  "prd": {
+    "title": "PRD Builder", "eyebrow": "Product Requirements",
+    "newSession": "New PRD", "create": "Create", "back": "← Back",
+    "noSessions": "No PRD sessions", "noSessionsDesc": "Create one to get started.",
+    "sources": "Sources", "pasteText": "Paste requirements text",
+    "addText": "Add Text", "uploadFile": "Upload File (.txt, .md, .pdf, .docx, images)",
+    "actions": "Actions", "extract": "Extract Requirements", "extracting": "Extracting...",
+    "generate": "Generate PRD Sections", "generating": "Generating...",
+    "validate": "Validate PRD", "validating": "Validating...",
+    "exportMd": "Export .md", "exportJson": "Export JSON",
+    "blockerWarning": "blocker(s) must be resolved before export.",
+    "validationScore": "Validation Score", "blockers": "blockers", "warnings": "warnings",
+    "extractionResults": "Extraction Results", "sections": "PRD Sections",
+    "noContent": "No content yet", "noContentDesc": "Upload sources, then extract and generate to build the PRD.",
+    "linkToIssue": "Link to Issue (optional)", "none": "None",
+    "chunks": "chunks", "uploading": "Uploading...", "creating": "Creating..."
+  },
+  "admin": {
+    "title": "Admin Console", "eyebrow": "Administration",
+    "tenants": "Tenant Management", "sso": "SSO & Identity",
+    "llmProviders": "LLM Providers", "promptTemplates": "Prompt Templates"
+  },
+  "llm": {
+    "addProvider": "Add Provider", "editProvider": "Edit Provider",
+    "activate": "Activate", "test": "Test", "testing": "Testing...",
+    "active": "Active", "inactive": "Inactive", "noProviders": "No providers configured",
+    "apiKey": "API Key", "model": "Model", "save": "Save", "cancel": "Cancel",
+    "delete": "Delete", "provider": "Provider", "displayName": "Display Name"
+  },
+  "prompts": {
+    "title": "Prompt Templates", "allCategories": "All categories",
+    "resetToDefault": "Reset to default", "save": "Save",
+    "temperature": "Temperature", "maxTokens": "Max tokens",
+    "modelOverride": "Model override", "variables": "Variables",
+    "version": "Version", "default": "Default"
+  },
+  "common": {
+    "save": "Save", "cancel": "Cancel", "delete": "Delete", "edit": "Edit",
+    "create": "Create", "close": "Close", "search": "Search", "loading": "Loading...",
+    "noResults": "No results", "confirm": "Confirm", "back": "Back",
+    "actions": "Actions", "name": "Name", "description": "Description",
+    "status": "Status", "type": "Type", "priority": "Priority",
+    "createdAt": "Created", "updatedAt": "Updated", "language": "Language"
+  }
+}

@@ -1,75 +1,76 @@
 import { useCallback, useEffect, useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/hooks/useAuth';
 
 interface NavItem {
   to: string;
-  label: string;
+  labelKey: string;
   icon: string;
 }
 
 interface NavGroup {
-  label: string;
+  labelKey: string;
   items: NavItem[];
 }
 
 const navGroups: NavGroup[] = [
   {
-    label: 'Core',
+    labelKey: 'navGroups.core',
     items: [
-      { to: '/', label: 'Dashboard', icon: '📊' },
-      { to: '/issues', label: 'Issues', icon: '📋' },
-      { to: '/clients', label: 'Clients', icon: '🏢' },
-      { to: '/connections', label: 'Connections', icon: '🔌' },
-      { to: '/explorer', label: 'Explorer', icon: '🌳' },
+      { to: '/', labelKey: 'nav.dashboard', icon: '📊' },
+      { to: '/issues', labelKey: 'nav.issues', icon: '📋' },
+      { to: '/clients', labelKey: 'nav.clients', icon: '🏢' },
+      { to: '/connections', labelKey: 'nav.connections', icon: '🔌' },
+      { to: '/explorer', labelKey: 'nav.explorer', icon: '🌳' },
     ],
   },
   {
-    label: 'Development',
+    labelKey: 'navGroups.development',
     items: [
-      { to: '/editor', label: 'Code Editor', icon: '✏️' },
-      { to: '/ai-studio', label: 'AI Studio', icon: '🤖' },
+      { to: '/editor', labelKey: 'nav.editor', icon: '✏️' },
+      { to: '/ai-studio', labelKey: 'nav.aiStudio', icon: '🤖' },
     ],
   },
   {
-    label: 'Requirements',
+    labelKey: 'navGroups.requirements',
     items: [
-      { to: '/prd', label: 'PRD Builder', icon: '📋' },
-      { to: '/page-gen', label: 'PRD to Page', icon: '📄' },
+      { to: '/prd', labelKey: 'nav.prd', icon: '📋' },
+      { to: '/page-gen', labelKey: 'nav.pageGen', icon: '📄' },
     ],
   },
   {
-    label: 'ALM',
+    labelKey: 'navGroups.alm',
     items: [
-      { to: '/change-manager', label: 'Change Manager', icon: '🔄' },
-      { to: '/schema-inspector', label: 'Schema Inspector', icon: '🗄️' },
-      { to: '/releases', label: 'Releases', icon: '🚀' },
+      { to: '/change-manager', labelKey: 'nav.changeManager', icon: '🔄' },
+      { to: '/schema-inspector', labelKey: 'nav.schemaInspector', icon: '🗄️' },
+      { to: '/releases', labelKey: 'nav.releases', icon: '🚀' },
     ],
   },
   {
-    label: 'Analysis',
+    labelKey: 'navGroups.analysis',
     items: [
-      { to: '/dependencies', label: 'Dependencies', icon: '🔗' },
-      { to: '/auto-docs', label: 'Auto Docs', icon: '📝' },
-      { to: '/test-studio', label: 'Test Studio', icon: '🧪' },
-      { to: '/knowledge', label: 'Knowledge', icon: '📚' },
+      { to: '/dependencies', labelKey: 'nav.dependencies', icon: '🔗' },
+      { to: '/auto-docs', labelKey: 'nav.autoDocs', icon: '📝' },
+      { to: '/test-studio', labelKey: 'nav.testStudio', icon: '🧪' },
+      { to: '/knowledge', labelKey: 'nav.knowledge', icon: '📚' },
     ],
   },
   {
-    label: 'Operations',
+    labelKey: 'navGroups.operations',
     items: [
-      { to: '/code-factory', label: 'Code Factory', icon: '🏭' },
-      { to: '/marketplace', label: 'Marketplace', icon: '🛒' },
-      { to: '/usage', label: 'Usage & Costs', icon: '💰' },
-      { to: '/dashboards', label: 'Observability', icon: '📈' },
+      { to: '/code-factory', labelKey: 'nav.codeFactory', icon: '🏭' },
+      { to: '/marketplace', labelKey: 'nav.marketplace', icon: '🛒' },
+      { to: '/usage', labelKey: 'nav.usage', icon: '💰' },
+      { to: '/dashboards', labelKey: 'nav.dashboards', icon: '📈' },
     ],
   },
   {
-    label: 'Admin',
+    labelKey: 'navGroups.admin',
     items: [
-      { to: '/governance', label: 'AI Governance', icon: '🛡️' },
-      { to: '/admin', label: 'Admin Console', icon: '⚙️' },
-      { to: '/llm-providers', label: 'LLM Providers', icon: '🧠' },
+      { to: '/governance', labelKey: 'nav.governance', icon: '🛡️' },
+      { to: '/admin', labelKey: 'nav.admin', icon: '⚙️' },
+      { to: '/llm-providers', labelKey: 'nav.llmProviders', icon: '🧠' },
     ],
   },
 ];
@@ -77,6 +78,7 @@ const navGroups: NavGroup[] = [
 const MOBILE_BREAKPOINT = 768;
 
 function MainLayout() {
+  const { t, i18n } = useTranslation();
   const { user, logout } = useAuth();
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < MOBILE_BREAKPOINT);
   const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= MOBILE_BREAKPOINT);
@@ -140,8 +142,8 @@ function MainLayout() {
             A
           </div>
           <div>
-            <h1 className="app-brand-title">APEX Dev Manager</h1>
-            <p className="app-brand-subtitle">Oracle APEX delivery workspace</p>
+            <h1 className="app-brand-title">{t('app.name')}</h1>
+            <p className="app-brand-subtitle">{t('app.subtitle')}</p>
           </div>
         </div>
 
@@ -151,8 +153,19 @@ function MainLayout() {
             {primaryRole && <span>{primaryRole}</span>}
           </div>
           {primaryRole && <span className="app-role-pill">{primaryRole}</span>}
+          <button
+            type="button"
+            className="app-button"
+            onClick={() => {
+              const next = i18n.language === 'es' ? 'en' : 'es';
+              i18n.changeLanguage(next);
+              localStorage.setItem('apex_lang', next);
+            }}
+          >
+            {i18n.language === 'es' ? 'EN' : 'ES'}
+          </button>
           <button type="button" className="app-button" onClick={logout}>
-            Sign out
+            {t('auth.signOut')}
           </button>
         </div>
       </header>
@@ -170,17 +183,17 @@ function MainLayout() {
         <aside className="app-sidebar">
           <nav className="app-nav" aria-label="Main navigation">
             {navGroups.map((group) => {
-              const isCollapsed = collapsedGroups[group.label] ?? false;
+              const isCollapsed = collapsedGroups[group.labelKey] ?? false;
 
               return (
-                <section className="app-nav-group" key={group.label}>
+                <section className="app-nav-group" key={group.labelKey}>
                   {showLabels ? (
                     <button
                       type="button"
                       className="app-nav-group-button"
-                      onClick={() => toggleGroup(group.label)}
+                      onClick={() => toggleGroup(group.labelKey)}
                     >
-                      <span>{group.label}</span>
+                      <span>{t(group.labelKey)}</span>
                       <span className="app-nav-chevron">{isCollapsed ? '+' : '-'}</span>
                     </button>
                   ) : (
@@ -198,12 +211,12 @@ function MainLayout() {
                             `app-nav-link${isActive ? ' app-nav-link-active' : ''}`
                           }
                           onClick={isMobile ? closeMobileDrawer : undefined}
-                          title={!showLabels ? item.label : undefined}
+                          title={!showLabels ? t(item.labelKey) : undefined}
                         >
                           <span className="app-nav-icon" aria-hidden="true">
                             {item.icon}
                           </span>
-                          <span className="app-nav-label">{item.label}</span>
+                          <span className="app-nav-label">{t(item.labelKey)}</span>
                         </NavLink>
                       ))}
                     </div>

@@ -1,0 +1,123 @@
+{
+  "app": { "name": "APEX Dev Manager", "subtitle": "Plataforma de desarrollo APEX" },
+  "nav": {
+    "dashboard": "Inicio", "issues": "Requerimientos", "clients": "Clientes",
+    "connections": "Conexiones", "explorer": "Explorador", "editor": "Editor de Codigo",
+    "aiStudio": "Estudio IA", "prd": "Constructor PRD", "pageGen": "PRD a Pagina",
+    "changeManager": "Gestor de Cambios", "schemaInspector": "Inspector de Esquema",
+    "releases": "Releases", "dependencies": "Dependencias", "autoDocs": "Documentacion Auto",
+    "testStudio": "Estudio de Pruebas", "knowledge": "Base de Conocimiento",
+    "codeFactory": "Fabrica de Codigo", "marketplace": "Marketplace",
+    "governance": "Gobernanza IA", "usage": "Uso y Costos", "dashboards": "Observabilidad",
+    "admin": "Administracion", "llmProviders": "Proveedores LLM", "promptTemplates": "Plantillas de Prompts"
+  },
+  "navGroups": {
+    "core": "Principal", "development": "Desarrollo", "requirements": "Requerimientos",
+    "alm": "Gestion de Cambios", "analysis": "Analisis", "operations": "Operaciones", "admin": "Administracion"
+  },
+  "auth": {
+    "signIn": "Iniciar Sesion", "signOut": "Cerrar Sesion", "email": "Correo electronico",
+    "password": "Contrasena", "organization": "Organizacion", "signingIn": "Iniciando sesion...",
+    "welcome": "Bienvenido de nuevo", "subtitle": "Inicia sesion en tu espacio de trabajo",
+    "defaultCredentials": "Por defecto: admin@apex.local / Admin123!",
+    "heroTitle": "Un espacio de trabajo limpio para desarrollo APEX.",
+    "heroText": "Gestiona conexiones Oracle APEX, explora aplicaciones, genera PRDs con IA, y despliega cambios — todo desde una sola plataforma."
+  },
+  "dashboard": {
+    "title": "Panel Principal", "eyebrow": "Espacio de trabajo",
+    "greeting": "Hola, {{name}}",
+    "description": "Tu resumen de entregas. Comienza con una conexion, abre el Explorador, luego avanza por editor, documentacion, pruebas y flujos de release.",
+    "totalIssues": "Total Requerimientos", "inProgress": "En Progreso", "done": "Completados",
+    "recentIssues": "Requerimientos Recientes", "noIssues": "No hay requerimientos aun",
+    "noIssuesDesc": "Crea tu primer requerimiento desde la pagina de Requerimientos para comenzar.",
+    "newConnection": "Nueva conexion", "openExplorer": "Abrir Explorador",
+    "loading": "Cargando datos del panel...",
+    "all": "Todos", "active": "Activos", "completed": "Completados"
+  },
+  "issues": {
+    "title": "Requerimientos", "newIssue": "Nuevo Requerimiento", "create": "Crear",
+    "kanban": "Tablero", "list": "Lista", "search": "Buscar requerimientos...",
+    "allClients": "Todos los Clientes", "allStatuses": "Todos los Estados",
+    "allPriorities": "Todas las Prioridades",
+    "noIssues": "No hay requerimientos", "noIssuesDesc": "Crea uno para comenzar.",
+    "advance": "Avanzar →", "linkedArtifacts": "Artefactos Vinculados",
+    "activity": "Actividad", "noActivity": "Sin actividad registrada"
+  },
+  "issueStatus": {
+    "intake": "Recepcion", "prd": "PRD", "design": "Diseno", "build": "Construccion",
+    "review": "Revision", "test": "Pruebas", "deploy": "Despliegue", "done": "Completado"
+  },
+  "issuePriority": { "low": "Baja", "medium": "Media", "high": "Alta", "critical": "Critica" },
+  "issueType": { "feature": "Funcionalidad", "bug": "Error", "enhancement": "Mejora", "task": "Tarea" },
+  "clients": {
+    "title": "Clientes", "newClient": "Nuevo Cliente", "create": "Crear",
+    "name": "Nombre", "code": "Codigo", "description": "Descripcion",
+    "connection": "Conexion", "contactName": "Nombre de Contacto", "contactEmail": "Correo de Contacto",
+    "noClients": "No hay clientes", "active": "Activo", "inactive": "Inactivo",
+    "edit": "Editar", "deactivate": "Desactivar", "search": "Buscar clientes..."
+  },
+  "connections": {
+    "title": "Conexiones", "newConnection": "Nueva Conexion", "create": "Crear",
+    "name": "Nombre", "type": "Tipo", "environment": "Ambiente", "status": "Estado",
+    "test": "Probar", "edit": "Editar", "delete": "Eliminar",
+    "allEnvironments": "Todos los Ambientes", "allStatuses": "Todos los Estados",
+    "noConnections": "No hay conexiones", "search": "Buscar conexiones..."
+  },
+  "explorer": {
+    "title": "Explorador de Aplicaciones", "selectConnection": "Seleccionar Conexion...",
+    "search": "Buscar...", "noApps": "No se encontraron aplicaciones",
+    "pages": "paginas", "runApp": "Ejecutar Aplicacion", "refresh": "Actualizar",
+    "runPage": "Ejecutar Pagina", "regions": "Regiones", "items": "Items",
+    "noComponents": "No se encontraron componentes"
+  },
+  "editor": {
+    "title": "Editor de Codigo", "selectConnection": "Seleccionar Conexion",
+    "componentName": "Nombre del componente...", "load": "Cargar", "loading": "Cargando...",
+    "editing": "Editando", "viewOnly": "Solo Lectura", "editMode": "Modo Edicion",
+    "viewMode": "Modo Vista", "modified": "Modificado", "sourceLoaded": "Fuente cargada"
+  },
+  "prd": {
+    "title": "Constructor PRD", "eyebrow": "Requerimientos de Producto",
+    "newSession": "Nuevo PRD", "create": "Crear", "back": "← Volver",
+    "noSessions": "No hay sesiones PRD", "noSessionsDesc": "Crea una para comenzar.",
+    "sources": "Fuentes", "pasteText": "Pegar texto de requerimientos",
+    "addText": "Agregar Texto", "uploadFile": "Subir Archivo (.txt, .md, .pdf, .docx, imagenes)",
+    "actions": "Acciones", "extract": "Extraer Requerimientos", "extracting": "Extrayendo...",
+    "generate": "Generar Secciones PRD", "generating": "Generando...",
+    "validate": "Validar PRD", "validating": "Validando...",
+    "exportMd": "Exportar .md", "exportJson": "Exportar JSON",
+    "blockerWarning": "bloqueante(s) deben resolverse antes de exportar.",
+    "validationScore": "Puntaje de Validacion", "blockers": "bloqueantes", "warnings": "advertencias",
+    "extractionResults": "Resultados de Extraccion", "sections": "Secciones PRD",
+    "noContent": "Sin contenido aun", "noContentDesc": "Sube fuentes, luego extrae y genera para construir el PRD.",
+    "linkToIssue": "Vincular a Requerimiento (opcional)", "none": "Ninguno",
+    "chunks": "fragmentos", "uploading": "Subiendo...", "creating": "Creando..."
+  },
+  "admin": {
+    "title": "Consola de Administracion", "eyebrow": "Administracion",
+    "tenants": "Gestion de Tenants", "sso": "SSO e Identidad",
+    "llmProviders": "Proveedores LLM", "promptTemplates": "Plantillas de Prompts"
+  },
+  "llm": {
+    "addProvider": "Agregar Proveedor", "editProvider": "Editar Proveedor",
+    "activate": "Activar", "test": "Probar", "testing": "Probando...",
+    "active": "Activo", "inactive": "Inactivo", "noProviders": "No hay proveedores configurados",
+    "apiKey": "API Key", "model": "Modelo", "save": "Guardar", "cancel": "Cancelar",
+    "delete": "Eliminar", "provider": "Proveedor", "displayName": "Nombre"
+  },
+  "prompts": {
+    "title": "Plantillas de Prompts", "allCategories": "Todas las categorias",
+    "resetToDefault": "Restaurar por defecto", "save": "Guardar",
+    "temperature": "Temperatura", "maxTokens": "Tokens maximos",
+    "modelOverride": "Modelo especifico", "variables": "Variables",
+    "version": "Version", "default": "Por defecto"
+  },
+  "common": {
+    "save": "Guardar", "cancel": "Cancelar", "delete": "Eliminar", "edit": "Editar",
+    "create": "Crear", "close": "Cerrar", "search": "Buscar", "loading": "Cargando...",
+    "noResults": "Sin resultados", "confirm": "Confirmar", "back": "Volver",
+    "actions": "Acciones", "name": "Nombre", "description": "Descripcion",
+    "status": "Estado", "type": "Tipo", "priority": "Prioridad",
+    "createdAt": "Creado", "updatedAt": "Actualizado", "language": "Idioma"
+  }
+}
