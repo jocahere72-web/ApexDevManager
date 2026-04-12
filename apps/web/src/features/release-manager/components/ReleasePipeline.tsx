@@ -140,11 +140,11 @@ const stageStyles: Record<string, { bg: string; border: string; text: string }> 
 };
 
 const stageIcons: Record<string, string> = {
-  pending: '\u25CB',    // circle
-  running: '\u25D4',    // half circle
-  passed: '\u2713',     // checkmark
-  failed: '\u2717',     // x
-  skipped: '\u2014',    // dash
+  pending: '\u25CB', // circle
+  running: '\u25D4', // half circle
+  passed: '\u2713', // checkmark
+  failed: '\u2717', // x
+  skipped: '\u2014', // dash
 };
 
 // ---------------------------------------------------------------------------
@@ -249,17 +249,29 @@ export default function ReleasePipeline() {
         </h1>
         <div style={styles.actions}>
           {release.status === 'draft' && (
-            <button style={{ ...styles.btn, ...styles.btnPrimary }} onClick={handleBuild} disabled={actionLoading}>
+            <button
+              style={{ ...styles.btn, ...styles.btnPrimary }}
+              onClick={handleBuild}
+              disabled={actionLoading}
+            >
               Build
             </button>
           )}
           {(release.status === 'building' || release.status === 'testing') && (
-            <button style={{ ...styles.btn, ...styles.btnPrimary }} onClick={handlePromote} disabled={actionLoading}>
+            <button
+              style={{ ...styles.btn, ...styles.btnPrimary }}
+              onClick={handlePromote}
+              disabled={actionLoading}
+            >
               Promote to Staging
             </button>
           )}
           {release.status === 'staging' && (
-            <button style={{ ...styles.btn, ...styles.btnSuccess }} onClick={handleDeploy} disabled={actionLoading}>
+            <button
+              style={{ ...styles.btn, ...styles.btnSuccess }}
+              onClick={handleDeploy}
+              disabled={actionLoading}
+            >
               Deploy to Production
             </button>
           )}
@@ -282,7 +294,9 @@ export default function ReleasePipeline() {
                   }}
                 >
                   <span style={{ fontSize: '24px' }}>{stageIcons[stage.status]}</span>
-                  <span style={{ fontSize: '11px', marginTop: '4px' }}>{stage.name.toUpperCase()}</span>
+                  <span style={{ fontSize: '11px', marginTop: '4px' }}>
+                    {stage.name.toUpperCase()}
+                  </span>
                 </div>
                 <div style={styles.stageLabel}>{stage.name}</div>
                 <div style={styles.stageStatus}>{stage.status}</div>
@@ -343,13 +357,25 @@ export default function ReleasePipeline() {
       {/* Details */}
       <div style={styles.detailsCard}>
         <h3 style={styles.sectionTitle}>Release Details</h3>
-        <div style={styles.meta}>
-          <div><span style={styles.metaLabel}>Version:</span> {release.version}</div>
-          <div><span style={styles.metaLabel}>Status:</span> {release.status}</div>
-          <div><span style={styles.metaLabel}>Created:</span> {formatDate(release.createdAt)}</div>
-          <div><span style={styles.metaLabel}>Deployed:</span> {formatDate(release.deployedAt)}</div>
-          <div><span style={styles.metaLabel}>Change Sets:</span> {release.changeSetIds.length}</div>
-          <div><span style={styles.metaLabel}>Updated:</span> {formatDate(release.updatedAt)}</div>
+        <div className="app-responsive-two-column" style={styles.meta}>
+          <div>
+            <span style={styles.metaLabel}>Version:</span> {release.version}
+          </div>
+          <div>
+            <span style={styles.metaLabel}>Status:</span> {release.status}
+          </div>
+          <div>
+            <span style={styles.metaLabel}>Created:</span> {formatDate(release.createdAt)}
+          </div>
+          <div>
+            <span style={styles.metaLabel}>Deployed:</span> {formatDate(release.deployedAt)}
+          </div>
+          <div>
+            <span style={styles.metaLabel}>Change Sets:</span> {release.changeSetIds.length}
+          </div>
+          <div>
+            <span style={styles.metaLabel}>Updated:</span> {formatDate(release.updatedAt)}
+          </div>
         </div>
       </div>
     </div>

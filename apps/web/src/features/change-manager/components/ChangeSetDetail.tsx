@@ -354,9 +354,7 @@ export default function ChangeSetDetail() {
 
       {/* Objects list */}
       <div style={styles.section}>
-        <h2 style={styles.sectionTitle}>
-          Objects ({changeSet.objects.length})
-        </h2>
+        <h2 style={styles.sectionTitle}>Objects ({changeSet.objects.length})</h2>
         <div style={styles.card}>
           {changeSet.objects.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '24px', color: '#999' }}>
@@ -369,14 +367,22 @@ export default function ChangeSetDetail() {
                 <div key={i} style={styles.objectRow}>
                   <div style={styles.objectInfo}>
                     <span style={styles.objectType}>{obj.objectType}</span>
-                    <strong>{obj.schema ? `${obj.schema}.` : ''}{obj.objectName}</strong>
+                    <strong>
+                      {obj.schema ? `${obj.schema}.` : ''}
+                      {obj.objectName}
+                    </strong>
                     <span style={{ ...styles.actionBadge, backgroundColor: ac.bg, color: ac.text }}>
                       {obj.action}
                     </span>
                   </div>
                   {changeSet.status === 'draft' && (
                     <button
-                      style={{ ...styles.btn, ...styles.btnOutline, padding: '4px 8px', fontSize: '12px' }}
+                      style={{
+                        ...styles.btn,
+                        ...styles.btnOutline,
+                        padding: '4px 8px',
+                        fontSize: '12px',
+                      }}
                       onClick={() => handleRemoveObject(i)}
                     >
                       Remove
@@ -393,7 +399,7 @@ export default function ChangeSetDetail() {
       <div style={styles.section}>
         <h2 style={styles.sectionTitle}>Details</h2>
         <div style={styles.card}>
-          <div style={styles.meta}>
+          <div className="app-responsive-two-column" style={styles.meta}>
             <div>
               <span style={styles.metaLabel}>Created:</span> {formatDate(changeSet.createdAt)}
             </div>

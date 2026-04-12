@@ -222,7 +222,10 @@ export default function DependencyGraph({ connectionId: propConnectionId }: Prop
   const [objectType, setObjectType] = useState('TABLE');
 
   useEffect(() => {
-    apiClient.get('/connections').then(res => setConnections(res.data.data || [])).catch(() => {});
+    apiClient
+      .get('/connections')
+      .then((res) => setConnections(res.data.data || []))
+      .catch(() => {});
   }, []);
   const [objectId, setObjectId] = useState('');
   const [graph, setGraph] = useState<DependencyGraphType | null>(null);
@@ -257,7 +260,11 @@ export default function DependencyGraph({ connectionId: propConnectionId }: Prop
     if (!connectionId || !objectId) return;
     setLoading(true);
     try {
-      const assessment = await dependencyApi.getImpactAssessment(connectionId, objectType, objectId);
+      const assessment = await dependencyApi.getImpactAssessment(
+        connectionId,
+        objectType,
+        objectId,
+      );
       setImpact(assessment);
     } catch (err) {
       console.error('Failed to assess impact:', err);
@@ -289,13 +296,32 @@ export default function DependencyGraph({ connectionId: propConnectionId }: Prop
       {/* Graph visualization */}
       <div style={styles.graphArea}>
         {loading && (
-          <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: '#999' }}>
+          <div
+            style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              color: '#999',
+            }}
+          >
             Analyzing dependencies...
           </div>
         )}
         {!loading && !graph && (
-          <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: '#999', textAlign: 'center' }}>
-            Enter connection details and click Analyze<br />to view the dependency graph.
+          <div
+            style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              color: '#999',
+              textAlign: 'center',
+            }}
+          >
+            Enter connection details and click Analyze
+            <br />
+            to view the dependency graph.
           </div>
         )}
         {graph && (
@@ -321,7 +347,14 @@ export default function DependencyGraph({ connectionId: propConnectionId }: Prop
 
             {/* Arrow marker */}
             <defs>
-              <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+              <marker
+                id="arrowhead"
+                markerWidth="10"
+                markerHeight="7"
+                refX="10"
+                refY="3.5"
+                orient="auto"
+              >
                 <polygon points="0 0, 10 3.5, 0 7" fill="#ccc" />
               </marker>
             </defs>
@@ -388,14 +421,20 @@ export default function DependencyGraph({ connectionId: propConnectionId }: Prop
           >
             <option value="">Select a connection</option>
             {connections.map((c) => (
-              <option key={c.id} value={c.id}>{c.name}</option>
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
             ))}
           </select>
         </div>
 
         <div style={styles.formGroup}>
           <label style={styles.label}>Object Type</label>
-          <select style={styles.select} value={objectType} onChange={(e) => setObjectType(e.target.value)}>
+          <select
+            style={styles.select}
+            value={objectType}
+            onChange={(e) => setObjectType(e.target.value)}
+          >
             <option value="TABLE">Table</option>
             <option value="VIEW">View</option>
             <option value="PACKAGE">Package</option>
@@ -421,14 +460,18 @@ export default function DependencyGraph({ connectionId: propConnectionId }: Prop
         </button>
 
         {objectId && (
-          <button style={styles.btnOutline} onClick={handleImpactAssessment} disabled={loading || !connectionId}>
+          <button
+            style={styles.btnOutline}
+            onClick={handleImpactAssessment}
+            disabled={loading || !connectionId}
+          >
             Impact Assessment
           </button>
         )}
 
         {/* Stats */}
         {graph?.metadata && (
-          <div style={styles.stats}>
+          <div className="app-responsive-two-column" style={styles.stats}>
             <div style={styles.statBox}>
               <div style={styles.statNum}>{graph.metadata.totalNodes}</div>
               <div style={styles.statLabel}>Nodes</div>
@@ -449,10 +492,7 @@ export default function DependencyGraph({ connectionId: propConnectionId }: Prop
             >
               Export Mermaid
             </button>
-            <button
-              style={{ ...styles.btnOutline, flex: 1 }}
-              onClick={() => handleExport('dot')}
-            >
+            <button style={{ ...styles.btnOutline, flex: 1 }} onClick={() => handleExport('dot')}>
               Export DOT
             </button>
           </div>
@@ -475,7 +515,9 @@ export default function DependencyGraph({ connectionId: propConnectionId }: Prop
 
             {impact.directDependents.length > 0 && (
               <>
-                <div style={{ fontSize: '12px', fontWeight: 600, color: '#333', marginTop: '12px' }}>
+                <div
+                  style={{ fontSize: '12px', fontWeight: 600, color: '#333', marginTop: '12px' }}
+                >
                   Direct Dependents ({impact.directDependents.length})
                 </div>
                 <ul style={styles.depList}>
@@ -491,7 +533,9 @@ export default function DependencyGraph({ connectionId: propConnectionId }: Prop
 
             {impact.transitiveDependents.length > 0 && (
               <>
-                <div style={{ fontSize: '12px', fontWeight: 600, color: '#333', marginTop: '12px' }}>
+                <div
+                  style={{ fontSize: '12px', fontWeight: 600, color: '#333', marginTop: '12px' }}
+                >
                   Transitive ({impact.transitiveDependents.length})
                 </div>
                 <ul style={styles.depList}>
@@ -507,7 +551,9 @@ export default function DependencyGraph({ connectionId: propConnectionId }: Prop
 
             {impact.breakingChanges.length > 0 && (
               <>
-                <div style={{ fontSize: '12px', fontWeight: 600, color: '#c62828', marginTop: '12px' }}>
+                <div
+                  style={{ fontSize: '12px', fontWeight: 600, color: '#c62828', marginTop: '12px' }}
+                >
                   Breaking Changes ({impact.breakingChanges.length})
                 </div>
                 <ul style={styles.depList}>

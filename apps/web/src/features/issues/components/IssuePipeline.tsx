@@ -8,22 +8,22 @@ export default function IssuePipeline({ currentStatus }: IssuePipelineProps) {
   const currentIndex = ISSUE_STATUSES.indexOf(currentStatus);
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '0', width: '100%' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 0, width: '100%' }}>
       {ISSUE_STATUSES.map((status, index) => {
         const isCompleted = index < currentIndex;
         const isCurrent = index === currentIndex;
         const isFuture = index > currentIndex;
 
-        let dotColor = '#d1d5db';
-        let lineColor = '#d1d5db';
-        let labelColor = '#9ca3af';
+        let dotColor = 'var(--app-border-strong)';
+        let lineColor = 'var(--app-border-strong)';
+        let labelColor = 'var(--app-muted)';
         if (isCompleted) {
-          dotColor = '#22c55e';
-          lineColor = '#22c55e';
-          labelColor = '#16a34a';
+          dotColor = 'var(--app-success)';
+          lineColor = 'var(--app-success)';
+          labelColor = 'var(--app-success)';
         } else if (isCurrent) {
-          dotColor = '#3b82f6';
-          labelColor = '#2563eb';
+          dotColor = 'var(--app-accent)';
+          labelColor = 'var(--app-accent-strong)';
         }
         void isFuture;
 
@@ -43,7 +43,7 @@ export default function IssuePipeline({ currentStatus }: IssuePipelineProps) {
                   height: isCurrent ? '14px' : '10px',
                   borderRadius: '50%',
                   backgroundColor: dotColor,
-                  border: isCurrent ? '2px solid #93c5fd' : 'none',
+                  border: isCurrent ? '2px solid var(--app-accent-soft)' : 'none',
                   flexShrink: 0,
                   transition: 'all 0.2s',
                 }}
@@ -67,7 +67,7 @@ export default function IssuePipeline({ currentStatus }: IssuePipelineProps) {
                 style={{
                   flex: 1,
                   height: '2px',
-                  backgroundColor: isCompleted ? lineColor : '#e5e7eb',
+                  backgroundColor: isCompleted ? lineColor : 'var(--app-border)',
                   marginLeft: '4px',
                   marginRight: '4px',
                   marginBottom: '18px',

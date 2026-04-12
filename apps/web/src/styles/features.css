@@ -1,0 +1,512 @@
+/* ==========================================================================
+   Feature-specific utility classes
+   Built on top of app-template.css design tokens
+   ========================================================================== */
+
+/* ---------------------------------------------------------------------------
+   Connections
+   --------------------------------------------------------------------------- */
+
+.conn-filter-bar {
+  margin-bottom: 16px;
+}
+
+.conn-filter-search {
+  max-width: 280px;
+}
+
+.conn-filter-select {
+  max-width: 220px;
+}
+
+.conn-name-cell {
+  font-weight: 650;
+}
+
+.conn-env-cell {
+  text-transform: capitalize;
+}
+
+.conn-meta-cell {
+  color: var(--app-muted);
+  font-size: 0.8125rem;
+}
+
+.conn-error-text {
+  color: var(--app-danger);
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+.conn-pagination {
+  justify-content: space-between;
+  margin-top: 16px;
+}
+
+.conn-pagination-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Connection Detail */
+
+.conn-detail-header {
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.conn-detail-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.conn-button-danger {
+  color: var(--app-danger);
+  border-color: #f4b4ae;
+}
+
+.conn-button-disabled {
+  opacity: 0.6;
+}
+
+.conn-test-alert {
+  margin-bottom: 1rem;
+}
+
+.conn-section-title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+}
+
+.conn-prop-row {
+  display: flex;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--app-border);
+  font-size: 0.875rem;
+}
+
+.conn-prop-label {
+  width: 10rem;
+  font-weight: 500;
+  color: var(--app-muted);
+  flex-shrink: 0;
+}
+
+.conn-prop-value {
+  color: var(--app-text);
+}
+
+.conn-tag {
+  margin-right: 0.375rem;
+}
+
+.conn-muted-text {
+  color: var(--app-muted);
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+.conn-health-grid {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.conn-health-label {
+  font-size: 0.75rem;
+  color: var(--app-muted);
+  margin-bottom: 0.25rem;
+}
+
+.conn-health-value {
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.conn-health-value-danger {
+  color: var(--app-danger);
+}
+
+.conn-chart-meta {
+  font-size: 0.75rem;
+  color: var(--app-muted);
+  margin-top: 0.5rem;
+  margin-bottom: 0;
+}
+
+.conn-changelog-entry {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--app-border);
+  font-size: 0.875rem;
+}
+
+.conn-changelog-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.25rem;
+}
+
+.conn-changelog-action {
+  font-weight: 500;
+}
+
+.conn-changelog-detail {
+  color: var(--app-muted);
+}
+
+/* Connection Form */
+
+.conn-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  max-width: 36rem;
+}
+
+.conn-fieldset {
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius);
+  padding: 1.25rem;
+  margin: 0;
+  background-color: var(--app-surface);
+}
+
+.conn-legend {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--app-text);
+  padding: 0 0.375rem;
+}
+
+.conn-type-toggle {
+  display: flex;
+  gap: 0;
+  border-radius: var(--app-radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--app-border);
+  width: fit-content;
+}
+
+.conn-type-toggle-btn {
+  padding: 0.5rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  background-color: var(--app-surface);
+  color: var(--app-text);
+  transition: all 0.15s;
+}
+
+.conn-type-toggle-btn-active {
+  background-color: var(--app-accent);
+  color: #ffffff;
+}
+
+.conn-jdbc-row {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.conn-jdbc-port {
+  flex: 1;
+}
+
+.conn-jdbc-service {
+  flex: 2;
+}
+
+.conn-hint {
+  font-size: 0.75rem;
+  color: var(--app-muted);
+}
+
+.conn-test-success {
+  font-size: 0.875rem;
+  color: var(--app-success);
+}
+
+.conn-test-fail {
+  font-size: 0.875rem;
+  color: var(--app-danger);
+}
+
+.conn-submit-error {
+  color: var(--app-danger);
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+/* Connection Modal */
+
+.conn-modal-title {
+  margin-bottom: 0.75rem;
+}
+
+.conn-modal-body {
+  color: var(--app-text);
+  font-size: 0.875rem;
+  line-height: 1.6;
+  margin-bottom: 1.25rem;
+}
+
+.conn-modal-text {
+  margin: 0;
+}
+
+.conn-modal-alert {
+  margin-top: 0.75rem;
+}
+
+.conn-modal-actions {
+  justify-content: flex-end;
+}
+
+/* ---------------------------------------------------------------------------
+   Explorer
+   --------------------------------------------------------------------------- */
+
+.explorer-sidebar-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.explorer-sidebar-header {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--app-border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.explorer-tree-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem 0.25rem;
+}
+
+.explorer-sync-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.explorer-sync-button {
+  font-size: 0.6875rem;
+  color: var(--app-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+}
+
+.explorer-offline-banner {
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 6px 12px;
+}
+
+.explorer-placeholder-text {
+  color: var(--app-muted);
+  font-size: 0.8125rem;
+  text-align: center;
+  margin-top: 48px;
+}
+
+.explorer-placeholder-text-sm {
+  margin-top: 0;
+  font-size: 0.75rem;
+}
+
+/* Explorer center */
+
+.explorer-center-header {
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid var(--app-border);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--app-text);
+  background: var(--app-surface);
+}
+
+.explorer-tree-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem;
+}
+
+/* Explorer search */
+
+.explorer-search-wrapper {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--app-border);
+}
+
+.explorer-search-results {
+  max-height: 320px;
+  overflow-y: auto;
+  padding: 0.25rem 0.75rem 0.5rem;
+  border-bottom: 1px solid var(--app-border);
+}
+
+.explorer-search-group-header {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--app-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 8px;
+  margin-bottom: 4px;
+}
+
+.explorer-search-result-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8125rem;
+}
+
+.explorer-search-result-item:hover {
+  background-color: var(--app-soft);
+}
+
+.explorer-search-result-path {
+  font-size: 0.6875rem;
+  color: var(--app-muted);
+}
+
+.explorer-search-highlight {
+  font-weight: 700;
+}
+
+/* Detail panel */
+
+.detail-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.detail-panel-empty {
+  align-items: center;
+  justify-content: center;
+}
+
+.detail-panel-header {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--app-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.detail-panel-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--app-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.detail-panel-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.75rem 1rem;
+}
+
+.detail-section-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--app-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+  margin-top: 16px;
+}
+
+.detail-section-label:first-child {
+  margin-top: 0;
+}
+
+.detail-field-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 4px 0;
+  font-size: 0.8125rem;
+}
+
+.detail-field-label {
+  color: var(--app-muted);
+  flex-shrink: 0;
+  margin-right: 12px;
+}
+
+.detail-field-value {
+  color: var(--app-text);
+  text-align: right;
+  word-break: break-word;
+}
+
+.detail-open-editor-btn {
+  margin-top: 16px;
+  width: 100%;
+}
+
+/* ---------------------------------------------------------------------------
+   Editor
+   --------------------------------------------------------------------------- */
+
+.editor-toolbar {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--app-border);
+  background: var(--app-surface-raised);
+}
+
+.editor-select-connection {
+  width: min(100%, 240px);
+}
+
+.editor-select-type {
+  width: min(100%, 220px);
+}
+
+.editor-input-component {
+  width: min(100%, 220px);
+}
+
+.editor-button-disabled {
+  opacity: 0.5;
+}
+
+.editor-toolbar-spacer {
+  flex: 1;
+}
+
+.editor-alert {
+  margin: 12px 14px 0;
+}
+
+.editor-alert-success {
+  color: var(--app-success);
+}
+
+.editor-monaco-wrapper {
+  flex: 1;
+  overflow: hidden;
+}

@@ -141,8 +141,17 @@ const badgeBase: CSSProperties = {
 };
 
 const componentTypes: FactoryComponentType[] = [
-  'page', 'region', 'process', 'validation', 'computation',
-  'dynamic-action', 'rest-api', 'plsql-package', 'trigger', 'view', 'full-module',
+  'page',
+  'region',
+  'process',
+  'validation',
+  'computation',
+  'dynamic-action',
+  'rest-api',
+  'plsql-package',
+  'trigger',
+  'view',
+  'full-module',
 ];
 
 // ---------------------------------------------------------------------------
@@ -173,10 +182,7 @@ export function CodeFactoryWorkspace() {
 
   const loadData = useCallback(async () => {
     try {
-      const [t, j] = await Promise.all([
-        factoryApi.getTemplates(),
-        factoryApi.listJobs(),
-      ]);
+      const [t, j] = await Promise.all([factoryApi.getTemplates(), factoryApi.listJobs()]);
       setTemplates(t);
       setJobs(j);
     } catch (err) {
@@ -214,7 +220,16 @@ export function CodeFactoryWorkspace() {
     } finally {
       setGenerating(false);
     }
-  }, [specName, specDescription, specComponentType, specConnectionId, specRequirements, specConstraints, specTemplateId, loadData]);
+  }, [
+    specName,
+    specDescription,
+    specComponentType,
+    specConnectionId,
+    specRequirements,
+    specConstraints,
+    specTemplateId,
+    loadData,
+  ]);
 
   const handleSelectJob = useCallback(async (job: FactoryJob) => {
     try {
@@ -243,47 +258,114 @@ export function CodeFactoryWorkspace() {
       {/* Left panel: Spec input form */}
       <div style={leftPanel}>
         <div style={cardStyle}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '0.75rem',
+            }}
+          >
             <div style={sectionTitle}>Code Factory</div>
-            <label style={{ fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.375rem', cursor: 'pointer' }}>
-              <input type="checkbox" checked={batchMode} onChange={(e) => setBatchMode(e.target.checked)} />
+            <label
+              style={{
+                fontSize: '0.75rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.375rem',
+                cursor: 'pointer',
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={batchMode}
+                onChange={(e) => setBatchMode(e.target.checked)}
+              />
               Batch Mode
             </label>
           </div>
 
           <label style={labelStyle}>Component Name *</label>
-          <input type="text" style={inputStyle} value={specName} onChange={(e) => setSpecName(e.target.value)} placeholder="e.g., employee_management" />
+          <input
+            type="text"
+            style={inputStyle}
+            value={specName}
+            onChange={(e) => setSpecName(e.target.value)}
+            placeholder="e.g., employee_management"
+          />
 
           <label style={labelStyle}>Description</label>
-          <input type="text" style={inputStyle} value={specDescription} onChange={(e) => setSpecDescription(e.target.value)} placeholder="Brief description" />
+          <input
+            type="text"
+            style={inputStyle}
+            value={specDescription}
+            onChange={(e) => setSpecDescription(e.target.value)}
+            placeholder="Brief description"
+          />
 
           <label style={labelStyle}>Component Type</label>
-          <select style={selectStyle} value={specComponentType} onChange={(e) => setSpecComponentType(e.target.value as FactoryComponentType)}>
+          <select
+            style={selectStyle}
+            value={specComponentType}
+            onChange={(e) => setSpecComponentType(e.target.value as FactoryComponentType)}
+          >
             {componentTypes.map((t) => (
-              <option key={t} value={t}>{t.replace(/-/g, ' ')}</option>
+              <option key={t} value={t}>
+                {t.replace(/-/g, ' ')}
+              </option>
             ))}
           </select>
 
           <label style={labelStyle}>Template (optional)</label>
-          <select style={selectStyle} value={specTemplateId} onChange={(e) => setSpecTemplateId(e.target.value)}>
+          <select
+            style={selectStyle}
+            value={specTemplateId}
+            onChange={(e) => setSpecTemplateId(e.target.value)}
+          >
             <option value="">No template</option>
             {templates.map((t) => (
-              <option key={t.id} value={t.id}>{t.name}</option>
+              <option key={t.id} value={t.id}>
+                {t.name}
+              </option>
             ))}
           </select>
 
           <label style={labelStyle}>Requirements *</label>
-          <textarea style={textareaStyle} value={specRequirements} onChange={(e) => setSpecRequirements(e.target.value)} placeholder="Describe what this component should do..." />
+          <textarea
+            style={textareaStyle}
+            value={specRequirements}
+            onChange={(e) => setSpecRequirements(e.target.value)}
+            placeholder="Describe what this component should do..."
+          />
 
           <label style={labelStyle}>Constraints (one per line)</label>
-          <textarea style={{ ...textareaStyle, minHeight: 60 }} value={specConstraints} onChange={(e) => setSpecConstraints(e.target.value)} placeholder="Optional constraints..." />
+          <textarea
+            style={{ ...textareaStyle, minHeight: 60 }}
+            value={specConstraints}
+            onChange={(e) => setSpecConstraints(e.target.value)}
+            placeholder="Optional constraints..."
+          />
 
-          <button type="button" style={buttonStyle} onClick={handleGenerate} disabled={generating || !specName || !specRequirements}>
+          <button
+            type="button"
+            style={buttonStyle}
+            onClick={handleGenerate}
+            disabled={generating || !specName || !specRequirements}
+          >
             {generating ? 'Generating...' : 'Generate Code'}
           </button>
 
           {error && (
-            <div style={{ padding: '0.5rem', backgroundColor: '#fef2f2', borderRadius: '0.375rem', color: '#991b1b', marginTop: '0.5rem', fontSize: '0.8125rem' }}>
+            <div
+              style={{
+                padding: '0.5rem',
+                backgroundColor: '#fef2f2',
+                borderRadius: '0.375rem',
+                color: '#991b1b',
+                marginTop: '0.5rem',
+                fontSize: '0.8125rem',
+              }}
+            >
               {error}
             </div>
           )}
@@ -298,18 +380,30 @@ export function CodeFactoryWorkspace() {
             jobs.slice(0, 10).map((job) => (
               <div
                 key={job.id}
-                style={{ ...jobCardStyle, borderColor: selectedJob?.id === job.id ? '#2563eb' : '#e5e7eb' }}
+                style={{
+                  ...jobCardStyle,
+                  borderColor: selectedJob?.id === job.id ? '#2563eb' : '#e5e7eb',
+                }}
                 onClick={() => handleSelectJob(job)}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
+                  }}
+                >
                   <div>
                     <div style={{ fontWeight: 500, fontSize: '0.875rem' }}>{job.spec.name}</div>
-                    <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>{job.spec.componentType}</div>
+                    <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                      {job.spec.componentType}
+                    </div>
                   </div>
                   <span style={statusBadge(job.status)}>{job.status}</span>
                 </div>
                 <div style={{ fontSize: '0.6875rem', color: '#9ca3af', marginTop: '0.25rem' }}>
-                  {job.outputs.length} files | {job.executionTimeMs ? `${job.executionTimeMs}ms` : 'pending'}
+                  {job.outputs.length} files |{' '}
+                  {job.executionTimeMs ? `${job.executionTimeMs}ms` : 'pending'}
                 </div>
               </div>
             ))
@@ -341,15 +435,31 @@ export function CodeFactoryWorkspace() {
                   <pre style={codePreStyle}>
                     {selectedJob.outputs[selectedOutputIdx]?.content ?? ''}
                   </pre>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      marginTop: '0.5rem',
+                    }}
+                  >
                     <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>
-                      {selectedJob.outputs[selectedOutputIdx]?.language} | {selectedJob.outputs[selectedOutputIdx]?.lineCount} lines | {selectedJob.outputs[selectedOutputIdx]?.description}
+                      {selectedJob.outputs[selectedOutputIdx]?.language} |{' '}
+                      {selectedJob.outputs[selectedOutputIdx]?.lineCount} lines |{' '}
+                      {selectedJob.outputs[selectedOutputIdx]?.description}
                     </div>
                     <button
                       type="button"
-                      style={{ ...buttonStyle, width: 'auto', padding: '0.375rem 1rem', fontSize: '0.8125rem' }}
+                      style={{
+                        ...buttonStyle,
+                        width: 'auto',
+                        padding: '0.375rem 1rem',
+                        fontSize: '0.8125rem',
+                      }}
                       onClick={() => {
-                        navigator.clipboard.writeText(selectedJob.outputs[selectedOutputIdx]?.content ?? '');
+                        navigator.clipboard.writeText(
+                          selectedJob.outputs[selectedOutputIdx]?.content ?? '',
+                        );
                       }}
                     >
                       Copy to Clipboard
@@ -359,17 +469,37 @@ export function CodeFactoryWorkspace() {
               </>
             ) : (
               <div style={{ ...cardStyle, textAlign: 'center', padding: '2rem', color: '#6b7280' }}>
-                {selectedJob.status === 'processing' ? 'Generating code...' : 'No outputs generated.'}
+                {selectedJob.status === 'processing'
+                  ? 'Generating code...'
+                  : 'No outputs generated.'}
               </div>
             )}
 
             {/* Job metadata */}
             <div style={{ ...cardStyle, marginTop: '1rem' }}>
-              <div style={{ fontSize: '0.8125rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-                <div><strong>Status:</strong> <span style={statusBadge(selectedJob.status)}>{selectedJob.status}</span></div>
-                <div><strong>Files:</strong> {selectedJob.outputs.length}</div>
-                <div><strong>Execution:</strong> {selectedJob.executionTimeMs ? `${selectedJob.executionTimeMs}ms` : '-'}</div>
-                <div><strong>Tokens:</strong> {selectedJob.tokensUsed?.toLocaleString() ?? '-'}</div>
+              <div
+                className="app-responsive-two-column"
+                style={{
+                  fontSize: '0.8125rem',
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: '0.5rem',
+                }}
+              >
+                <div>
+                  <strong>Status:</strong>{' '}
+                  <span style={statusBadge(selectedJob.status)}>{selectedJob.status}</span>
+                </div>
+                <div>
+                  <strong>Files:</strong> {selectedJob.outputs.length}
+                </div>
+                <div>
+                  <strong>Execution:</strong>{' '}
+                  {selectedJob.executionTimeMs ? `${selectedJob.executionTimeMs}ms` : '-'}
+                </div>
+                <div>
+                  <strong>Tokens:</strong> {selectedJob.tokensUsed?.toLocaleString() ?? '-'}
+                </div>
               </div>
             </div>
           </div>

@@ -1,52 +1,6 @@
-import { useState, useEffect, useRef, useMemo, type CSSProperties } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import type { SearchResultItem, TreeNodeType } from '@apex-dev-manager/shared-types';
 import { useExplorerSearch } from '../hooks/useExplorer';
-
-// ---------------------------------------------------------------------------
-// Styles
-// ---------------------------------------------------------------------------
-
-const wrapperStyle: CSSProperties = {
-  padding: '0.5rem 0.75rem',
-  borderBottom: '1px solid #e5e7eb',
-};
-
-const inputStyle: CSSProperties = {
-  width: '100%',
-  padding: '0.375rem 0.5rem',
-  fontSize: '0.8125rem',
-  border: '1px solid #d1d5db',
-  borderRadius: 6,
-  outline: 'none',
-  boxSizing: 'border-box',
-};
-
-const resultsContainerStyle: CSSProperties = {
-  maxHeight: 320,
-  overflowY: 'auto',
-  padding: '0.25rem 0.75rem 0.5rem',
-  borderBottom: '1px solid #e5e7eb',
-};
-
-const groupHeaderStyle: CSSProperties = {
-  fontSize: '0.6875rem',
-  fontWeight: 600,
-  color: '#6b7280',
-  textTransform: 'uppercase',
-  letterSpacing: '0.05em',
-  marginTop: 8,
-  marginBottom: 4,
-};
-
-const resultItemStyle: CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  gap: 2,
-  padding: '4px 6px',
-  borderRadius: 4,
-  cursor: 'pointer',
-  fontSize: '0.8125rem',
-};
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -101,7 +55,7 @@ function HighlightedLabel({
     <span>
       {parts.map((p, i) =>
         p.bold ? (
-          <strong key={i} style={{ fontWeight: 700 }}>
+          <strong key={i} className="explorer-search-highlight">
             {p.text}
           </strong>
         ) : (
@@ -149,52 +103,46 @@ export function ExplorerSearch({ connectionId, onNavigate }: ExplorerSearchProps
 
   return (
     <div>
-      <div style={wrapperStyle}>
+      <div className="explorer-search-wrapper">
         <input
           type="search"
           placeholder="Search components..."
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
-          style={inputStyle}
+          className="app-input"
           aria-label="Search explorer"
         />
       </div>
 
       {/* Results */}
       {debouncedTerm.length >= 2 && (
-        <div style={resultsContainerStyle}>
+        <div className="explorer-search-results">
           {isFetching && (
-            <p style={{ fontSize: '0.75rem', color: '#9ca3af' }}>Searching...</p>
+            <p className="explorer-placeholder-text explorer-placeholder-text-sm">Searching...</p>
           )}
 
           {showEmpty && (
-            <p style={{ fontSize: '0.8125rem', color: '#9ca3af', textAlign: 'center', marginTop: 12 }}>
-              No results found for "{debouncedTerm}".
+            <p className="explorer-placeholder-text">
+              No results found for &quot;{debouncedTerm}&quot;.
             </p>
           )}
 
           {hasResults &&
             Object.entries(grouped).map(([type, items]) => (
               <div key={type}>
-                <div style={groupHeaderStyle}>
+                <div className="explorer-search-group-header">
                   {NODE_TYPE_LABELS[type as TreeNodeType] ?? type}
                 </div>
                 {items.map((item) => (
                   <div
                     key={item.id}
-                    style={resultItemStyle}
+                    className="explorer-search-result-item"
                     onClick={() => onNavigate(item.id)}
-                    onMouseEnter={(e) => {
-                      (e.currentTarget as HTMLDivElement).style.backgroundColor = '#f3f4f6';
-                    }}
-                    onMouseLeave={(e) => {
-                      (e.currentTarget as HTMLDivElement).style.backgroundColor = 'transparent';
-                    }}
                     role="option"
                     tabIndex={0}
                   >
                     <HighlightedLabel label={item.label} ranges={item.matchRanges} />
-                    <span style={{ fontSize: '0.6875rem', color: '#9ca3af' }}>{item.path}</span>
+                    <span className="explorer-search-result-path">{item.path}</span>
                   </div>
                 ))}
               </div>
