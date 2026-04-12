@@ -5,8 +5,15 @@ import type {
   CreateLLMProviderRequest,
   UpdateLLMProviderRequest,
 } from '@apex-dev-manager/shared-types';
-import { PROVIDER_MODELS } from '@apex-dev-manager/shared-types';
 import * as llmApi from '@/services/llm-providers.api';
+
+const PROVIDER_MODELS: Record<LLMProviderName, string[]> = {
+  anthropic: ['claude-sonnet-4-20250514', 'claude-opus-4-20250514', 'claude-haiku-4-20250414'],
+  openai: ['gpt-4o', 'gpt-4o-mini', 'o3', 'o3-mini'],
+  google: ['gemini-2.5-pro', 'gemini-2.5-flash'],
+  mistral: ['mistral-large', 'mistral-medium', 'codestral'],
+  local: ['custom'],
+};
 
 // ---------------------------------------------------------------------------
 // Styles

@@ -358,6 +358,12 @@ export async function activateProvider(
 
   logger.info({ tenantId, providerId: id, providerName: activated.providerName }, 'LLM provider activated');
 
+  // Invalidate cached LLM config so next AI call uses the new provider
+  try {
+    const { invalidateConfigCache } = await import('../ai-studio/claude.client.js');
+    invalidateConfigCache();
+  } catch { /* ignore if not available */ }
+
   return activated;
 }
 

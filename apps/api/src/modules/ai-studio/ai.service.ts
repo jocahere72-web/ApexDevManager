@@ -152,7 +152,7 @@ export async function chat(
     const response = await claudeClient.chat(messages, {
       systemPrompt,
       model: request.model,
-    });
+    }, tenantId);
 
     // Sanitize output
     const sanitizedOutput = sanitizeOutput(response.content);
@@ -293,7 +293,7 @@ export async function* streamChat(
     for await (const chunk of claudeClient.stream(messages, {
       systemPrompt,
       model: request.model,
-    })) {
+    }, tenantId)) {
       if (chunk.type === 'content_delta' && chunk.content) {
         fullContent += chunk.content;
         yield { type: 'delta', content: chunk.content };

@@ -166,7 +166,11 @@ export class ClaudeClient {
   async chat(
     messages: ChatMessage[],
     options: ChatOptions = {},
+    tenantId?: string,
   ): Promise<ChatResponse> {
+    // Ensure we use the active LLM provider for this tenant
+    await this.refreshConfig(tenantId);
+
     const model = options.model ?? this.config.model;
     const maxTokens = options.maxTokens ?? this.config.maxTokens;
 
@@ -226,7 +230,11 @@ export class ClaudeClient {
   async *stream(
     messages: ChatMessage[],
     options: ChatOptions = {},
+    tenantId?: string,
   ): AsyncIterable<StreamChunk> {
+    // Ensure we use the active LLM provider for this tenant
+    await this.refreshConfig(tenantId);
+
     const model = options.model ?? this.config.model;
     const maxTokens = options.maxTokens ?? this.config.maxTokens;
 
