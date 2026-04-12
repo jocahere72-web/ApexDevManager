@@ -30,6 +30,22 @@ const baseConnectionFields = {
     .min(1, 'Password is required'),
   tags: z.array(z.string().max(100)).max(20).optional(),
   labels: z.record(z.string().max(255)).optional(),
+  // APEX fields
+  description: z.string().max(500).optional(),
+  apexWorkspace: z.string().max(100).optional(),
+  schemaName: z.string().max(100).optional(),
+  workspaceName: z.string().max(100).optional(),
+  apexAppId: z.coerce.number().int().optional(),
+  apexBaseUrl: z.string().max(500).optional(),
+  apexVersion: z.string().max(20).optional(),
+  ordsUsername: z.string().max(100).optional(),
+  // Oracle DB fields
+  host: z.string().max(255).optional(),
+  port: z.coerce.number().int().min(1).max(65535).optional(),
+  serviceName: z.string().max(255).optional(),
+  dbSid: z.string().max(100).optional(),
+  dbUsername: z.string().max(100).optional(),
+  dbPassword: z.string().max(255).optional(),
 };
 
 // ── ORDS connection schema ───────────────────────────────────────────────────
@@ -45,19 +61,9 @@ const OrdsConnectionSchema = z.object({
 const JdbcConnectionSchema = z.object({
   ...baseConnectionFields,
   type: z.literal('jdbc'),
-  host: z
-    .string({ required_error: 'Host is required' })
-    .min(1, 'Host is required')
-    .max(255),
-  port: z.coerce
-    .number({ required_error: 'Port is required' })
-    .int()
-    .min(1)
-    .max(65535),
-  serviceName: z
-    .string({ required_error: 'Service name is required' })
-    .min(1, 'Service name is required')
-    .max(255),
+  host: z.string().min(1, 'Host is required').max(255),
+  port: z.coerce.number().int().min(1).max(65535),
+  serviceName: z.string().min(1, 'Service name is required').max(255),
 });
 
 // ── Create Connection (discriminated union) ──────────────────────────────────
