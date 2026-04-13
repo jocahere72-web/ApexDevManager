@@ -5,7 +5,11 @@
  */
 
 // ── Roles ────────────────────────────────────────────────────────────────────
-export const ROLES = ['admin', 'manager', 'member', 'viewer'] as const;
+export const ROLES = [
+  'admin', 'ops_lead', 'developer', 'tech_lead', 'release_manager',
+  'knowledge_editor', 'marketplace_publisher', 'qa_analyst',
+  'dba', 'devops_engineer', 'auditor',
+] as const;
 export type Role = (typeof ROLES)[number];
 
 // ── JWT Payload ──────────────────────────────────────────────────────────────
