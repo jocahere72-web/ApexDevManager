@@ -12,6 +12,7 @@ import {
 import * as prdService from './prd.service.js';
 import { prdConfigRouter } from './prd-config.controller.js';
 import { ValidationError } from '../../lib/errors.js';
+import { checkRateLimit } from '../ai-studio/rate-limiter.js';
 import type { ApiResponse, PaginatedResponse } from '../../types/index.js';
 import type { PRDSession, PRDSource, PRDSection, ExtractionData, ValidationResult } from '@apex-dev-manager/shared-types';
 
@@ -136,6 +137,8 @@ prdRouter.post(
         throw new ValidationError('Invalid extraction options', parsed.error.flatten().fieldErrors);
       }
 
+      await checkRateLimit(req.tenantId!, req.userId!, req.dbClient);
+
       const extraction = await prdService.extractRequirements(
         req.params.id,
         parsed.data,
@@ -163,6 +166,8 @@ prdRouter.post(
         throw new ValidationError('Invalid generation options', parsed.error.flatten().fieldErrors);
       }
 
+      await checkRateLimit(req.tenantId!, req.userId!, req.dbClient);
+
       const sections = await prdService.generateSections(
         req.params.id,
         parsed.data,
@@ -189,6 +194,8 @@ prdRouter.post(
       if (!parsed.success) {
         throw new ValidationError('Invalid validation options', parsed.error.flatten().fieldErrors);
       }
+
+      await checkRateLimit(req.tenantId!, req.userId!, req.dbClient);
 
       const result = await prdService.validatePRD(req.params.id, parsed.data, req.tenantId!, req.dbClient);
 

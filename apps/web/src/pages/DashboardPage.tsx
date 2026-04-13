@@ -63,7 +63,7 @@ function DashboardPage() {
 
   const firstName = user?.displayName?.split(' ')[0] ?? 'there';
 
-  const byStatus = stats?.byStatus ?? {};
+  const byStatus: Record<string, number> = (stats?.byStatus ?? {}) as Record<string, number>;
   const summaryCards = stats
     ? [
         { label: t('dashboard.totalIssues'), value: stats.total ?? 0, tone: 'accent' as const },

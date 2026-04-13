@@ -451,25 +451,25 @@ export function PRDWorkspace({ sessionId }: PRDWorkspaceProps) {
               <div style={sectionCardStyle}>
                 <h4 style={{ ...sectionTitleStyle, fontSize: '0.875rem' }}>Extraction Results</h4>
 
-                {session.extractionData.goals.length > 0 && (
+                {(session.extractionData?.goals?.length ?? 0) > 0 && (
                   <div style={{ marginBottom: '1rem' }}>
                     <h5 style={{ fontSize: '0.8125rem', fontWeight: 600, color: '#374151', marginBottom: '0.375rem' }}>
                       Goals
                     </h5>
                     <ul style={{ margin: 0, paddingLeft: '1.25rem', fontSize: '0.8125rem', color: '#4b5563' }}>
-                      {session.extractionData.goals.map((goal, i) => (
+                      {session.extractionData?.goals?.map((goal, i) => (
                         <li key={i} style={{ marginBottom: '0.25rem' }}>{goal}</li>
                       ))}
                     </ul>
                   </div>
                 )}
 
-                {session.extractionData.features.length > 0 && (
+                {(session.extractionData?.features?.length ?? 0) > 0 && (
                   <div style={{ marginBottom: '1rem' }}>
                     <h5 style={{ fontSize: '0.8125rem', fontWeight: 600, color: '#374151', marginBottom: '0.375rem' }}>
-                      Features ({session.extractionData.features.length})
+                      Features ({session.extractionData?.features?.length ?? 0})
                     </h5>
-                    {session.extractionData.features.map((feature, i) => (
+                    {session.extractionData?.features?.map((feature, i) => (
                       <div
                         key={i}
                         style={{
@@ -503,13 +503,13 @@ export function PRDWorkspace({ sessionId }: PRDWorkspaceProps) {
                   </div>
                 )}
 
-                {session.extractionData.userPersonas.length > 0 && (
+                {(session.extractionData?.userPersonas?.length ?? 0) > 0 && (
                   <div style={{ marginBottom: '1rem' }}>
                     <h5 style={{ fontSize: '0.8125rem', fontWeight: 600, color: '#374151', marginBottom: '0.375rem' }}>
                       User Personas
                     </h5>
                     <ul style={{ margin: 0, paddingLeft: '1.25rem', fontSize: '0.8125rem', color: '#4b5563' }}>
-                      {session.extractionData.userPersonas.map((persona, i) => (
+                      {session.extractionData?.userPersonas?.map((persona, i) => (
                         <li key={i} style={{ marginBottom: '0.25rem' }}>{persona}</li>
                       ))}
                     </ul>
