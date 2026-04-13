@@ -8,7 +8,21 @@ import {
   type CreateUserPayload,
   type UpdateUserPayload,
 } from '@/services/users.api';
-import { ROLE_LABELS, type Role } from '@apex-dev-manager/shared-types';
+import type { Role } from '@apex-dev-manager/shared-types';
+
+const ROLE_LABELS: Record<string, string> = {
+  admin: 'Administrador',
+  ops_lead: 'Líder Operativo',
+  developer: 'Desarrollador',
+  tech_lead: 'Jefe de Desarrollo',
+  release_manager: 'Release Manager',
+  knowledge_editor: 'Knowledge Editor',
+  marketplace_publisher: 'Marketplace Publisher',
+  qa_analyst: 'QA / Tester',
+  dba: 'DBA',
+  devops_engineer: 'DevOps Engineer',
+  auditor: 'Auditor',
+};
 
 // ---------------------------------------------------------------------------
 // Role catalog — ordered to match the product flow

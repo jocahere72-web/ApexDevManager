@@ -6,7 +6,13 @@ import type {
   ExtractionData,
   ValidationResult,
 } from '@apex-dev-manager/shared-types';
-import { PRD_STAGE_LABELS } from '@apex-dev-manager/shared-types';
+const PRD_STAGE_LABELS: Record<number, string> = {
+  1: 'Upload Sources',
+  2: 'Extract Requirements',
+  3: 'Generate Sections',
+  4: 'Validate',
+  5: 'Export',
+};
 import {
   usePRDSession,
   useUploadSource,
