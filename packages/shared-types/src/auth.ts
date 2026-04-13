@@ -5,14 +5,31 @@
 /** Available user roles within a tenant. */
 export type Role =
   | 'admin'
+  | 'ops_lead'
   | 'developer'
   | 'tech_lead'
   | 'release_manager'
   | 'knowledge_editor'
   | 'marketplace_publisher'
   | 'qa_analyst'
+  | 'dba'
   | 'devops_engineer'
   | 'auditor';
+
+/** Role labels for display. */
+export const ROLE_LABELS: Record<Role, string> = {
+  admin: 'Administrador',
+  ops_lead: 'Líder Operativo',
+  developer: 'Desarrollador',
+  tech_lead: 'Jefe de Desarrollo',
+  release_manager: 'Release Manager',
+  knowledge_editor: 'Knowledge Editor',
+  marketplace_publisher: 'Marketplace Publisher',
+  qa_analyst: 'QA / Tester',
+  dba: 'DBA',
+  devops_engineer: 'DevOps Engineer',
+  auditor: 'Auditor',
+};
 
 /** Payload sent by the client to authenticate. */
 export interface LoginRequest {

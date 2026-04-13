@@ -1,6 +1,9 @@
 {
   "app": { "name": "APEX Dev Manager", "subtitle": "Plataforma de desarrollo APEX" },
   "nav": {
+    "newRequirement": "Nuevo Requerimiento",
+    "devLeadInbox": "Bandeja Jefe Desarrollo",
+    "pipeline": "Pipeline",
     "dashboard": "Inicio", "issues": "Requerimientos", "clients": "Clientes",
     "connections": "Conexiones", "explorer": "Explorador", "editor": "Editor de Codigo",
     "aiStudio": "Estudio IA", "prd": "Constructor PRD", "pageGen": "PRD a Pagina",
@@ -9,9 +12,10 @@
     "testStudio": "Estudio de Pruebas", "knowledge": "Base de Conocimiento",
     "codeFactory": "Fabrica de Codigo", "marketplace": "Marketplace",
     "governance": "Gobernanza IA", "usage": "Uso y Costos", "dashboards": "Observabilidad",
-    "admin": "Administracion", "llmProviders": "Proveedores LLM", "promptTemplates": "Plantillas de Prompts"
+    "admin": "Administracion", "users": "Usuarios", "llmProviders": "Proveedores LLM", "promptTemplates": "Plantillas de Prompts"
   },
   "navGroups": {
+    "pipeline": "Pipeline",
     "core": "Principal", "development": "Desarrollo", "requirements": "Requerimientos",
     "alm": "Gestion de Cambios", "analysis": "Analisis", "operations": "Operaciones", "admin": "Administracion"
   },

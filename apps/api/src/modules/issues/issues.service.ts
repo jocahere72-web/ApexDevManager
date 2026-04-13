@@ -3,8 +3,8 @@ import { tenantQuery } from '../../lib/tenant-db.js';
 import { NotFoundError, ValidationError } from '../../lib/errors.js';
 import type { CreateIssueInput, UpdateIssueInput, ListIssuesQuery } from './issues.validation.js';
 import type { PoolClient } from 'pg';
-import type { Issue, IssueRequirementDocument, IssueStatus } from '@apex-dev-manager/shared-types';
-import { ISSUE_STATUS_FLOW } from '@apex-dev-manager/shared-types';
+import type { Issue, IssueRequirementDocument, IssueStatus, IssueApproval, IssueReturnRecord } from '@apex-dev-manager/shared-types';
+import { ISSUE_STATUS_FLOW, VALID_TRANSITIONS } from '@apex-dev-manager/shared-types';
 
 // ── Row mapper ──────────────────────────────────────────────────────────────
 function rowToIssue(row: Record<string, unknown>): Issue {
@@ -33,6 +33,14 @@ function rowToIssue(row: Record<string, unknown>): Issue {
     createdBy: (row.created_by as string) ?? undefined,
     createdAt: (row.created_at as Date).toISOString(),
     updatedAt: (row.updated_at as Date).toISOString(),
+    // AI validation fields
+    aiValidationScore: (row.ai_validation_score as number) ?? undefined,
+    aiValidationNotes: (row.ai_validation_notes as Record<string, unknown>) ?? undefined,
+    aiValidatedAt: row.ai_validated_at ? (row.ai_validated_at as Date).toISOString() : undefined,
+    // Return tracking
+    returnedReason: (row.returned_reason as string) ?? undefined,
+    returnedBy: (row.returned_by as string) ?? undefined,
+    returnedAt: row.returned_at ? (row.returned_at as Date).toISOString() : undefined,
     // Joined fields
     clientName: (row.client_name as string) ?? undefined,
     clientCode: (row.client_code as string) ?? undefined,
@@ -78,6 +86,8 @@ const SELECT_WITH_JOINS = `
   i.page_id, i.page_name,
   i.prd_session_id, i.change_set_id, i.release_id, i.test_suite_id,
   i.assigned_to, i.requested_by, i.tags, i.created_by, i.created_at, i.updated_at,
+  i.ai_validation_score, i.ai_validation_notes, i.ai_validated_at,
+  i.returned_reason, i.returned_by, i.returned_at,
   c.name AS client_name, c.code AS client_code,
   u.display_name AS assigned_to_name
 `;
@@ -134,7 +144,7 @@ export async function createIssue(
        priority, type, status, connection_id, app_id, app_name, page_id, page_name,
        requested_by, tags, created_by
      )
-     VALUES ($1, $2, $3, $4, $5, $6, $7, 'intake', $8, $9, $10, $11, $12, $13, $14, $15)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, 'draft', $8, $9, $10, $11, $12, $13, $14, $15)
      RETURNING id`,
     [
       tenantId,
@@ -372,53 +382,272 @@ export async function updateIssue(
   return getIssueById(tenantId, id, client);
 }
 
+// ── Save AI Validation Result ──────────────────────────────────────────────
+export async function saveIssueValidation(
+  tenantId: string,
+  id: string,
+  data: { score: number; notes: Record<string, unknown> },
+  actorId: string,
+  client?: PoolClient,
+): Promise<Issue> {
+  const result = await tenantQuery(
+    client,
+    `UPDATE issues
+       SET ai_validation_score = $3,
+           ai_validation_notes = $4,
+           ai_validated_at = NOW(),
+           updated_at = NOW()
+     WHERE tenant_id = $1 AND id = $2
+     RETURNING id`,
+    [tenantId, id, data.score, JSON.stringify(data.notes)],
+  );
+
+  if (result.rowCount === 0) {
+    throw new NotFoundError('Issue not found');
+  }
+
+  await logAudit(
+    tenantId,
+    actorId,
+    'issue.validation_saved',
+    id,
+    { score: data.score } as Record<string, unknown>,
+    client,
+  );
+
+  logger.info({ tenantId, issueId: id, score: data.score }, 'Issue validation saved');
+
+  return getIssueById(tenantId, id, client);
+}
+
 // ── Transition Issue ────────────────────────────────────────────────────────
 export async function transitionIssue(
   tenantId: string,
   id: string,
   newStatus: IssueStatus,
   actorId: string,
+  options?: { reason?: string; annotations?: Record<string, unknown> },
   client?: PoolClient,
 ): Promise<Issue> {
   // Fetch current issue
   const current = await getIssueById(tenantId, id, client);
-  const currentIndex = ISSUE_STATUS_FLOW.indexOf(current.status);
-  const newIndex = ISSUE_STATUS_FLOW.indexOf(newStatus);
-
-  // Validate: must be adjacent (one step forward or back) or same
-  if (Math.abs(currentIndex - newIndex) > 1) {
-    throw new ValidationError(
-      `Invalid status transition from '${current.status}' to '${newStatus}'. ` +
-        `Only adjacent transitions are allowed.`,
-    );
-  }
 
   if (current.status === newStatus) {
     return current;
   }
 
+  // Validate transition using the valid transitions map
+  const validTargets = VALID_TRANSITIONS[current.status] ?? [];
+  if (!validTargets.includes(newStatus)) {
+    throw new ValidationError(
+      `Invalid status transition from '${current.status}' to '${newStatus}'. ` +
+        `Valid transitions: ${validTargets.join(', ') || 'none'}.`,
+    );
+  }
+
+  // Check if this is a forward or return transition
+  const currentIndex = ISSUE_STATUS_FLOW.indexOf(current.status);
+  const newIndex = ISSUE_STATUS_FLOW.indexOf(newStatus);
+  const isReturn = newIndex < currentIndex;
+
+  // Additional validations for specific transitions
+  if (current.status === 'intake' && newStatus === 'prd') {
+    // Must have assignedTo before moving to prd
+    if (!current.assignedTo) {
+      throw new ValidationError(
+        'Cannot move to PRD stage without assigning a developer. Set assignedTo first.',
+      );
+    }
+  }
+
+  // Build update query
+  const setClauses = ['status = $3', 'updated_at = NOW()'];
+  const params: unknown[] = [tenantId, id, newStatus];
+
+  // If returning, track return info
+  if (isReturn && options?.reason) {
+    setClauses.push('returned_reason = $4', 'returned_by = $5', 'returned_at = NOW()');
+    params.push(options.reason, actorId);
+  } else {
+    // Clear return fields when moving forward
+    setClauses.push('returned_reason = NULL', 'returned_by = NULL', 'returned_at = NULL');
+  }
+
   await tenantQuery(
     client,
-    `UPDATE issues SET status = $3, updated_at = NOW()
+    `UPDATE issues SET ${setClauses.join(', ')}
      WHERE tenant_id = $1 AND id = $2`,
-    [tenantId, id, newStatus],
+    params,
   );
+
+  // Log return history if this is a return transition
+  if (isReturn && options?.reason) {
+    await tenantQuery(
+      client,
+      `INSERT INTO issue_return_history (tenant_id, issue_id, from_stage, to_stage, returned_by, reason, annotations)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [
+        tenantId,
+        id,
+        current.status,
+        newStatus,
+        actorId,
+        options.reason,
+        options.annotations ? JSON.stringify(options.annotations) : null,
+      ],
+    );
+  }
+
+  // If returning from prd_approval, reset approvals
+  if (current.status === 'prd_approval' && newStatus === 'prd') {
+    await tenantQuery(
+      client,
+      `DELETE FROM issue_approvals WHERE tenant_id = $1 AND issue_id = $2 AND stage = 'prd_approval'`,
+      [tenantId, id],
+    );
+  }
 
   await logAudit(
     tenantId,
     actorId,
-    'issue.transitioned',
+    isReturn ? 'issue.returned' : 'issue.transitioned',
     id,
     {
       old_status: current.status,
       new_status: newStatus,
+      reason: options?.reason,
     },
     client,
   );
 
-  logger.info({ tenantId, issueId: id, from: current.status, to: newStatus }, 'Issue transitioned');
+  await logActivity(
+    tenantId,
+    id,
+    'status_change',
+    isReturn
+      ? `Issue devuelto de ${current.status} a ${newStatus}: ${options?.reason ?? ''}`
+      : `Issue avanzado de ${current.status} a ${newStatus}`,
+    undefined,
+    undefined,
+    actorId,
+    client,
+  );
+
+  logger.info({ tenantId, issueId: id, from: current.status, to: newStatus, isReturn }, 'Issue transitioned');
 
   return getIssueById(tenantId, id, client);
+}
+
+// ── Approval Management ────────────────────────────────────────────────────
+
+export async function submitApproval(
+  tenantId: string,
+  issueId: string,
+  stage: IssueStatus,
+  actorId: string,
+  actorRole: string,
+  decision: 'approved' | 'returned',
+  comments?: string,
+  client?: PoolClient,
+): Promise<IssueApproval> {
+  // Upsert approval record
+  const result = await tenantQuery(
+    client,
+    `INSERT INTO issue_approvals (tenant_id, issue_id, stage, approver_user_id, approver_role, decision, comments, decided_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+     ON CONFLICT (issue_id, stage, approver_role)
+     DO UPDATE SET decision = $6, comments = $7, decided_at = NOW()
+     RETURNING *`,
+    [tenantId, issueId, stage, actorId, actorRole, decision, comments ?? null],
+  );
+
+  const approval = result.rows[0];
+
+  await logActivity(
+    tenantId,
+    issueId,
+    'comment',
+    `${actorRole} ${decision === 'approved' ? 'aprobó' : 'devolvió'} en etapa ${stage}${comments ? ': ' + comments : ''}`,
+    undefined,
+    undefined,
+    actorId,
+    client,
+  );
+
+  logger.info({ tenantId, issueId, stage, actorRole, decision }, 'Approval submitted');
+
+  return {
+    id: approval.id as string,
+    tenantId: approval.tenant_id as string,
+    issueId: approval.issue_id as string,
+    stage: approval.stage as IssueStatus,
+    approverUserId: approval.approver_user_id as string,
+    approverRole: approval.approver_role as string,
+    decision: approval.decision as IssueApproval['decision'],
+    comments: approval.comments as string | undefined,
+    decidedAt: approval.decided_at ? (approval.decided_at as Date).toISOString() : undefined,
+    createdAt: (approval.created_at as Date).toISOString(),
+  };
+}
+
+export async function getApprovals(
+  tenantId: string,
+  issueId: string,
+  stage: IssueStatus,
+  client?: PoolClient,
+): Promise<IssueApproval[]> {
+  const result = await tenantQuery(
+    client,
+    `SELECT a.*, u.display_name AS approver_name
+     FROM issue_approvals a
+     LEFT JOIN users u ON a.approver_user_id = u.id
+     WHERE a.tenant_id = $1 AND a.issue_id = $2 AND a.stage = $3
+     ORDER BY a.created_at`,
+    [tenantId, issueId, stage],
+  );
+
+  return result.rows.map((row) => ({
+    id: row.id as string,
+    tenantId: row.tenant_id as string,
+    issueId: row.issue_id as string,
+    stage: row.stage as IssueStatus,
+    approverUserId: row.approver_user_id as string,
+    approverRole: row.approver_role as string,
+    approverName: (row.approver_name as string) ?? undefined,
+    decision: row.decision as IssueApproval['decision'],
+    comments: (row.comments as string) ?? undefined,
+    decidedAt: row.decided_at ? (row.decided_at as Date).toISOString() : undefined,
+    createdAt: (row.created_at as Date).toISOString(),
+  }));
+}
+
+export async function getReturnHistory(
+  tenantId: string,
+  issueId: string,
+  client?: PoolClient,
+): Promise<IssueReturnRecord[]> {
+  const result = await tenantQuery(
+    client,
+    `SELECT r.*, u.display_name AS returned_by_name
+     FROM issue_return_history r
+     LEFT JOIN users u ON r.returned_by = u.id
+     WHERE r.tenant_id = $1 AND r.issue_id = $2
+     ORDER BY r.created_at DESC`,
+    [tenantId, issueId],
+  );
+
+  return result.rows.map((row) => ({
+    id: row.id as string,
+    tenantId: row.tenant_id as string,
+    issueId: row.issue_id as string,
+    fromStage: row.from_stage as IssueStatus,
+    toStage: row.to_stage as IssueStatus,
+    returnedBy: row.returned_by as string,
+    returnedByName: (row.returned_by_name as string) ?? undefined,
+    reason: row.reason as string,
+    annotations: (row.annotations as Record<string, unknown>) ?? undefined,
+    createdAt: (row.created_at as Date).toISOString(),
+  }));
 }
 
 // ── Get Issues By Client ────────────────────────────────────────────────────

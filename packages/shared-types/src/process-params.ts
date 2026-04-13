@@ -61,7 +61,7 @@ export interface UpsertProcessParamsRequest {
 // ── Stage Labels ────────────────────────────────────────────────────────────
 
 export const STAGE_LABELS: Record<ProcessStage, { es: string; en: string }> = {
-  intake: { es: 'Recepcion', en: 'Intake' },
+  intake: { es: 'Creacion de Requerimiento', en: 'Requirement Creation' },
   prd: { es: 'PRD', en: 'PRD' },
   design: { es: 'Diseno', en: 'Design' },
   build: { es: 'Construccion', en: 'Build' },
@@ -74,18 +74,56 @@ export const STAGE_LABELS: Record<ProcessStage, { es: string; en: string }> = {
 
 export const DEFAULT_PROCESS_PARAMS: Record<ProcessStage, Partial<ProcessParams>> = {
   intake: {
-    name: 'Recepcion de Requerimiento',
-    description: 'Captura inicial del requerimiento del cliente',
+    name: 'Creacion de Requerimiento',
+    description: 'Creacion del requerimiento por el Lider Operativo y validacion automatica por IA antes de enviar a revision del Jefe de Desarrollo',
+    promptTemplate: `Eres un analista senior que valida requerimientos de desarrollo de software APEX.
+
+Evalua el siguiente requerimiento y devuelve un reporte estructurado en JSON con:
+- score (0-100): puntaje global de calidad
+- summary: resumen ejecutivo en una oracion
+- criteria: array de criterios evaluados, cada uno con { id, label, status: 'pass'|'warning'|'fail', message }
+
+Criterios a evaluar:
+1. Titulo descriptivo: debe describir que, donde y para que (minimo 5 palabras relevantes)
+2. Descripcion completa: debe incluir contexto actual, necesidad y resultado esperado (minimo 100 caracteres)
+3. Criterios de aceptacion: debe listar condiciones medibles para validar el resultado
+4. Impacto del negocio: debe mencionar a quienes afecta y consecuencias si no se implementa
+5. Documentacion de soporte: evaluar si los archivos adjuntos son suficientes
+6. Viabilidad tecnica: evaluar si la descripcion es tecnicamente implementable en APEX
+7. Alcance claro: evaluar que el alcance este delimitado (no ambiguo)
+
+Datos del requerimiento:
+- Titulo: {{title}}
+- Descripcion: {{description}}
+- Cliente: {{clientName}}
+- Aplicacion APEX: {{appName}}
+- Prioridad: {{priority}}
+- Tipo: {{type}}
+- Archivos adjuntos: {{attachmentCount}} documento(s)
+
+Devuelve UNICAMENTE el JSON con el formato solicitado, sin texto adicional.`,
+    modelOverride: 'claude-sonnet-4',
+    temperature: 0.2,
+    maxTokens: 2000,
     requiredFields: [
       { field: 'title', label: 'Titulo', type: 'text' },
       { field: 'description', label: 'Descripcion', type: 'text' },
+      { field: 'clientId', label: 'Cliente', type: 'text' },
+      { field: 'appId', label: 'Aplicacion APEX', type: 'text' },
       { field: 'priority', label: 'Prioridad', type: 'select', options: ['low', 'medium', 'high', 'critical'] },
     ],
     checklist: [
-      { id: 'desc-clear', label: 'Descripcion clara y completa', required: true },
-      { id: 'priority-set', label: 'Prioridad asignada', required: true },
-      { id: 'client-confirmed', label: 'Confirmado por el cliente', required: false },
+      { id: 'title-clear', label: 'Titulo descriptivo y claro', required: true },
+      { id: 'desc-complete', label: 'Descripcion completa (contexto + necesidad + resultado)', required: true },
+      { id: 'acceptance-criteria', label: 'Criterios de aceptacion definidos', required: true },
+      { id: 'business-impact', label: 'Impacto del negocio documentado', required: false },
+      { id: 'supporting-docs', label: 'Documentacion de soporte adjunta', required: false },
+      { id: 'scope-defined', label: 'Alcance claramente delimitado', required: true },
     ],
+    config: {
+      minScoreToAdvance: 70,
+      allowOverrideWithJustification: true,
+    },
   },
   prd: {
     name: 'Documento de Requerimientos',

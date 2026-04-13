@@ -68,7 +68,7 @@ export const ListIssuesSchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(20),
   clientId: z.string().uuid('Invalid client ID').optional(),
   status: z
-    .enum(['intake', 'prd', 'design', 'build', 'review', 'test', 'deploy', 'done'])
+    .enum(['draft', 'validation', 'intake', 'prd', 'prd_approval', 'design', 'build', 'test', 'docs', 'done'])
     .optional(),
   priority: z.enum(['low', 'medium', 'high', 'critical']).optional(),
   type: z.enum(['feature', 'bug', 'enhancement', 'task']).optional(),
@@ -95,7 +95,9 @@ export type LinkArtifactInput = z.infer<typeof LinkArtifactSchema>;
 
 // ── Transition Issue ───────────────────────────────────────────────────────
 export const TransitionSchema = z.object({
-  status: z.enum(['intake', 'prd', 'design', 'build', 'review', 'test', 'deploy', 'done']),
+  status: z.enum(['draft', 'validation', 'intake', 'prd', 'prd_approval', 'design', 'build', 'test', 'docs', 'done']),
+  reason: z.string().max(2000).optional(),
+  annotations: z.record(z.unknown()).optional(),
 });
 
 export type TransitionInput = z.infer<typeof TransitionSchema>;

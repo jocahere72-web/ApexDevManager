@@ -59,13 +59,15 @@ const PRIORITY_DOT: Record<IssuePriority, string> = {
 };
 
 const STATUS_COL_COLORS: Record<IssueStatus, string> = {
+  draft: '#94a3b8',
+  validation: '#64748b',
   intake: '#6366f1',
   prd: '#8b5cf6',
+  prd_approval: '#7c3aed',
   design: '#a855f7',
   build: '#3b82f6',
-  review: '#f59e0b',
   test: '#14b8a6',
-  deploy: '#f97316',
+  docs: '#f97316',
   done: 'var(--app-success)',
 };
 

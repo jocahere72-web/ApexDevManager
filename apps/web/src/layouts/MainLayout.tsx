@@ -16,6 +16,14 @@ interface NavGroup {
 
 const navGroups: NavGroup[] = [
   {
+    labelKey: 'navGroups.pipeline',
+    items: [
+      { to: '/requirements/new', labelKey: 'nav.newRequirement', icon: '➕' },
+      { to: '/requirements/inbox', labelKey: 'nav.devLeadInbox', icon: '📥' },
+      { to: '/pipeline', labelKey: 'nav.pipeline', icon: '🔄' },
+    ],
+  },
+  {
     labelKey: 'navGroups.core',
     items: [
       { to: '/', labelKey: 'nav.dashboard', icon: '📊' },
@@ -69,6 +77,7 @@ const navGroups: NavGroup[] = [
     labelKey: 'navGroups.admin',
     items: [
       { to: '/governance', labelKey: 'nav.governance', icon: '🛡️' },
+      { to: '/users', labelKey: 'nav.users', icon: '👥' },
       { to: '/admin', labelKey: 'nav.admin', icon: '⚙️' },
       { to: '/llm-providers', labelKey: 'nav.llmProviders', icon: '🧠' },
     ],

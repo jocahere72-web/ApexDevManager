@@ -1,6 +1,9 @@
 {
   "app": { "name": "APEX Dev Manager", "subtitle": "APEX Development Platform" },
   "nav": {
+    "newRequirement": "New Requirement",
+    "devLeadInbox": "Dev Lead Inbox",
+    "pipeline": "Pipeline",
     "dashboard": "Dashboard", "issues": "Issues", "clients": "Clients",
     "connections": "Connections", "explorer": "Explorer", "editor": "Code Editor",
     "aiStudio": "AI Studio", "prd": "PRD Builder", "pageGen": "PRD to Page",
@@ -9,9 +12,10 @@
     "testStudio": "Test Studio", "knowledge": "Knowledge Base",
     "codeFactory": "Code Factory", "marketplace": "Marketplace",
     "governance": "AI Governance", "usage": "Usage & Costs", "dashboards": "Observability",
-    "admin": "Admin Console", "llmProviders": "LLM Providers", "promptTemplates": "Prompt Templates"
+    "admin": "Admin Console", "users": "Users", "llmProviders": "LLM Providers", "promptTemplates": "Prompt Templates"
   },
   "navGroups": {
+    "pipeline": "Pipeline",
     "core": "Core", "development": "Development", "requirements": "Requirements",
     "alm": "ALM", "analysis": "Analysis", "operations": "Operations", "admin": "Admin"
   },

@@ -5,39 +5,72 @@ import { apiClient } from '@/lib/api-client';
 // ---------------------------------------------------------------------------
 
 export type IssueStatus =
+  | 'draft'
+  | 'validation'
   | 'intake'
   | 'prd'
+  | 'prd_approval'
   | 'design'
   | 'build'
-  | 'review'
   | 'test'
-  | 'deploy'
+  | 'docs'
   | 'done';
 
 export type IssuePriority = 'critical' | 'high' | 'medium' | 'low';
 export type IssueType = 'feature' | 'bug' | 'enhancement' | 'task';
 
 export const ISSUE_STATUSES: IssueStatus[] = [
+  'draft',
+  'validation',
   'intake',
   'prd',
+  'prd_approval',
   'design',
   'build',
-  'review',
   'test',
-  'deploy',
+  'docs',
   'done',
 ];
 
 export const STATUS_LABELS: Record<IssueStatus, string> = {
-  intake: 'Intake',
+  draft: 'Borrador',
+  validation: 'Validación IA',
+  intake: 'Recepción',
   prd: 'PRD',
-  design: 'Design',
-  build: 'Build',
-  review: 'Review',
-  test: 'Test',
-  deploy: 'Deploy',
-  done: 'Done',
+  prd_approval: 'Aprobación PRD',
+  design: 'Análisis y Diseño',
+  build: 'Construcción',
+  test: 'Pruebas',
+  docs: 'Documentación',
+  done: 'Entregado',
 };
+
+export type ApprovalDecision = 'pending' | 'approved' | 'returned';
+
+export interface IssueApproval {
+  id: string;
+  issueId: string;
+  stage: IssueStatus;
+  approverUserId: string;
+  approverRole: string;
+  approverName?: string;
+  decision: ApprovalDecision;
+  comments?: string;
+  decidedAt?: string;
+  createdAt: string;
+}
+
+export interface IssueReturnRecord {
+  id: string;
+  issueId: string;
+  fromStage: IssueStatus;
+  toStage: IssueStatus;
+  returnedBy: string;
+  returnedByName?: string;
+  reason: string;
+  annotations?: Record<string, unknown>;
+  createdAt: string;
+}
 
 export interface Issue {
   id: string;
@@ -58,6 +91,7 @@ export interface Issue {
   assignedTo: string | null;
   assignedToName: string | null;
   requestedBy: string | null;
+  requestedByName: string | null;
   tags: string[];
   prdSessionId: string | null;
   changeSetId: string | null;
@@ -65,6 +99,14 @@ export interface Issue {
   testSuiteId: string | null;
   transitions: IssueTransition[];
   requirementDocuments?: IssueRequirementDocument[];
+  // AI validation
+  aiValidationScore: number | null;
+  aiValidationNotes: Record<string, unknown> | null;
+  aiValidatedAt: string | null;
+  // Return tracking
+  returnedReason: string | null;
+  returnedBy: string | null;
+  returnedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -165,13 +207,14 @@ export async function fetchIssues(filters: IssueFilters = {}): Promise<Paginated
   if (filters.type) params.type = filters.type;
   if (filters.assignedTo) params.assignedTo = filters.assignedTo;
   params.page = filters.page ?? 1;
-  params.pageSize = filters.pageSize ?? 100;
+  // Backend expects `limit` (max 100), not `pageSize`
+  params.limit = Math.min(filters.pageSize ?? 100, 100);
 
   const response = await apiClient.get('/issues', { params });
   const body = response.data;
   return {
     data: body.data ?? [],
-    total: body.pagination?.total ?? 0,
+    total: body.pagination?.totalItems ?? body.pagination?.total ?? 0,
     page: body.pagination?.page ?? 1,
     pageSize: body.pagination?.pageSize ?? 100,
     totalPages: body.pagination?.totalPages ?? 0,
@@ -195,6 +238,14 @@ export async function updateIssue(id: string, payload: Partial<IssuePayload>): P
 
 export async function transitionIssue(id: string, status: IssueStatus): Promise<Issue> {
   const response = await apiClient.post(`/issues/${id}/transition`, { status });
+  return response.data.data;
+}
+
+export async function saveIssueValidation(
+  id: string,
+  payload: { score: number; notes: Record<string, unknown> },
+): Promise<Issue> {
+  const response = await apiClient.post(`/issues/${id}/validation`, payload);
   return response.data.data;
 }
 
@@ -237,4 +288,54 @@ export async function fetchIssueStats(clientId?: string): Promise<IssueStats> {
   if (clientId) params.clientId = clientId;
   const response = await apiClient.get('/issues/stats', { params });
   return response.data.data;
+}
+
+// ---------------------------------------------------------------------------
+// Transition with return support
+// ---------------------------------------------------------------------------
+
+export async function transitionIssueWithReason(
+  id: string,
+  status: IssueStatus,
+  reason?: string,
+  annotations?: Record<string, unknown>,
+): Promise<Issue> {
+  const response = await apiClient.post(`/issues/${id}/transition`, {
+    status,
+    reason,
+    annotations,
+  });
+  return response.data.data;
+}
+
+// ---------------------------------------------------------------------------
+// Approvals
+// ---------------------------------------------------------------------------
+
+export async function fetchApprovals(issueId: string, stage: IssueStatus): Promise<IssueApproval[]> {
+  const response = await apiClient.get(`/issues/${issueId}/approvals`, { params: { stage } });
+  return response.data.data ?? [];
+}
+
+export async function submitApproval(
+  issueId: string,
+  stage: IssueStatus,
+  decision: 'approved' | 'returned',
+  comments?: string,
+): Promise<IssueApproval> {
+  const response = await apiClient.post(`/issues/${issueId}/approvals`, {
+    stage,
+    decision,
+    comments,
+  });
+  return response.data.data;
+}
+
+// ---------------------------------------------------------------------------
+// Return History
+// ---------------------------------------------------------------------------
+
+export async function fetchReturnHistory(issueId: string): Promise<IssueReturnRecord[]> {
+  const response = await apiClient.get(`/issues/${issueId}/returns`);
+  return response.data.data ?? [];
 }

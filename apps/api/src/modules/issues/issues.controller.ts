@@ -198,6 +198,29 @@ issuesRouter.patch(
   },
 );
 
+// ── POST /:id/validation — Save AI validation result ──────────────────────
+issuesRouter.post(
+  '/:id/validation',
+  async (req: Request, res: Response<ApiResponse<Issue>>, next: NextFunction) => {
+    try {
+      const body = req.body as { score?: number; notes?: Record<string, unknown> };
+      if (typeof body.score !== 'number' || body.score < 0 || body.score > 100) {
+        throw new ValidationError('score must be a number between 0 and 100');
+      }
+      const issue = await issuesService.saveIssueValidation(
+        req.tenantId!,
+        req.params.id,
+        { score: body.score, notes: body.notes ?? {} },
+        req.userId!,
+        req.dbClient,
+      );
+      res.json({ success: true, data: issue });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
 // ── POST /:id/transition — Transition issue status ─────────────────────────
 issuesRouter.post(
   '/:id/transition',
@@ -213,10 +236,90 @@ issuesRouter.post(
         req.params.id,
         parsed.data.status,
         req.userId!,
+        {
+          reason: req.body.reason as string | undefined,
+          annotations: req.body.annotations as Record<string, unknown> | undefined,
+        },
         req.dbClient,
       );
 
       res.json({ success: true, data: issue });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// ── GET /:id/approvals — Get approvals for issue stage ────────────────────
+issuesRouter.get(
+  '/:id/approvals',
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const stage = req.query.stage as IssueStatus;
+      if (!stage) {
+        throw new ValidationError('stage query parameter is required');
+      }
+
+      const approvals = await issuesService.getApprovals(
+        req.tenantId!,
+        req.params.id,
+        stage,
+        req.dbClient,
+      );
+
+      res.json({ success: true, data: approvals });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// ── POST /:id/approvals — Submit approval decision ───────────────────────
+issuesRouter.post(
+  '/:id/approvals',
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { stage, decision, comments } = req.body;
+      if (!stage || !decision) {
+        throw new ValidationError('stage and decision are required');
+      }
+
+      // Determine actor's relevant role for this approval
+      const userRoles: string[] = (req as Record<string, unknown>).userRoles as string[] ?? [];
+      const approverRole = stage === 'prd_approval'
+        ? (userRoles.includes('ops_lead') ? 'ops_lead' : userRoles.includes('tech_lead') ? 'tech_lead' : userRoles[0])
+        : userRoles[0];
+
+      const approval = await issuesService.submitApproval(
+        req.tenantId!,
+        req.params.id,
+        stage,
+        req.userId!,
+        approverRole,
+        decision,
+        comments,
+        req.dbClient,
+      );
+
+      res.json({ success: true, data: approval });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// ── GET /:id/returns — Get return history ─────────────────────────────────
+issuesRouter.get(
+  '/:id/returns',
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const returns = await issuesService.getReturnHistory(
+        req.tenantId!,
+        req.params.id,
+        req.dbClient,
+      );
+
+      res.json({ success: true, data: returns });
     } catch (err) {
       next(err);
     }

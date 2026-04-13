@@ -26,7 +26,11 @@ const CodeFactoryPage = lazy(() => import('@/features/code-factory'));
 const MarketplacePage = lazy(() => import('@/features/marketplace'));
 const ClientsPage = lazy(() => import('@/features/clients'));
 const IssuesPage = lazy(() => import('@/features/issues'));
+const PipelinePage = lazy(() => import('@/features/pipeline'));
+const CreateRequirementPage = lazy(() => import('@/features/requirements/CreateRequirement'));
+const DevLeadInboxPage = lazy(() => import('@/features/requirements/DevelopmentLeadInbox'));
 const AdminPage = lazy(() => import('@/features/admin'));
+const UsersPage = lazy(() => import('@/features/users'));
 const LLMProvidersPage = lazy(() => import('@/features/admin/components/LLMProviders'));
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -53,6 +57,9 @@ function App() {
         }
       >
         <Route path="/" element={<DashboardPage />} />
+        <Route path="/requirements/new" element={<Suspense fallback={<Loading />}><CreateRequirementPage /></Suspense>} />
+        <Route path="/requirements/inbox" element={<Suspense fallback={<Loading />}><DevLeadInboxPage /></Suspense>} />
+        <Route path="/pipeline/*" element={<Suspense fallback={<Loading />}><PipelinePage /></Suspense>} />
         <Route path="/clients/*" element={<Suspense fallback={<Loading />}><ClientsPage /></Suspense>} />
         <Route path="/issues/*" element={<Suspense fallback={<Loading />}><IssuesPage /></Suspense>} />
         <Route path="/connections/*" element={<Suspense fallback={<Loading />}><ConnectionsPage /></Suspense>} />
@@ -74,6 +81,7 @@ function App() {
         <Route path="/code-factory" element={<Suspense fallback={<Loading />}><CodeFactoryPage /></Suspense>} />
         <Route path="/marketplace" element={<Suspense fallback={<Loading />}><MarketplacePage /></Suspense>} />
         <Route path="/admin/*" element={<Suspense fallback={<Loading />}><AdminPage /></Suspense>} />
+        <Route path="/users" element={<Suspense fallback={<Loading />}><UsersPage /></Suspense>} />
         <Route path="/llm-providers" element={<Suspense fallback={<Loading />}><LLMProvidersPage /></Suspense>} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
