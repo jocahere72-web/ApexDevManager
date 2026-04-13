@@ -1,5 +1,6 @@
 import bcrypt from 'bcrypt';
-import { pool } from '../../config/database.js';
+import { tenantQuery } from '../../lib/tenant-db.js';
+import type { PoolClient } from 'pg';
 import { logger } from '../../lib/logger.js';
 import type { LockoutStatus } from './auth.types.js';
 
@@ -24,11 +25,11 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
 /**
  * Check the lockout status for a user by querying failed_attempts and locked_until.
  */
-export async function checkLockout(userId: string): Promise<LockoutStatus> {
-  const result = await pool.query<{ failed_attempts: number; locked_until: Date | null }>(
+export async function checkLockout(userId: string, client?: PoolClient): Promise<LockoutStatus> {
+  const result = await tenantQuery(client,
     'SELECT failed_attempts, locked_until FROM users WHERE id = $1',
     [userId],
-  );
+  ) as { rows: { failed_attempts: number; locked_until: Date | null }[]; rowCount: number | null };
 
   if (result.rows.length === 0) {
     return {
@@ -61,15 +62,15 @@ export async function checkLockout(userId: string): Promise<LockoutStatus> {
  * Increment failed login attempts for a user.
  * Automatically locks the account when MAX_FAILED_ATTEMPTS is reached.
  */
-export async function incrementFailedAttempts(userId: string): Promise<LockoutStatus> {
-  const result = await pool.query<{ failed_attempts: number; locked_until: Date | null }>(
+export async function incrementFailedAttempts(userId: string, client?: PoolClient): Promise<LockoutStatus> {
+  const result = await tenantQuery(client,
     `UPDATE users
      SET failed_attempts = failed_attempts + 1,
          updated_at = NOW()
      WHERE id = $1
      RETURNING failed_attempts, locked_until`,
     [userId],
-  );
+  ) as { rows: { failed_attempts: number; locked_until: Date | null }[]; rowCount: number | null };
 
   if (result.rows.length === 0) {
     logger.warn({ userId }, 'Attempted to increment failed attempts for non-existent user');
@@ -87,7 +88,7 @@ export async function incrementFailedAttempts(userId: string): Promise<LockoutSt
   if (failed_attempts >= MAX_FAILED_ATTEMPTS) {
     const lockedUntil = new Date(Date.now() + LOCKOUT_DURATION_MINUTES * 60 * 1000);
 
-    await pool.query(
+    await tenantQuery(client,
       `UPDATE users
        SET locked_until = $1, updated_at = NOW()
        WHERE id = $2`,
@@ -118,8 +119,8 @@ export async function incrementFailedAttempts(userId: string): Promise<LockoutSt
 /**
  * Reset failed login attempts after a successful login.
  */
-export async function resetFailedAttempts(userId: string): Promise<void> {
-  await pool.query(
+export async function resetFailedAttempts(userId: string, client?: PoolClient): Promise<void> {
+  await tenantQuery(client,
     `UPDATE users
      SET failed_attempts = 0, locked_until = NULL, updated_at = NOW()
      WHERE id = $1`,
@@ -130,10 +131,10 @@ export async function resetFailedAttempts(userId: string): Promise<void> {
 /**
  * Manually lock a user account for the configured lockout duration.
  */
-export async function lockAccount(userId: string): Promise<void> {
+export async function lockAccount(userId: string, client?: PoolClient): Promise<void> {
   const lockedUntil = new Date(Date.now() + LOCKOUT_DURATION_MINUTES * 60 * 1000);
 
-  await pool.query(
+  await tenantQuery(client,
     `UPDATE users
      SET locked_until = $1, updated_at = NOW()
      WHERE id = $2`,
@@ -146,8 +147,8 @@ export async function lockAccount(userId: string): Promise<void> {
 /**
  * Unlock a user account by clearing the lockout timestamp and resetting failed attempts.
  */
-export async function unlockAccount(userId: string): Promise<void> {
-  await pool.query(
+export async function unlockAccount(userId: string, client?: PoolClient): Promise<void> {
+  await tenantQuery(client,
     `UPDATE users
      SET locked_until = NULL, failed_attempts = 0, updated_at = NOW()
      WHERE id = $1`,

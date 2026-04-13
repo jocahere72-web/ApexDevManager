@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import jwt from 'jsonwebtoken';
-import { pool } from '../../config/database.js';
+import { tenantQuery } from '../../lib/tenant-db.js';
+import type { PoolClient } from 'pg';
 import { logger } from '../../lib/logger.js';
 import type { JwtPayload, Role, TokenPair } from './auth.types.js';
 
@@ -54,11 +55,11 @@ export function generateAccessToken(userId: string, tenantId: string, roles: Rol
     roles,
   };
 
-  return jwt.sign(payload, secret, {
+  return jwt.sign(payload as object, secret as jwt.Secret, {
     algorithm,
-    expiresIn: ACCESS_TOKEN_EXPIRY,
+    expiresIn: ACCESS_TOKEN_EXPIRY as any,
     jwtid: crypto.randomUUID(),
-  });
+  } as jwt.SignOptions);
 }
 
 /**
@@ -90,6 +91,7 @@ export async function generateRefreshToken(
   userId: string,
   tenantId: string,
   familyId?: string,
+  client?: PoolClient,
 ): Promise<{ rawToken: string; familyId: string }> {
   const rawToken = crypto.randomBytes(32).toString('hex');
   const tokenHash = hashToken(rawToken);
@@ -97,7 +99,7 @@ export async function generateRefreshToken(
   const resolvedFamilyId = familyId ?? crypto.randomUUID();
   const expiresAt = new Date(Date.now() + REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60 * 1000);
 
-  await pool.query(
+  await tenantQuery(client,
     `INSERT INTO refresh_tokens (id, token_hash, user_id, tenant_id, family_id, is_used, expires_at, created_at)
      VALUES ($1, $2, $3, $4, $5, FALSE, $6, NOW())`,
     [id, tokenHash, userId, tenantId, resolvedFamilyId, expiresAt],
@@ -114,9 +116,10 @@ export async function generateTokenPair(
   tenantId: string,
   roles: Role[],
   familyId?: string,
+  client?: PoolClient,
 ): Promise<TokenPair & { familyId: string }> {
   const accessToken = generateAccessToken(userId, tenantId, roles);
-  const { rawToken, familyId: resolvedFamilyId } = await generateRefreshToken(userId, tenantId, familyId);
+  const { rawToken, familyId: resolvedFamilyId } = await generateRefreshToken(userId, tenantId, familyId, client);
 
   return {
     accessToken,
@@ -137,6 +140,7 @@ export async function generateTokenPair(
 export async function rotateRefreshToken(
   rawToken: string,
   tenantId: string,
+  client?: PoolClient,
 ): Promise<{
   accessToken: string;
   refreshToken: string;
@@ -147,19 +151,12 @@ export async function rotateRefreshToken(
   const tokenHash = hashToken(rawToken);
 
   // Find the token record
-  const result = await pool.query<{
-    id: string;
-    user_id: string;
-    tenant_id: string;
-    family_id: string;
-    is_used: boolean;
-    expires_at: Date;
-  }>(
+  const result = await tenantQuery(client,
     `SELECT id, user_id, tenant_id, family_id, is_used, expires_at
      FROM refresh_tokens
      WHERE token_hash = $1 AND tenant_id = $2`,
     [tokenHash, tenantId],
-  );
+  ) as { rows: { id: string; user_id: string; tenant_id: string; family_id: string; is_used: boolean; expires_at: Date }[]; rowCount: number | null };
 
   if (result.rows.length === 0) {
     throw new InvalidRefreshTokenError('Refresh token not found');
@@ -173,7 +170,7 @@ export async function rotateRefreshToken(
       { userId: record.user_id, familyId: record.family_id },
       'Refresh token reuse detected — invalidating entire token family',
     );
-    await invalidateFamily(record.family_id);
+    await invalidateFamily(record.family_id, client);
     throw new InvalidRefreshTokenError('Refresh token has already been used (possible token theft)');
   }
 
@@ -183,7 +180,7 @@ export async function rotateRefreshToken(
   }
 
   // Mark current token as used
-  await pool.query(
+  await tenantQuery(client,
     `UPDATE refresh_tokens
      SET is_used = TRUE, used_at = NOW()
      WHERE id = $1`,
@@ -191,13 +188,13 @@ export async function rotateRefreshToken(
   );
 
   // Fetch user roles for the new access token
-  const userResult = await pool.query<{ roles: Role[] }>(
+  const userResult = await tenantQuery(client,
     'SELECT roles FROM users WHERE id = $1 AND tenant_id = $2 AND is_active = TRUE',
     [record.user_id, record.tenant_id],
-  );
+  ) as { rows: { roles: Role[] }[]; rowCount: number | null };
 
   if (userResult.rows.length === 0) {
-    await invalidateFamily(record.family_id);
+    await invalidateFamily(record.family_id, client);
     throw new InvalidRefreshTokenError('User not found or inactive');
   }
 
@@ -208,10 +205,11 @@ export async function rotateRefreshToken(
     record.user_id,
     record.tenant_id,
     record.family_id,
+    client,
   );
 
   // Update old token to point to replacement
-  await pool.query(
+  await tenantQuery(client,
     `UPDATE refresh_tokens
      SET replaced_by = (
        SELECT id FROM refresh_tokens
@@ -238,8 +236,8 @@ export async function rotateRefreshToken(
  * Invalidate an entire refresh token family.
  * Used when token reuse is detected (possible theft).
  */
-export async function invalidateFamily(familyId: string): Promise<void> {
-  const result = await pool.query(
+export async function invalidateFamily(familyId: string, client?: PoolClient): Promise<void> {
+  const result = await tenantQuery(client,
     `UPDATE refresh_tokens
      SET is_used = TRUE, used_at = NOW()
      WHERE family_id = $1 AND is_used = FALSE`,
@@ -256,8 +254,8 @@ export async function invalidateFamily(familyId: string): Promise<void> {
  * Delete all expired refresh tokens from the database.
  * Should be called periodically (e.g. via cron) to keep the table clean.
  */
-export async function cleanupExpiredTokens(): Promise<number> {
-  const result = await pool.query(
+export async function cleanupExpiredTokens(client?: PoolClient): Promise<number> {
+  const result = await tenantQuery(client,
     `DELETE FROM refresh_tokens WHERE expires_at < NOW()`,
   );
 
