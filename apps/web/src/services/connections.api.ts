@@ -6,7 +6,7 @@ import { apiClient } from '@/lib/api-client';
 
 export type ConnectionType = 'ords' | 'jdbc';
 export type ConnectionStatus = 'connected' | 'degraded' | 'disconnected' | 'unknown';
-export type Environment = 'development' | 'staging' | 'production';
+export type Environment = 'dev' | 'test' | 'staging' | 'prod';
 
 export interface Connection {
   id: string;
@@ -21,12 +21,28 @@ export interface Connection {
   tags: string[];
   // ORDS-specific
   ordsBaseUrl?: string;
+  ordsUsername?: string | null;
+  apexBaseUrl?: string | null;
+  apexWorkspace?: string | null;
+  workspaceName?: string | null;
+  schemaName?: string | null;
   // JDBC-specific
   host?: string;
   port?: number;
   serviceName?: string;
+  dbHost?: string | null;
+  dbPort?: number | null;
+  dbServiceName?: string | null;
+  dbUsername?: string | null;
+  dbSid?: string | null;
   // Common auth
   username: string;
+  description?: string | null;
+  config?: {
+    host?: string;
+    serviceName?: string;
+    [key: string]: unknown;
+  };
   createdAt: string;
   updatedAt: string;
 }
@@ -60,12 +76,25 @@ export interface ConnectionPayload {
   host?: string;
   port?: number;
   serviceName?: string;
+  description?: string;
+  apexWorkspace?: string;
+  schemaName?: string;
+  workspaceName?: string;
+  apexBaseUrl?: string;
+  ordsUsername?: string;
+  dbUsername?: string;
+  dbPassword?: string;
 }
 
 export interface TestConnectionResult {
   success: boolean;
   latencyMs: number;
   message: string;
+}
+
+export interface ConnectionSecrets {
+  ordsPassword: string | null;
+  dbPassword: string | null;
 }
 
 export interface HealthHistoryEntry {
@@ -121,6 +150,11 @@ export async function fetchConnectionById(id: string): Promise<Connection> {
   return response.data.data;
 }
 
+export async function fetchConnectionSecrets(id: string): Promise<ConnectionSecrets> {
+  const response = await apiClient.get(`/connections/${id}/secrets`);
+  return response.data.data;
+}
+
 export async function createConnection(payload: ConnectionPayload): Promise<Connection> {
   const response = await apiClient.post('/connections', payload);
   return response.data.data;
@@ -144,10 +178,7 @@ export async function testConnection(id: string): Promise<TestConnectionResult> 
 }
 
 // Stubs - backend endpoints not yet implemented
-export async function fetchHealthHistory(
-  _id: string,
-  _hours = 24,
-): Promise<HealthHistoryEntry[]> {
+export async function fetchHealthHistory(_id: string, _hours = 24): Promise<HealthHistoryEntry[]> {
   console.warn('fetchHealthHistory: endpoint not yet available in backend');
   return [];
 }

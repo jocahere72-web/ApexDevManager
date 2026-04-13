@@ -1,14 +1,19 @@
 import type Redis from 'ioredis';
 import { redis } from '../../config/redis.js';
 import { logger } from '../../lib/logger.js';
-import type { ApexApplication, ApexPage, ApexComponent, ApexSearchResult } from '../../integrations/mcp/mcp-apex-adapter.js';
+import type {
+  ApexApplication,
+  ApexPage,
+  ApexComponent,
+  ApexSearchResult,
+} from '../../integrations/mcp/mcp-apex-adapter.js';
 
 // ── TTL Constants (seconds) ──────────────────────────────────────────────────
 
-const TTL_APPS = 3600;          // 1 hour
-const TTL_PAGES = 3600;         // 1 hour
-const TTL_COMPONENTS = 3600;    // 1 hour
-const TTL_SEARCH = 300;         // 5 minutes
+const TTL_APPS = 3600; // 1 hour
+const TTL_PAGES = 3600; // 1 hour
+const TTL_COMPONENTS = 3600; // 1 hour
+const TTL_SEARCH = 300; // 5 minutes
 
 // ── Key Builders ─────────────────────────────────────────────────────────────
 
@@ -23,11 +28,12 @@ function pagesKey(tenantId: string, connectionId: string, appId: number): string
 function componentsKey(
   tenantId: string,
   connectionId: string,
+  appId: number,
   pageId: number,
   type?: string,
 ): string {
   const suffix = type ? `:${type}` : '';
-  return `explorer:${tenantId}:${connectionId}:components:${pageId}${suffix}`;
+  return `explorer:${tenantId}:${connectionId}:components:${appId}:${pageId}${suffix}`;
 }
 
 function searchKey(
@@ -70,18 +76,9 @@ export class ExplorerCacheService {
     }
   }
 
-  async setApps(
-    tenantId: string,
-    connectionId: string,
-    apps: ApexApplication[],
-  ): Promise<void> {
+  async setApps(tenantId: string, connectionId: string, apps: ApexApplication[]): Promise<void> {
     try {
-      await this.client.set(
-        appsKey(tenantId, connectionId),
-        JSON.stringify(apps),
-        'EX',
-        TTL_APPS,
-      );
+      await this.client.set(appsKey(tenantId, connectionId), JSON.stringify(apps), 'EX', TTL_APPS);
     } catch (err) {
       logger.warn({ err, tenantId, connectionId }, 'Explorer cache: failed to set apps');
     }
@@ -127,15 +124,21 @@ export class ExplorerCacheService {
   async getComponents(
     tenantId: string,
     connectionId: string,
+    appId: number,
     pageId: number,
     type?: string,
   ): Promise<ApexComponent[] | null> {
     try {
-      const data = await this.client.get(componentsKey(tenantId, connectionId, pageId, type));
+      const data = await this.client.get(
+        componentsKey(tenantId, connectionId, appId, pageId, type),
+      );
       if (!data) return null;
       return JSON.parse(data) as ApexComponent[];
     } catch (err) {
-      logger.warn({ err, tenantId, connectionId, pageId }, 'Explorer cache: failed to get components');
+      logger.warn(
+        { err, tenantId, connectionId, appId, pageId },
+        'Explorer cache: failed to get components',
+      );
       return null;
     }
   }
@@ -143,19 +146,23 @@ export class ExplorerCacheService {
   async setComponents(
     tenantId: string,
     connectionId: string,
+    appId: number,
     pageId: number,
     components: ApexComponent[],
     type?: string,
   ): Promise<void> {
     try {
       await this.client.set(
-        componentsKey(tenantId, connectionId, pageId, type),
+        componentsKey(tenantId, connectionId, appId, pageId, type),
         JSON.stringify(components),
         'EX',
         TTL_COMPONENTS,
       );
     } catch (err) {
-      logger.warn({ err, tenantId, connectionId, pageId }, 'Explorer cache: failed to set components');
+      logger.warn(
+        { err, tenantId, connectionId, appId, pageId },
+        'Explorer cache: failed to set components',
+      );
     }
   }
 
@@ -172,7 +179,10 @@ export class ExplorerCacheService {
       if (!data) return null;
       return JSON.parse(data) as ApexSearchResult[];
     } catch (err) {
-      logger.warn({ err, tenantId, connectionId, term }, 'Explorer cache: failed to get search results');
+      logger.warn(
+        { err, tenantId, connectionId, term },
+        'Explorer cache: failed to get search results',
+      );
       return null;
     }
   }
@@ -192,7 +202,10 @@ export class ExplorerCacheService {
         TTL_SEARCH,
       );
     } catch (err) {
-      logger.warn({ err, tenantId, connectionId, term }, 'Explorer cache: failed to set search results');
+      logger.warn(
+        { err, tenantId, connectionId, term },
+        'Explorer cache: failed to set search results',
+      );
     }
   }
 
@@ -209,13 +222,7 @@ export class ExplorerCacheService {
 
     try {
       do {
-        const [nextCursor, keys] = await this.client.scan(
-          cursor,
-          'MATCH',
-          pattern,
-          'COUNT',
-          100,
-        );
+        const [nextCursor, keys] = await this.client.scan(cursor, 'MATCH', pattern, 'COUNT', 100);
         cursor = nextCursor;
 
         if (keys.length > 0) {
@@ -251,13 +258,7 @@ export class ExplorerCacheService {
 
     try {
       do {
-        const [nextCursor, keys] = await this.client.scan(
-          cursor,
-          'MATCH',
-          pattern,
-          'COUNT',
-          100,
-        );
+        const [nextCursor, keys] = await this.client.scan(cursor, 'MATCH', pattern, 'COUNT', 100);
         cursor = nextCursor;
         count += keys.length;
       } while (cursor !== '0');

@@ -38,7 +38,7 @@ export type ListPagesParams = z.infer<typeof ListPagesParamsSchema>;
 // ── List Components Params ──────────────────────────────────────────────────
 export const ListComponentsParamsSchema = z.object({
   connectionId: z.string().uuid('Invalid connection ID'),
-  pageId: z.coerce.number().int().positive('Page ID must be a positive integer'),
+  pageId: z.coerce.number().int().min(0, 'Page ID must be a non-negative integer'),
 });
 
 export type ListComponentsParams = z.infer<typeof ListComponentsParamsSchema>;

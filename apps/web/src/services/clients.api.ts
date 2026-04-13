@@ -11,6 +11,7 @@ export interface Client {
   description: string;
   connectionId: string | null;
   connectionName: string | null;
+  appId: number | null;
   contactName: string | null;
   contactEmail: string | null;
   contactPhone: string | null;
@@ -24,7 +25,9 @@ export interface ClientSummary {
   name: string;
   code: string;
   description: string;
+  connectionId: string | null;
   connectionName: string | null;
+  appId: number | null;
   contactName: string | null;
   contactEmail: string | null;
   issueCount: number;
@@ -34,6 +37,7 @@ export interface ClientFilters {
   search?: string;
   page?: number;
   pageSize?: number;
+  isActive?: boolean;
 }
 
 export interface ClientPayload {
@@ -58,11 +62,10 @@ export interface PaginatedClients {
 // API Functions
 // ---------------------------------------------------------------------------
 
-export async function fetchClients(
-  filters: ClientFilters = {},
-): Promise<PaginatedClients> {
+export async function fetchClients(filters: ClientFilters = {}): Promise<PaginatedClients> {
   const params: Record<string, string | number> = {};
   if (filters.search) params.search = filters.search;
+  if (filters.isActive !== undefined) params.isActive = String(filters.isActive);
   params.page = filters.page ?? 1;
   params.pageSize = filters.pageSize ?? 20;
 
@@ -87,10 +90,7 @@ export async function createClient(payload: ClientPayload): Promise<Client> {
   return response.data.data;
 }
 
-export async function updateClient(
-  id: string,
-  payload: Partial<ClientPayload>,
-): Promise<Client> {
+export async function updateClient(id: string, payload: Partial<ClientPayload>): Promise<Client> {
   const response = await apiClient.patch(`/clients/${id}`, payload);
   return response.data.data;
 }

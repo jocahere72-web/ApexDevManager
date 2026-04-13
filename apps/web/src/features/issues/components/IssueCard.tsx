@@ -52,7 +52,7 @@ export default function IssueCard({ issue, isSelected, onClick }: IssueCardProps
         style={{
           fontSize: '0.82rem',
           color: 'var(--app-text)',
-          marginBottom: '8px',
+          marginBottom: '6px',
           lineHeight: 1.35,
           overflow: 'hidden',
           textOverflow: 'ellipsis',
@@ -63,6 +63,38 @@ export default function IssueCard({ issue, isSelected, onClick }: IssueCardProps
       >
         {issue.title}
       </div>
+
+      {issue.appId && (
+        <div
+          style={{
+            fontSize: '0.72rem',
+            color: 'var(--app-muted)',
+            marginBottom: '8px',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+          title={`${issue.appId} - ${issue.appName ?? 'Aplicacion APEX'}`}
+        >
+          {issue.appId} - {issue.appName ?? 'Aplicacion APEX'}
+        </div>
+      )}
+
+      {issue.pageId && (
+        <div
+          style={{
+            fontSize: '0.7rem',
+            color: 'var(--app-muted)',
+            marginBottom: '8px',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+          title={`Pagina ${issue.pageId} - ${issue.pageName ?? 'Sin nombre'}`}
+        >
+          Pagina {issue.pageId} - {issue.pageName ?? 'Sin nombre'}
+        </div>
+      )}
 
       <div
         style={{

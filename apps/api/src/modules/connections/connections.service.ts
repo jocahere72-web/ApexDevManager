@@ -30,6 +30,20 @@ export interface ConnectionProfile {
   consecutiveFailures: number;
   createdAt: Date;
   updatedAt: Date;
+  description?: string | null;
+  ordsBaseUrl?: string | null;
+  ordsUsername?: string | null;
+  dbHost?: string | null;
+  dbPort?: number | null;
+  dbServiceName?: string | null;
+  dbSid?: string | null;
+  dbUsername?: string | null;
+  schemaName?: string | null;
+  workspaceName?: string | null;
+  apexWorkspace?: string | null;
+  apexAppId?: number | null;
+  apexBaseUrl?: string | null;
+  apexVersion?: string | null;
 }
 
 export interface ConnectionHealth {
@@ -38,6 +52,20 @@ export interface ConnectionHealth {
   lastHealthCheck: Date | null;
   lastLatencyMs: number | null;
   consecutiveFailures: number;
+}
+
+export interface DatabaseTestInput {
+  connectionId?: string;
+  host?: string;
+  port?: number;
+  serviceName?: string;
+  username?: string;
+  password?: string;
+}
+
+export interface ConnectionSecrets {
+  ordsPassword: string | null;
+  dbPassword: string | null;
 }
 
 // ── Audit Logging ────────────────────────────────────────────────────────────
@@ -147,17 +175,28 @@ export async function createConnection(
 
   const initialStatus: ConnectionStatus = testResult.success ? 'connected' : 'disconnected';
 
+  // Encrypt DB password if provided
+  let dbPasswordEncrypted: string | null = null;
+  const dbPass = (data as any).dbPassword;
+  if (dbPass) {
+    const encDbCreds = encryptCredentials(
+      { username: (data as any).dbUsername || '', password: dbPass },
+      tenantId,
+    );
+    dbPasswordEncrypted = JSON.stringify(encDbCreds);
+  }
+
   const result = await tenantQuery(
     client,
     `INSERT INTO connections (
        tenant_id, name, connection_type, environment, ords_url, db_host, service_name,
        schema_name, workspace_name, db_port, db_username, db_sid,
        apex_workspace, apex_app_id, apex_base_url, apex_version,
-       ords_username, description,
+       ords_username, description, db_password_encrypted,
        encrypted_credentials, status, tags, labels, is_active, consecutive_failures,
        last_check_at, last_latency_ms, change_log, created_at, updated_at
      )
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, true, 0, NOW(), $23, $24, NOW(), NOW())
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, true, 0, NOW(), $24, $25, NOW(), NOW())
      RETURNING *`,
     [
       tenantId,
@@ -178,6 +217,7 @@ export async function createConnection(
       (data as any).apexVersion || null,
       (data as any).ordsUsername || (data as any).username || null,
       (data as any).description || null,
+      dbPasswordEncrypted,
       JSON.stringify(encryptedCreds),
       initialStatus,
       data.tags ?? [],
@@ -196,12 +236,19 @@ export async function createConnection(
 
   const connection = rowToProfile(result.rows[0]);
 
-  await logAudit(tenantId, actorId, 'connection.created', connection.id, {
-    name: data.name,
-    type: data.type,
-    environment: data.environment,
-    testSuccess: testResult.success,
-  }, client);
+  await logAudit(
+    tenantId,
+    actorId,
+    'connection.created',
+    connection.id,
+    {
+      name: data.name,
+      type: data.type,
+      environment: data.environment,
+      testSuccess: testResult.success,
+    },
+    client,
+  );
 
   logger.info(
     { tenantId, connectionId: connection.id, type: data.type, status: initialStatus },
@@ -246,6 +293,9 @@ export async function listConnections(
     tenantQuery(
       client,
       `SELECT id, tenant_id, name, connection_type, environment, ords_url, db_host, service_name,
+              schema_name, workspace_name, db_port, db_username, db_sid,
+              apex_workspace, apex_app_id, apex_base_url, apex_version,
+              ords_username, description,
               status, tags, labels, is_active, last_check_at, last_latency_ms,
               consecutive_failures, created_at, updated_at
        FROM connections
@@ -254,7 +304,11 @@ export async function listConnections(
        LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
       [...params, query.limit, offset],
     ),
-    tenantQuery(client, `SELECT COUNT(*)::int AS total FROM connections WHERE ${whereClause}`, params),
+    tenantQuery(
+      client,
+      `SELECT COUNT(*)::int AS total FROM connections WHERE ${whereClause}`,
+      params,
+    ),
   ]);
 
   return {
@@ -272,6 +326,9 @@ export async function getConnectionById(
   const result = await tenantQuery(
     client,
     `SELECT id, tenant_id, name, connection_type, environment, ords_url, db_host, service_name,
+            schema_name, workspace_name, db_port, db_username, db_sid,
+            apex_workspace, apex_app_id, apex_base_url, apex_version,
+            ords_username, description,
             status, tags, labels, is_active, last_check_at, last_latency_ms,
             consecutive_failures, created_at, updated_at
      FROM connections
@@ -286,6 +343,51 @@ export async function getConnectionById(
   return rowToProfile(result.rows[0]);
 }
 
+// ── Get Connection Secrets ──────────────────────────────────────────────────
+export async function getConnectionSecrets(
+  tenantId: string,
+  id: string,
+  actorId: string,
+  client?: PoolClient,
+): Promise<ConnectionSecrets> {
+  const result = await tenantQuery(
+    client,
+    `SELECT encrypted_credentials, db_password_encrypted
+     FROM connections
+     WHERE tenant_id = $1 AND id = $2 AND deleted_at IS NULL`,
+    [tenantId, id],
+  );
+
+  if (result.rowCount === 0) {
+    throw new NotFoundError('Connection not found');
+  }
+
+  const row = result.rows[0];
+  const ordsCredentials = row.encrypted_credentials
+    ? decryptCredentials(row.encrypted_credentials as any, tenantId)
+    : null;
+  const dbCredentials = row.db_password_encrypted
+    ? decryptCredentials(row.db_password_encrypted as any, tenantId)
+    : null;
+
+  await logAudit(
+    tenantId,
+    actorId,
+    'connection.secrets.viewed',
+    id,
+    {
+      ordsPasswordReturned: Boolean(ordsCredentials?.password),
+      dbPasswordReturned: Boolean(dbCredentials?.password),
+    },
+    client,
+  );
+
+  return {
+    ordsPassword: ordsCredentials?.password ?? null,
+    dbPassword: dbCredentials?.password ?? null,
+  };
+}
+
 // ── Update Connection ────────────────────────────────────────────────────────
 export async function updateConnection(
   tenantId: string,
@@ -298,6 +400,12 @@ export async function updateConnection(
   const params: unknown[] = [tenantId, id];
   let paramIndex = 3;
 
+  const addSetClause = (column: string, value: unknown) => {
+    setClauses.push(`${column} = $${paramIndex}`);
+    params.push(value);
+    paramIndex++;
+  };
+
   if (data.name !== undefined) {
     // Check for duplicate name
     const existing = await tenantQuery(
@@ -309,33 +417,123 @@ export async function updateConnection(
       throw new ConflictError('A connection with this name already exists');
     }
 
-    setClauses.push(`name = $${paramIndex}`);
-    params.push(data.name);
-    paramIndex++;
+    addSetClause('name', data.name);
   }
 
   if (data.environment !== undefined) {
-    setClauses.push(`environment = $${paramIndex}`);
-    params.push(data.environment);
-    paramIndex++;
+    addSetClause('environment', data.environment);
   }
 
   if (data.tags !== undefined) {
-    setClauses.push(`tags = $${paramIndex}`);
-    params.push(data.tags);
-    paramIndex++;
+    addSetClause('tags', data.tags);
   }
 
   if (data.labels !== undefined) {
-    setClauses.push(`labels = $${paramIndex}`);
-    params.push(JSON.stringify(data.labels));
-    paramIndex++;
+    addSetClause('labels', JSON.stringify(data.labels));
+  }
+
+  if (data.description !== undefined) {
+    addSetClause('description', data.description);
+  }
+
+  if (data.ordsBaseUrl !== undefined) {
+    addSetClause('ords_url', data.ordsBaseUrl);
+  }
+
+  if (data.host !== undefined) {
+    addSetClause('db_host', data.host);
+  }
+
+  if (data.port !== undefined) {
+    addSetClause('db_port', data.port);
+  }
+
+  if (data.serviceName !== undefined) {
+    addSetClause('service_name', data.serviceName);
+  }
+
+  if (data.schemaName !== undefined) {
+    addSetClause('schema_name', data.schemaName);
+  }
+
+  if (data.workspaceName !== undefined) {
+    addSetClause('workspace_name', data.workspaceName);
+  }
+
+  if (data.apexWorkspace !== undefined) {
+    addSetClause('apex_workspace', data.apexWorkspace);
+    if (data.workspaceName === undefined) {
+      addSetClause('workspace_name', data.apexWorkspace);
+    }
+  }
+
+  if (data.apexAppId !== undefined) {
+    addSetClause('apex_app_id', data.apexAppId);
+  }
+
+  if (data.apexBaseUrl !== undefined) {
+    addSetClause('apex_base_url', data.apexBaseUrl);
+  }
+
+  if (data.apexVersion !== undefined) {
+    addSetClause('apex_version', data.apexVersion);
+  }
+
+  if (data.ordsUsername !== undefined) {
+    addSetClause('ords_username', data.ordsUsername);
+  }
+
+  if (data.dbUsername !== undefined) {
+    addSetClause('db_username', data.dbUsername);
+  }
+
+  if (data.dbSid !== undefined) {
+    addSetClause('db_sid', data.dbSid);
+  }
+
+  if (
+    data.username !== undefined ||
+    (data.password !== undefined && data.password !== 'unchanged')
+  ) {
+    const currentCredsResult = await tenantQuery(
+      client,
+      `SELECT encrypted_credentials
+       FROM connections
+       WHERE tenant_id = $1 AND id = $2 AND deleted_at IS NULL`,
+      [tenantId, id],
+    );
+
+    if (currentCredsResult.rowCount === 0) {
+      throw new NotFoundError('Connection not found');
+    }
+
+    const currentCredentials = decryptCredentials(
+      currentCredsResult.rows[0].encrypted_credentials as any,
+      tenantId,
+    );
+    const encryptedCreds = encryptCredentials(
+      {
+        username: data.username ?? currentCredentials.username,
+        password:
+          data.password !== undefined && data.password !== 'unchanged'
+            ? data.password
+            : currentCredentials.password,
+      },
+      tenantId,
+    );
+    addSetClause('encrypted_credentials', encryptedCreds);
+  }
+
+  if (data.dbPassword !== undefined) {
+    const encryptedDbPassword = encryptCredentials(
+      { username: data.dbUsername ?? '', password: data.dbPassword },
+      tenantId,
+    );
+    addSetClause('db_password_encrypted', encryptedDbPassword);
   }
 
   // Append to change_log
-  setClauses.push(
-    `change_log = change_log || $${paramIndex}::jsonb`,
-  );
+  setClauses.push(`change_log = change_log || $${paramIndex}::jsonb`);
   params.push(
     JSON.stringify([
       {
@@ -353,6 +551,9 @@ export async function updateConnection(
     `UPDATE connections SET ${setClauses.join(', ')}
      WHERE tenant_id = $1 AND id = $2 AND deleted_at IS NULL
      RETURNING id, tenant_id, name, connection_type, environment, ords_url, db_host, service_name,
+               schema_name, workspace_name, db_port, db_username, db_sid,
+               apex_workspace, apex_app_id, apex_base_url, apex_version,
+               ords_username, description,
                status, tags, labels, is_active, last_check_at, last_latency_ms,
                consecutive_failures, created_at, updated_at`,
     params,
@@ -364,7 +565,14 @@ export async function updateConnection(
 
   const connection = rowToProfile(result.rows[0]);
 
-  await logAudit(tenantId, actorId, 'connection.updated', id, data as Record<string, unknown>, client);
+  await logAudit(
+    tenantId,
+    actorId,
+    'connection.updated',
+    id,
+    data as Record<string, unknown>,
+    client,
+  );
 
   logger.info({ tenantId, connectionId: id }, 'Connection updated');
 
@@ -393,6 +601,62 @@ export async function softDeleteConnection(
   await logAudit(tenantId, actorId, 'connection.deleted', id, undefined, client);
 
   logger.info({ tenantId, connectionId: id }, 'Connection soft-deleted');
+}
+
+// ── Test Database Connection From Form ───────────────────────────────────────
+export async function testDatabaseConnection(
+  tenantId: string,
+  input: DatabaseTestInput,
+  client?: PoolClient,
+): Promise<TestResult> {
+  let host = input.host;
+  let port = input.port ?? 1521;
+  let serviceName = input.serviceName;
+  let username = input.username;
+  let password = input.password;
+
+  if (input.connectionId) {
+    const result = await tenantQuery(
+      client,
+      `SELECT db_host, db_port, service_name, db_username, db_password_encrypted
+       FROM connections
+       WHERE tenant_id = $1 AND id = $2 AND deleted_at IS NULL`,
+      [tenantId, input.connectionId],
+    );
+
+    if (result.rowCount === 0) {
+      throw new NotFoundError('Connection not found');
+    }
+
+    const saved = result.rows[0];
+    host = host || (saved.db_host as string | undefined);
+    port = port || ((saved.db_port as number | undefined) ?? 1521);
+    serviceName = serviceName || (saved.service_name as string | undefined);
+    username = username || (saved.db_username as string | undefined);
+
+    if (!password && saved.db_password_encrypted) {
+      const savedCredentials = decryptCredentials(saved.db_password_encrypted as any, tenantId);
+      password = savedCredentials.password;
+      username = username || savedCredentials.username;
+    }
+  }
+
+  if (!host || !serviceName || !username || !password) {
+    return {
+      success: false,
+      latencyMs: 0,
+      message:
+        'Completa host, service name, usuario y contraseña de BD. En edición, guarda una contraseña BD al menos una vez para poder probarla sin volver a escribirla.',
+    };
+  }
+
+  return testJdbcConnection({
+    host,
+    port,
+    serviceName,
+    username,
+    password,
+  });
 }
 
 // ── Test Connection ──────────────────────────────────────────────────────────

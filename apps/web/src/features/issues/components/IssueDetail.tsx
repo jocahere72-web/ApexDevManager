@@ -72,10 +72,7 @@ export default function IssueDetail({ issueId, onClose, onUpdated }: IssueDetail
   const loadIssue = useCallback(async () => {
     setLoading(true);
     try {
-      const [data, acts] = await Promise.all([
-        fetchIssue(issueId),
-        fetchIssueActivities(issueId),
-      ]);
+      const [data, acts] = await Promise.all([fetchIssue(issueId), fetchIssueActivities(issueId)]);
       setIssue(data);
       setActivities(acts);
     } catch (err) {
@@ -270,6 +267,18 @@ export default function IssueDetail({ issueId, onClose, onUpdated }: IssueDetail
             <div style={valueStyle}>{issue.clientName}</div>
           </div>
           <div>
+            <div style={labelStyle}>Application</div>
+            <div style={valueStyle}>
+              {issue.appId ? `${issue.appId} - ${issue.appName ?? 'Aplicacion APEX'}` : '--'}
+            </div>
+          </div>
+          <div>
+            <div style={labelStyle}>Page</div>
+            <div style={valueStyle}>
+              {issue.pageId ? `${issue.pageId} - ${issue.pageName ?? 'Sin nombre'}` : '--'}
+            </div>
+          </div>
+          <div>
             <div style={labelStyle}>Priority</div>
             {editing ? (
               <select
@@ -354,6 +363,38 @@ export default function IssueDetail({ issueId, onClose, onUpdated }: IssueDetail
               )}
             </div>
           </div>
+        </div>
+
+        {/* Requirement documents */}
+        <div style={{ marginBottom: '20px' }}>
+          <div style={{ ...labelStyle, marginBottom: '8px' }}>Requirement Document</div>
+          {issue.requirementDocuments && issue.requirementDocuments.length > 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              {issue.requirementDocuments.map((document) => (
+                <div
+                  key={document.id}
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    gap: '12px',
+                    padding: '8px 10px',
+                    backgroundColor: 'var(--app-surface-raised)',
+                    borderRadius: 'var(--app-radius-sm)',
+                    fontSize: '0.8rem',
+                  }}
+                >
+                  <span style={{ color: 'var(--app-text)' }}>{document.filename}</span>
+                  <span style={{ color: 'var(--app-muted)', whiteSpace: 'nowrap' }}>
+                    {(document.fileSize / 1024).toFixed(1)} KB
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p style={{ fontSize: '0.8rem', color: 'var(--app-muted)', margin: 0 }}>
+              No requirement document attached.
+            </p>
+          )}
         </div>
 
         {/* Description */}
@@ -453,7 +494,11 @@ export default function IssueDetail({ issueId, onClose, onUpdated }: IssueDetail
                     <span>{a.description}</span>
                     {a.artifactType && a.artifactId && (
                       <a
-                        href={ARTIFACT_PATHS[a.artifactType] ? `${ARTIFACT_PATHS[a.artifactType]}/${a.artifactId}` : '#'}
+                        href={
+                          ARTIFACT_PATHS[a.artifactType]
+                            ? `${ARTIFACT_PATHS[a.artifactType]}/${a.artifactId}`
+                            : '#'
+                        }
                         style={{
                           marginLeft: '6px',
                           color: 'var(--app-accent-strong)',
@@ -474,44 +519,45 @@ export default function IssueDetail({ issueId, onClose, onUpdated }: IssueDetail
                 </div>
               ))}
               {/* Legacy transitions */}
-              {issue.transitions && issue.transitions.map((t, i) => (
-                <div
-                  key={`t-${i}`}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    fontSize: '0.78rem',
-                    color: 'var(--app-text)',
-                  }}
-                >
+              {issue.transitions &&
+                issue.transitions.map((t, i) => (
                   <div
+                    key={`t-${i}`}
                     style={{
-                      width: '8px',
-                      height: '8px',
-                      borderRadius: '50%',
-                      backgroundColor: 'var(--app-accent)',
-                      flexShrink: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      fontSize: '0.78rem',
+                      color: 'var(--app-text)',
                     }}
-                  />
-                  <span>
-                    <strong>{t.by}</strong> moved{' '}
-                    {t.from ? (
-                      <>
-                        from <em>{STATUS_LABELS[t.from]}</em> to{' '}
-                      </>
-                    ) : (
-                      'to '
-                    )}
-                    <em>{STATUS_LABELS[t.to]}</em>
-                  </span>
-                  <span
-                    style={{ marginLeft: 'auto', color: 'var(--app-muted)', fontSize: '0.7rem' }}
                   >
-                    {new Date(t.at).toLocaleString()}
-                  </span>
-                </div>
-              ))}
+                    <div
+                      style={{
+                        width: '8px',
+                        height: '8px',
+                        borderRadius: '50%',
+                        backgroundColor: 'var(--app-accent)',
+                        flexShrink: 0,
+                      }}
+                    />
+                    <span>
+                      <strong>{t.by}</strong> moved{' '}
+                      {t.from ? (
+                        <>
+                          from <em>{STATUS_LABELS[t.from]}</em> to{' '}
+                        </>
+                      ) : (
+                        'to '
+                      )}
+                      <em>{STATUS_LABELS[t.to]}</em>
+                    </span>
+                    <span
+                      style={{ marginLeft: 'auto', color: 'var(--app-muted)', fontSize: '0.7rem' }}
+                    >
+                      {new Date(t.at).toLocaleString()}
+                    </span>
+                  </div>
+                ))}
             </div>
           ) : (
             <p style={{ fontSize: '0.8rem', color: 'var(--app-muted)', margin: 0 }}>

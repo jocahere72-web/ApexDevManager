@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
 import {
   AppCard,
   AppEmptyState,
@@ -35,6 +37,9 @@ function debounce<T extends (...args: unknown[]) => void>(fn: T, ms: number) {
 
 export default function ClientsPage() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const canDeleteClients = user?.roles?.includes('admin') ?? false;
   const [clients, setClients] = useState<ClientSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -100,7 +105,7 @@ export default function ClientsPage() {
     setFormName(client.name);
     setFormCode(client.code);
     setFormDescription(client.description ?? '');
-    setFormConnectionId('');
+    setFormConnectionId(client.connectionId ?? '');
     setFormContactName(client.contactName ?? '');
     setFormContactEmail(client.contactEmail ?? '');
     loadConnections();
@@ -258,6 +263,17 @@ export default function ClientsPage() {
                     {client.issueCount} issue{client.issueCount !== 1 ? 's' : ''}
                   </span>
                   <div style={{ display: 'flex', gap: '6px' }}>
+                    {client.connectionId && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/explorer?clientId=${client.id}`);
+                        }}
+                        className="app-button"
+                      >
+                        Explorar
+                      </button>
+                    )}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -267,16 +283,18 @@ export default function ClientsPage() {
                     >
                       {t('clients.edit')}
                     </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeactivate(client.id);
-                      }}
-                      className="app-button"
-                      style={{ color: 'var(--app-danger)', borderColor: '#f4b4ae' }}
-                    >
-                      {t('clients.delete')}
-                    </button>
+                    {canDeleteClients && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeactivate(client.id);
+                        }}
+                        className="app-button"
+                        style={{ color: 'var(--app-danger)', borderColor: '#f4b4ae' }}
+                      >
+                        {t('clients.deleteClient')}
+                      </button>
+                    )}
                   </div>
                 </div>
               </AppCard>

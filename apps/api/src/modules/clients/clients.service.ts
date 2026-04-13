@@ -1,7 +1,11 @@
 import { logger } from '../../lib/logger.js';
 import { tenantQuery } from '../../lib/tenant-db.js';
 import { NotFoundError, ConflictError } from '../../lib/errors.js';
-import type { CreateClientInput, UpdateClientInput, ListClientsQuery } from './clients.validation.js';
+import type {
+  CreateClientInput,
+  UpdateClientInput,
+  ListClientsQuery,
+} from './clients.validation.js';
 import type { PoolClient } from 'pg';
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -12,6 +16,7 @@ export interface ClientRow {
   code: string;
   description: string | null;
   connectionId: string | null;
+  connectionName: string | null;
   appId: number | null;
   contactName: string | null;
   contactEmail: string | null;
@@ -30,6 +35,7 @@ function rowToClient(row: Record<string, unknown>): ClientRow {
     code: row.code as string,
     description: (row.description as string) ?? null,
     connectionId: (row.connection_id as string) ?? null,
+    connectionName: (row.connection_name as string) ?? null,
     appId: (row.app_id as number) ?? null,
     contactName: (row.contact_name as string) ?? null,
     contactEmail: (row.contact_email as string) ?? null,
@@ -64,6 +70,10 @@ async function logAudit(
 // ── Select columns ──────────────────────────────────────────────────────────
 const SELECT_COLS = `id, tenant_id, name, code, description, connection_id, app_id,
   contact_name, contact_email, is_active, created_by, created_at, updated_at`;
+
+const SELECT_WITH_CONNECTION = `clients.id, clients.tenant_id, clients.name, clients.code, clients.description, clients.connection_id, clients.app_id,
+  clients.contact_name, clients.contact_email, clients.is_active, clients.created_by, clients.created_at, clients.updated_at,
+  conn.name AS connection_name`;
 
 // ── Create Client ───────────────────────────────────────────────────────────
 export async function createClient(
@@ -103,10 +113,17 @@ export async function createClient(
 
   const created = rowToClient(result.rows[0]);
 
-  await logAudit(tenantId, actorId, 'client.created', created.id, {
-    name: data.name,
-    code: data.code,
-  }, client);
+  await logAudit(
+    tenantId,
+    actorId,
+    'client.created',
+    created.id,
+    {
+      name: data.name,
+      code: data.code,
+    },
+    client,
+  );
 
   logger.info({ tenantId, clientId: created.id, code: data.code }, 'Client created');
 
@@ -119,21 +136,19 @@ export async function listClients(
   query: ListClientsQuery,
   client?: PoolClient,
 ): Promise<{ clients: ClientRow[]; total: number }> {
-  const conditions: string[] = ['tenant_id = $1'];
+  const conditions: string[] = ['clients.tenant_id = $1'];
   const params: unknown[] = [tenantId];
   let paramIndex = 2;
 
   if (query.search) {
-    conditions.push(`(name ILIKE $${paramIndex} OR code ILIKE $${paramIndex})`);
+    conditions.push(`(clients.name ILIKE $${paramIndex} OR clients.code ILIKE $${paramIndex})`);
     params.push(`%${query.search}%`);
     paramIndex++;
   }
 
-  if (query.isActive !== undefined) {
-    conditions.push(`is_active = $${paramIndex}`);
-    params.push(query.isActive);
-    paramIndex++;
-  }
+  conditions.push(`clients.is_active = $${paramIndex}`);
+  params.push(query.isActive ?? true);
+  paramIndex++;
 
   const whereClause = conditions.join(' AND ');
   const offset = (query.page - 1) * query.limit;
@@ -141,10 +156,11 @@ export async function listClients(
   const [dataResult, countResult] = await Promise.all([
     tenantQuery(
       client,
-      `SELECT ${SELECT_COLS}
+      `SELECT ${SELECT_WITH_CONNECTION}
        FROM clients
+       LEFT JOIN connections conn ON conn.id = clients.connection_id AND conn.tenant_id = clients.tenant_id
        WHERE ${whereClause}
-       ORDER BY name ASC
+       ORDER BY clients.name ASC
        LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
       [...params, query.limit, offset],
     ),
@@ -165,7 +181,10 @@ export async function getClientById(
 ): Promise<ClientRow> {
   const result = await tenantQuery(
     client,
-    `SELECT ${SELECT_COLS} FROM clients WHERE tenant_id = $1 AND id = $2`,
+    `SELECT ${SELECT_WITH_CONNECTION}
+     FROM clients
+     LEFT JOIN connections conn ON conn.id = clients.connection_id AND conn.tenant_id = clients.tenant_id
+     WHERE clients.tenant_id = $1 AND clients.id = $2`,
     [tenantId, id],
   );
 

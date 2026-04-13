@@ -14,6 +14,8 @@ import {
   type IssuePayload,
 } from '@/services/issues.api';
 import { fetchClients, type ClientSummary } from '@/services/clients.api';
+import { fetchApplications, fetchPages } from '@/services/explorer.api';
+import type { ApexApplication } from '@apex-dev-manager/shared-types';
 import IssueCard from './components/IssueCard';
 import IssueDetail from './components/IssueDetail';
 
@@ -31,6 +33,23 @@ function debounce<T extends (...args: unknown[]) => void>(fn: T, ms: number) {
 
 const PRIORITY_OPTIONS: IssuePriority[] = ['critical', 'high', 'medium', 'low'];
 const TYPE_OPTIONS: IssueType[] = ['feature', 'bug', 'enhancement', 'task'];
+const MAX_REQUIREMENT_FILE_BYTES = 5 * 1024 * 1024;
+const REQUIREMENT_FILE_ACCEPT =
+  '.doc,.docx,.pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf';
+
+interface ExplorerPageOption {
+  pageId: number;
+  pageName: string;
+  title?: string;
+}
+
+type IssueApexApplication = ApexApplication & {
+  applicationName?: string;
+};
+
+function getApplicationName(app: IssueApexApplication | undefined): string {
+  return app?.name || app?.applicationName || 'Aplicacion APEX';
+}
 
 const PRIORITY_DOT: Record<IssuePriority, string> = {
   critical: 'var(--app-danger)',
@@ -58,6 +77,8 @@ export default function IssuesPage() {
   const { t } = useTranslation();
   const [issues, setIssues] = useState<IssueSummary[]>([]);
   const [clients, setClients] = useState<ClientSummary[]>([]);
+  const [applications, setApplications] = useState<IssueApexApplication[]>([]);
+  const [pages, setPages] = useState<ExplorerPageOption[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Filters
@@ -76,8 +97,16 @@ export default function IssuesPage() {
   const [formTitle, setFormTitle] = useState('');
   const [formDescription, setFormDescription] = useState('');
   const [formClientId, setFormClientId] = useState('');
+  const [formAppId, setFormAppId] = useState('');
+  const [formPageId, setFormPageId] = useState('');
   const [formPriority, setFormPriority] = useState<IssuePriority>('medium');
   const [formType, setFormType] = useState<IssueType>('task');
+  const [formRequirementFile, setFormRequirementFile] = useState<File | null>(null);
+  const [formRequirementFileError, setFormRequirementFileError] = useState('');
+  const [loadingApplications, setLoadingApplications] = useState(false);
+  const [loadingPages, setLoadingPages] = useState(false);
+  const [applicationsError, setApplicationsError] = useState('');
+  const [pagesError, setPagesError] = useState('');
 
   const debouncedSetSearch = useCallback(
     debounce((...args: unknown[]) => setDebouncedSearch(args[0] as string), 300),
@@ -111,6 +140,106 @@ export default function IssuesPage() {
       .catch(() => {});
   }, []);
 
+  useEffect(() => {
+    if (!modalOpen || !formClientId) {
+      setApplications([]);
+      setFormAppId('');
+      setPages([]);
+      setFormPageId('');
+      setApplicationsError('');
+      return;
+    }
+
+    const selectedClient = clients.find((client) => client.id === formClientId);
+    if (!selectedClient?.connectionId) {
+      setApplications([]);
+      setFormAppId('');
+      setPages([]);
+      setFormPageId('');
+      setApplicationsError('Este cliente no tiene una conexion APEX configurada.');
+      return;
+    }
+
+    let cancelled = false;
+    setLoadingApplications(true);
+    setApplicationsError('');
+    fetchApplications(selectedClient.connectionId)
+      .then((apps) => {
+        if (cancelled) return;
+        setApplications(apps);
+        const preferredAppId = selectedClient.appId
+          ? String(selectedClient.appId)
+          : apps[0]?.applicationId
+            ? String(apps[0].applicationId)
+            : '';
+        setFormAppId(preferredAppId);
+        if (apps.length === 0) {
+          setApplicationsError('No encontre aplicaciones APEX para la conexion del cliente.');
+        }
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        console.error('Failed to load client applications', err);
+        setApplications([]);
+        setFormAppId('');
+        setApplicationsError('No pude cargar las aplicaciones de este cliente.');
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingApplications(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [clients, formClientId, modalOpen]);
+
+  useEffect(() => {
+    if (!modalOpen || !formClientId || !formAppId) {
+      setPages([]);
+      setFormPageId('');
+      setPagesError('');
+      return;
+    }
+
+    const selectedClient = clients.find((client) => client.id === formClientId);
+    if (!selectedClient?.connectionId) {
+      setPages([]);
+      setFormPageId('');
+      setPagesError('');
+      return;
+    }
+
+    let cancelled = false;
+    setLoadingPages(true);
+    setPagesError('');
+    fetchPages(selectedClient.connectionId, formAppId)
+      .then((nextPages) => {
+        if (cancelled) return;
+        setPages(
+          nextPages.map((page) => ({
+            pageId: Number((page as unknown as ExplorerPageOption).pageId ?? page.pageNumber),
+            pageName: String((page as unknown as ExplorerPageOption).pageName ?? page.name ?? ''),
+            title: page.title,
+          })),
+        );
+        setFormPageId('');
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        console.error('Failed to load application pages', err);
+        setPages([]);
+        setFormPageId('');
+        setPagesError('No pude cargar las paginas de esta aplicacion.');
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingPages(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [clients, formAppId, formClientId, modalOpen]);
+
   // Group by status for kanban
   const grouped = ISSUE_STATUSES.reduce<Record<IssueStatus, IssueSummary[]>>(
     (acc, status) => {
@@ -127,21 +256,72 @@ export default function IssuesPage() {
     setFormTitle('');
     setFormDescription('');
     setFormClientId(clients[0]?.id ?? '');
+    setFormAppId('');
+    setFormPageId('');
+    setApplications([]);
+    setPages([]);
+    setApplicationsError('');
+    setPagesError('');
     setFormPriority('medium');
     setFormType('task');
+    setFormRequirementFile(null);
+    setFormRequirementFileError('');
     setModalOpen(true);
   };
 
+  const readFileAsBase64 = (file: File) =>
+    new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const value = String(reader.result ?? '');
+        resolve(value.includes(',') ? value.split(',')[1] : value);
+      };
+      reader.onerror = () => reject(reader.error ?? new Error('Failed to read file'));
+      reader.readAsDataURL(file);
+    });
+
+  const handleRequirementFileChange = (file: File | null) => {
+    setFormRequirementFile(null);
+    setFormRequirementFileError('');
+    if (!file) return;
+
+    if (!/\.(doc|docx|pdf)$/i.test(file.name)) {
+      setFormRequirementFileError('Solo se permiten documentos Word o PDF.');
+      return;
+    }
+
+    if (file.size > MAX_REQUIREMENT_FILE_BYTES) {
+      setFormRequirementFileError('El archivo debe pesar 5 MB o menos.');
+      return;
+    }
+
+    setFormRequirementFile(file);
+  };
+
   const handleCreateIssue = async () => {
-    if (!formTitle.trim() || !formClientId) return;
+    if (!formTitle.trim() || !formClientId || !formAppId) return;
+    const selectedApplication = applications.find((app) => String(app.applicationId) === formAppId);
+    const selectedPage = pages.find((page) => String(page.pageId) === formPageId);
     const payload: IssuePayload = {
       clientId: formClientId,
+      appId: Number(formAppId),
+      appName: getApplicationName(selectedApplication),
+      pageId: selectedPage?.pageId ?? null,
+      pageName: selectedPage?.pageName || selectedPage?.title || null,
       title: formTitle,
       description: formDescription || undefined,
       priority: formPriority,
       type: formType,
     };
     try {
+      if (formRequirementFile) {
+        payload.requirementDocument = {
+          filename: formRequirementFile.name,
+          mimeType: formRequirementFile.type || 'application/octet-stream',
+          fileSize: formRequirementFile.size,
+          contentBase64: await readFileAsBase64(formRequirementFile),
+        };
+      }
       await createIssue(payload);
       setModalOpen(false);
       loadIssues();
@@ -153,6 +333,17 @@ export default function IssuesPage() {
   const handleCardClick = (issue: IssueSummary) => {
     setSelectedIssueId(issue.id);
   };
+
+  const selectedFormClient = clients.find((client) => client.id === formClientId);
+  const selectedApplication = applications.find((app) => String(app.applicationId) === formAppId);
+  const selectedPage = pages.find((page) => String(page.pageId) === formPageId);
+  const canCreateIssue = Boolean(
+    formTitle.trim() &&
+    formClientId &&
+    formAppId &&
+    !loadingApplications &&
+    !formRequirementFileError,
+  );
 
   // ---------------------------------------------------------------------------
   // Render
@@ -360,6 +551,8 @@ export default function IssuesPage() {
                       'Code',
                       'Title',
                       'Client',
+                      'Application',
+                      'Page',
                       'Status',
                       'Priority',
                       'Type',
@@ -374,7 +567,7 @@ export default function IssuesPage() {
                   {issues.length === 0 && (
                     <tr>
                       <td
-                        colSpan={8}
+                        colSpan={10}
                         style={{ padding: '2rem', textAlign: 'center', color: 'var(--app-muted)' }}
                       >
                         {t('issues.noIssues')}
@@ -412,6 +605,16 @@ export default function IssuesPage() {
                         {issue.title}
                       </td>
                       <td style={{ color: 'var(--app-muted)' }}>{issue.clientName}</td>
+                      <td style={{ color: 'var(--app-muted)' }}>
+                        {issue.appId
+                          ? `${issue.appId} - ${issue.appName ?? 'Aplicacion APEX'}`
+                          : '--'}
+                      </td>
+                      <td style={{ color: 'var(--app-muted)' }}>
+                        {issue.pageId
+                          ? `${issue.pageId} - ${issue.pageName ?? 'Sin nombre'}`
+                          : '--'}
+                      </td>
                       <td>
                         <span className="app-status-pill app-status-accent">
                           {STATUS_LABELS[issue.status]}
@@ -433,15 +636,9 @@ export default function IssuesPage() {
                           </span>
                         </span>
                       </td>
-                      <td style={{ textTransform: 'capitalize' }}>
-                        {issue.type}
-                      </td>
-                      <td style={{ color: 'var(--app-muted)' }}>
-                        {issue.assignedToName ?? '--'}
-                      </td>
-                      <td style={{ color: 'var(--app-muted)', fontSize: '0.75rem' }}>
-                        --
-                      </td>
+                      <td style={{ textTransform: 'capitalize' }}>{issue.type}</td>
+                      <td style={{ color: 'var(--app-muted)' }}>{issue.assignedToName ?? '--'}</td>
+                      <td style={{ color: 'var(--app-muted)', fontSize: '0.75rem' }}>--</td>
                     </tr>
                   ))}
                 </tbody>
@@ -452,10 +649,7 @@ export default function IssuesPage() {
 
         {/* Detail sidebar */}
         {selectedIssueId && (
-          <div
-            className="app-workspace-panel"
-            style={{ flex: '0 0 400px', overflowY: 'auto' }}
-          >
+          <div className="app-workspace-panel" style={{ flex: '0 0 400px', overflowY: 'auto' }}>
             <IssueDetail
               issueId={selectedIssueId}
               onClose={() => setSelectedIssueId(null)}
@@ -467,51 +661,179 @@ export default function IssuesPage() {
         {/* New issue modal */}
         {modalOpen && (
           <div className="app-modal-backdrop" onClick={() => setModalOpen(false)}>
-            <div className="app-modal" onClick={(e) => e.stopPropagation()}>
-              <h2 className="app-card-title" style={{ marginBottom: '18px' }}>
-                New Issue
-              </h2>
+            <div
+              className="app-modal"
+              style={{ width: 'min(96vw, 760px)', maxWidth: 760 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div style={{ marginBottom: 18 }}>
+                <p className="app-label" style={{ marginBottom: 6 }}>
+                  Requerimientos
+                </p>
+                <h2 className="app-card-title" style={{ marginBottom: 6 }}>
+                  Nuevo requerimiento
+                </h2>
+                <p style={{ color: 'var(--app-muted)', margin: 0, fontSize: '0.86rem' }}>
+                  Define el cliente y la aplicacion APEX antes de enviar el trabajo al tablero.
+                </p>
+              </div>
 
-              <div className="app-field">
-                <label className="app-label">Client *</label>
-                <select
-                  value={formClientId}
-                  onChange={(e) => setFormClientId(e.target.value)}
-                  className="app-select"
-                >
-                  <option value="">Select client...</option>
-                  {clients.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
+              <div className="app-responsive-two-column" style={{ display: 'grid', gap: 12 }}>
+                <div className="app-field">
+                  <label className="app-label">Cliente *</label>
+                  <select
+                    value={formClientId}
+                    onChange={(e) => {
+                      setFormClientId(e.target.value);
+                      setFormAppId('');
+                      setFormPageId('');
+                    }}
+                    className="app-select"
+                  >
+                    <option value="">Selecciona un cliente...</option>
+                    {clients.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                  {selectedFormClient?.connectionName && (
+                    <div style={{ color: 'var(--app-muted)', fontSize: '0.78rem', marginTop: 6 }}>
+                      Conexion: {selectedFormClient.connectionName}
+                    </div>
+                  )}
+                </div>
+
+                <div className="app-field">
+                  <label className="app-label">Aplicacion APEX *</label>
+                  <select
+                    value={formAppId}
+                    onChange={(e) => {
+                      setFormAppId(e.target.value);
+                      setFormPageId('');
+                    }}
+                    className="app-select"
+                    disabled={!formClientId || loadingApplications || applications.length === 0}
+                  >
+                    <option value="">
+                      {loadingApplications
+                        ? 'Cargando aplicaciones...'
+                        : 'Selecciona una aplicacion...'}
                     </option>
-                  ))}
-                </select>
+                    {applications.map((app) => (
+                      <option key={app.applicationId} value={String(app.applicationId)}>
+                        {app.applicationId} - {getApplicationName(app)}
+                      </option>
+                    ))}
+                  </select>
+                  {selectedApplication && (
+                    <div style={{ color: 'var(--app-muted)', fontSize: '0.78rem', marginTop: 6 }}>
+                      Codigo {selectedApplication.applicationId} -{' '}
+                      {getApplicationName(selectedApplication)}
+                    </div>
+                  )}
+                  {applicationsError && (
+                    <div style={{ color: 'var(--app-danger)', fontSize: '0.78rem', marginTop: 6 }}>
+                      {applicationsError}
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="app-field">
-                <label className="app-label">Title *</label>
+                <label className="app-label">Pagina APEX</label>
+                <select
+                  value={formPageId}
+                  onChange={(e) => setFormPageId(e.target.value)}
+                  className="app-select"
+                  disabled={!formAppId || loadingPages || pages.length === 0}
+                >
+                  <option value="">
+                    {loadingPages ? 'Cargando paginas...' : 'Sin pagina especifica'}
+                  </option>
+                  {pages.map((page) => (
+                    <option key={page.pageId} value={String(page.pageId)}>
+                      {page.pageId} - {page.pageName || page.title || 'Sin nombre'}
+                    </option>
+                  ))}
+                </select>
+                {selectedPage && (
+                  <div style={{ color: 'var(--app-muted)', fontSize: '0.78rem', marginTop: 6 }}>
+                    Pagina {selectedPage.pageId} -{' '}
+                    {selectedPage.pageName || selectedPage.title || 'Sin nombre'}
+                  </div>
+                )}
+                {pagesError && (
+                  <div style={{ color: 'var(--app-danger)', fontSize: '0.78rem', marginTop: 6 }}>
+                    {pagesError}
+                  </div>
+                )}
+              </div>
+
+              <div className="app-field">
+                <label className="app-label">Titulo *</label>
                 <input
                   value={formTitle}
                   onChange={(e) => setFormTitle(e.target.value)}
                   className="app-input"
-                  placeholder="Issue title"
+                  placeholder="Ej. Ajustar consulta de pagos"
                 />
               </div>
 
               <div className="app-field">
-                <label className="app-label">Description</label>
+                <label className="app-label">Descripcion</label>
                 <textarea
                   value={formDescription}
                   onChange={(e) => setFormDescription(e.target.value)}
-                  rows={3}
+                  rows={4}
                   className="app-textarea"
-                  placeholder="Describe the issue..."
+                  placeholder="Describe el alcance, contexto y resultado esperado..."
                 />
+              </div>
+
+              <div className="app-field">
+                <label className="app-label">Documento de requerimientos</label>
+                <input
+                  type="file"
+                  accept={REQUIREMENT_FILE_ACCEPT}
+                  onChange={(e) => handleRequirementFileChange(e.target.files?.[0] ?? null)}
+                  className="app-input"
+                />
+                {formRequirementFile && (
+                  <div
+                    style={{
+                      marginTop: 8,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: 12,
+                      color: 'var(--app-muted)',
+                      fontSize: '0.78rem',
+                    }}
+                  >
+                    <span>
+                      {formRequirementFile.name} - {(formRequirementFile.size / 1024).toFixed(1)} KB
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleRequirementFileChange(null)}
+                      className="app-button"
+                      style={{ padding: '4px 8px', minHeight: 0 }}
+                    >
+                      Quitar
+                    </button>
+                  </div>
+                )}
+                {formRequirementFileError && (
+                  <div style={{ color: 'var(--app-danger)', fontSize: '0.78rem', marginTop: 6 }}>
+                    {formRequirementFileError}
+                  </div>
+                )}
               </div>
 
               <div style={{ display: 'flex', gap: '12px' }}>
                 <div className="app-field" style={{ flex: 1 }}>
-                  <label className="app-label">Priority</label>
+                  <label className="app-label">Prioridad</label>
                   <select
                     value={formPriority}
                     onChange={(e) => setFormPriority(e.target.value as IssuePriority)}
@@ -525,7 +847,7 @@ export default function IssuesPage() {
                   </select>
                 </div>
                 <div className="app-field" style={{ flex: 1 }}>
-                  <label className="app-label">Type</label>
+                  <label className="app-label">Tipo</label>
                   <select
                     value={formType}
                     onChange={(e) => setFormType(e.target.value as IssueType)}
@@ -542,15 +864,15 @@ export default function IssuesPage() {
 
               <div className="app-toolbar" style={{ justifyContent: 'flex-end', marginTop: '8px' }}>
                 <button onClick={() => setModalOpen(false)} className="app-button">
-                  Cancel
+                  Cancelar
                 </button>
                 <button
                   onClick={handleCreateIssue}
-                  disabled={!formTitle.trim() || !formClientId}
+                  disabled={!canCreateIssue}
                   className="app-button app-button-primary"
-                  style={{ opacity: !formTitle.trim() || !formClientId ? 0.5 : 1 }}
+                  style={{ opacity: canCreateIssue ? 1 : 0.5 }}
                 >
-                  Create Issue
+                  Crear requerimiento
                 </button>
               </div>
             </div>

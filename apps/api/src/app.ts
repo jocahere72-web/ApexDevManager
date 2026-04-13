@@ -12,12 +12,17 @@ const CORRELATION_ID_HEADER = 'x-correlation-id';
 export function createApp(): express.Express {
   const app = express();
 
+  // Authenticated JSON APIs should return bodies instead of conditional 304s.
+  app.set('etag', false);
+
   // Security headers
   app.use(helmet());
 
   // CORS
-  const rawOrigins = process.env.CORS_ORIGINS?.split(',').map(s => s.trim()).filter(Boolean);
-  const allowedOrigins = rawOrigins?.filter(o => o !== '*');
+  const rawOrigins = process.env.CORS_ORIGINS?.split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const allowedOrigins = rawOrigins?.filter((o) => o !== '*');
   if (rawOrigins?.includes('*') && process.env.NODE_ENV === 'production') {
     throw new Error('CORS_ORIGINS cannot be "*" in production with credentials enabled');
   }
@@ -35,8 +40,8 @@ export function createApp(): express.Express {
   app.use(compression());
 
   // Body parsing
-  app.use(express.json({ limit: '1mb' }));
-  app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+  app.use(express.json({ limit: '10mb' }));
+  app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
   // Correlation ID middleware
   app.use((req: Request, _res: Response, next: NextFunction) => {

@@ -9,7 +9,11 @@ import {
 import * as connectionsService from './connections.service.js';
 import { ValidationError } from '../../lib/errors.js';
 import type { ApiResponse, PaginatedResponse } from '../../types/index.js';
-import type { ConnectionProfile, ConnectionHealth } from './connections.service.js';
+import type {
+  ConnectionProfile,
+  ConnectionHealth,
+  ConnectionSecrets,
+} from './connections.service.js';
 import type { TestResult } from './connections.validation.js';
 
 export const connectionsRouter = Router();
@@ -93,6 +97,26 @@ connectionsRouter.get(
   },
 );
 
+// ── GET /:id/secrets — Reveal editable connection passwords ─────────────────
+connectionsRouter.get(
+  '/:id/secrets',
+  authorize(['admin', 'tech_lead', 'devops_engineer']),
+  async (req: Request, res: Response<ApiResponse<ConnectionSecrets>>, next: NextFunction) => {
+    try {
+      const secrets = await connectionsService.getConnectionSecrets(
+        req.tenantId!,
+        req.params.id,
+        req.userId!,
+        req.dbClient,
+      );
+
+      res.json({ success: true, data: secrets });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
 // ── PATCH /:id — Update connection ───────────────────────────────────────────
 connectionsRouter.patch(
   '/:id',
@@ -150,7 +174,11 @@ connectionsRouter.post(
         throw new ValidationError('Invalid connection ID', parsed.error.flatten().fieldErrors);
       }
 
-      const result = await connectionsService.testConnection(req.tenantId!, parsed.data.id, req.dbClient);
+      const result = await connectionsService.testConnection(
+        req.tenantId!,
+        parsed.data.id,
+        req.dbClient,
+      );
 
       res.json({ success: true, data: result });
     } catch (err) {
@@ -164,9 +192,31 @@ connectionsRouter.get(
   '/:id/health',
   async (req: Request, res: Response<ApiResponse<ConnectionHealth>>, next: NextFunction) => {
     try {
-      const health = await connectionsService.getHealthStatus(req.tenantId!, req.params.id, req.dbClient);
+      const health = await connectionsService.getHealthStatus(
+        req.tenantId!,
+        req.params.id,
+        req.dbClient,
+      );
 
       res.json({ success: true, data: health });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// ── POST /test-db — Test Oracle DB connection before saving ──────────────────
+connectionsRouter.post(
+  '/test-db',
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const result = await connectionsService.testDatabaseConnection(
+        req.tenantId!,
+        req.body,
+        req.dbClient,
+      );
+
+      res.json({ success: true, data: result });
     } catch (err) {
       next(err);
     }

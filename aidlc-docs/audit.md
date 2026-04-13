@@ -1056,3 +1056,159 @@ revisa de nuevo"
 **Context**: PRD document upload code review refresh.
 
 ---
+
+## Connections Create Screen Database Test Fix
+**Timestamp**: 2026-04-12T21:28:40Z
+**User Input**: "# Review findings:
+
+## Finding 1 (apps/web/src/features/prd-builder/index.tsx:128-153) [added]
+[P1] Upload UI sigue sin cumplir el contrato backend
+
+Sigue vigente. `UploadSourceSchema` requiere `fileSize` y `storageKey`, pero el upload de texto todavía manda solo `filename`, `mimeType` y `content`; el upload de archivo manda `fileSize`, pero no `storageKey`. Ambos caminos pueden fallar en validación antes de guardar la fuente. Hay que alinear el contrato: permitir uploads inline de texto con `fileSize/storageKey` opcionales, o pasar a multipart/storage real y mandar una clave válida.
+
+## Finding 2 (apps/web/src/features/prd-builder/index.tsx:146-153) [added]
+[P1] PDF/DOCX/imágenes siguen leyéndose como texto
+
+Sigue vigente. El selector acepta binarios, pero `file.text()` se usa para cualquier archivo y luego el backend marca cualquier `content` como `parsed`, saltándose `pdf-parse`, `mammoth` y cualquier extracción de imágenes. Debe reservarse `content` para TXT/MD y usar `FormData` o storage para PDF/DOCX/imágenes.
+
+## Finding 3 (apps/api/src/modules/prd-builder/prd.service.ts:414-420) [added]
+[P1] Ruta storage/multipart sigue sin storage real
+
+Sigue vigente para el camino sin `content`. El backend solo intenta leer `storageKey` como ruta local y no hay middleware multipart configurado en la API, solo `express.json({ limit: '1mb' })`. Eso deja el flujo de metadata/storage como placeholder operativo, no como carga real de documentos.
+
+## Finding 4 (apps/web/src/features/prd-builder/index.tsx:342) [added]
+[P2] Extract sigue habilitado sin fuente parseada
+
+Sigue vigente. La UI muestra estados por `parseStatus`, pero el botón de extracción todavía debe basarse en `sources.some(s => s.parseStatus === 'parsed')`, no solo en que exista una fuente. Si hay fuentes `pending`, `parsing` o `error`, el backend rechazará con `No parsed sources available`.
+
+## My request for Codex:
+revisa la pantalla de crear conexiones, no me funciona probar la bd"
+**AI Response**: "Reviewed and fixed the create-connection database test path. Repaired invalid TypeScript in connections service, added a `/connections/test-db` endpoint that handles optional `oracledb` with TCP fallback, aligned frontend connection environment/types with backend fields, and added a migration for connection form fields used by the service. Validation shows connection-related type errors are cleared; remaining typecheck failures are unrelated auth, PRDWorkspace, and Dashboard issues."
+**Context**: Connections create screen and database test troubleshooting.
+
+---
+
+## Connections Edit And Oracle Database Test Fix
+**Timestamp**: 2026-04-12T21:45:00Z
+**User Input**: "REVISA PORQUE CUANDO EDITO LA CONEXION NO TRAE LA INF GUARDADA
+
+no me permite conectarme a oracle"
+**AI Response**: "Reviewed the connection edit and Oracle DB test flow. Found that PATCH /connections/:id only accepted and persisted name/environment/tags/labels, so the form could send extended APEX/DB fields without saving them. Updated validation and service persistence for extended fields, added saved DB password reuse for edit-mode Oracle tests via connectionId, routed /connections/test-db through the JDBC service, and added oracledb to API dependencies and lockfile. Validation confirms connection-related API type errors are cleared; remaining failures are unrelated auth token typing and existing web PRD/Dashboard type errors."
+**Context**: Connections edit form persistence and Oracle database connection test troubleshooting.
+
+---
+
+## Connections Edit Secrets Reveal
+**Timestamp**: 2026-04-12T22:05:00Z
+**User Input**: "quiero que cuando se de editar, traiga toda la informacion almacenada en la bd de las 2 conexiones y el password tenga la opcion de ver **** o el valor real"
+**AI Response**: "Updated the edit connection flow so stored non-secret APEX and database fields are loaded through the normal connection detail response, while real passwords are fetched only on explicit reveal. Added an authorized /connections/:id/secrets endpoint that decrypts ORDS and DB passwords on demand, audits secret viewing, exposed the API in the frontend service, and added Ver/Ocultar controls for both APEX and DB password fields in the edit form."
+**Context**: Connections edit form data loading and password reveal behavior.
+
+---
+
+## Clients Delete Button Fix
+**Timestamp**: 2026-04-12T22:18:00Z
+**User Input**: "en la forma clientes mira el boton clientes delete"
+**AI Response**: "Reviewed the Clients page delete button. Found the UI referenced a missing translation key (`clients.delete`) while locale files define `clients.deleteClient`, showed the delete action to roles that the backend rejects, and the API list returned soft-deleted clients by default. Updated the button to use the correct translation key, hide it unless the user has the admin role, default backend client listings to active clients, and preserve the selected connection when editing a client."
+**Context**: Clients UI delete button and soft-delete behavior.
+
+---
+
+## Explorer Client Chinu Troubleshooting
+**Timestamp**: 2026-04-12T22:34:00Z
+**User Input**: "# Review findings:
+
+## Finding 1 (apps/web/src/features/schema-inspector/components/SchemaExplorer.tsx:12) [added]
+[P2] Pantallas de análisis siguen con grids fijos sin breakpoint local
+
+Aún hay pantallas con columnas rígidas como 280px/320px + 1fr y 1fr/1fr sin fallback local. Aunque algunas tengan wrappers, estos estilos inline pueden ganar y comprimir contenido en mobile; Schema Inspector, Auto Docs, Dashboard, Issues detail y otros deben usar clases responsive del template.
+
+## My request for Codex:
+revisa porque el explorador no funciona con el cliente chinu"
+**AI Response**: "Reviewed the Explorer and Clients flow. Found that Explorer only worked by manually selecting a connection and did not understand client context, so a client like Chinu could have a stored connection/app without Explorer selecting it. Added client-aware Explorer support via `?clientId=...`, a client selector in Explorer, an `Explorar` action from client cards, automatic connection selection from the client's stored `connectionId`, optional app auto-open from `appId`, and connection-name hydration for clients returned by the backend."
+**Context**: Explorer client-context routing and Chinu client troubleshooting.
+
+---
+
+## Chinu APEX Connection Verification
+**Timestamp**: 2026-04-12T22:52:00Z
+**User Input**: "verifica si hay conexion a apex"
+**AI Response**: "Verified the Chinu client and APEX/ORDS connectivity. Chinu has an active connection record, but the stored `ords_url` was malformed (`http://99.0.5.232:8031/ords/r/apex/workspace-sign-in/ords/genesys`) and returned HTTP 404. The corrected ORDS root and application endpoint (`http://99.0.5.232:8031/ords/genesys/apexdev/applications`) returned HTTP 200 with application JSON. Updated the local CHINU connection record to `apex_base_url=http://99.0.5.232:8031` and `ords_url=http://99.0.5.232:8031/ords/genesys`, and added frontend normalization so future saves from an APEX login URL strip everything from `/ords` onward before deriving the ORDS URL."
+**Context**: Chinu APEX/ORDS connection verification and URL normalization.
+
+---
+
+## Explorer Chinu Empty Cache And Header Refinement
+**Timestamp**: 2026-04-12T22:58:00Z
+**User Input**: "per el explorador no trae nada
+
+no me gusta eso ALCALDIA DE CHINU > CHINU > Consulta General > Page 2 - Consulta General busca algo mas elegante"
+**AI Response**: "Diagnosed why Explorer was empty after fixing the CHINU ORDS URL. The direct ORDS endpoint returned 37 applications, but the backend Explorer service returned an empty array due to a Redis apps cache hit containing `[]`. Invalidated the CHINU Explorer cache, verified the service now returns 37 applications, and changed `listApplications` to ignore empty app caches and refetch. Also refined the Explorer header to use a focused title plus contextual status pills instead of a long `>` breadcrumb."
+**Context**: Explorer empty results cache fix and header UX refinement.
+
+---
+
+## Issues New Requirement Modal Enhancement
+**Timestamp**: 2026-04-13T08:35:34Z
+**User Input**: "estas equivocado
+
+# Files mentioned by the user:
+
+## Screenshot 2026-04-12 at 5.02.58 PM.png: /Users/jherrera/Desktop/Screenshot 2026-04-12 at 5.02.58 PM.png
+
+## My request for Codex:
+quiero es mejorrar esta pantalla"
+**AI Response**: "Corrected focus from Linear issue creation to the in-app Requirements/New Issue screen. Reviewed the Issues page, issue API contract, backend validation, and issue service, then updated the New Issue modal to request client, APEX application, optional APEX page, title, description, priority, type, and a requirements document upload."
+**Context**: In-app Requirements page modal enhancement.
+
+---
+
+## Issues Requirement Document Upload
+**Timestamp**: 2026-04-13T08:35:34Z
+**User Input**: "debe permitir agregar el archivo de requerimientos que generalmente se hace en word"
+**AI Response**: "Added a Word/PDF requirements document upload to the New Issue modal. The frontend validates .doc/.docx/.pdf files up to 5 MB, encodes the selected file into the issue creation payload, and the backend validates and stores the document in a new tenant-isolated issue_documents table."
+**Context**: Requirements document attachment support for issue creation.
+
+---
+
+## Issues Application Display
+**Timestamp**: 2026-04-13T08:35:34Z
+**User Input**: "quiero q muestre el  codigo y nombre de la aplicacion"
+**AI Response**: "Updated issue creation and display to use the APEX application code and name format. The modal application selector now shows applicationId - name, the selected application hint repeats the code and name, and issues persist appName alongside appId so the kanban cards, list, and detail panel can display the selected application without re-querying APEX."
+**Context**: APEX application code/name display and persistence for issues.
+
+---
+
+## Issues Optional Page Selection
+**Timestamp**: 2026-04-13T08:35:34Z
+**User Input**: "ademas de la aplicacion el usuario pueda colocar la pagina, pero no es obligatorio. creo que seria bueno aunmentar el tamano de la patalla para mejorar la visualizacion"
+**AI Response**: "Added optional APEX page selection after the application is selected. The modal now loads pages from the selected client's connection and selected application, allows leaving the page empty, stores pageId/pageName when provided, and widens the modal to improve readability."
+**Context**: Optional APEX page selection and modal layout improvement.
+
+---
+
+## Explorer And Requirements Page Visibility Fix
+**Timestamp**: 2026-04-13T08:46:06Z
+**User Input**: "sigue fallando el explorador
+
+no veo los cambios en la pgina de creacion de requerimientos"
+**AI Response**: "Re-tested the Explorer service for the CHINU connection and confirmed it returns 37 applications and 40 pages for application 140000. Hardened the Explorer UI to normalize both adapter and shared-type response shapes, fixed the requirements page selector to consume pageId/pageName from the Explorer API, allowed APEX page 0 in backend validation, restarted the API on port 3001 and Vite on port 5174, and applied an idempotent SQL patch for issues.app_name/page_id/page_name and issue_documents after the migration runner attempted to replay old migrations."
+**Context**: Explorer runtime troubleshooting and local dev server refresh.
+
+---
+
+## Requirements Modal App Name And Width Fix
+**Timestamp**: 2026-04-13T08:47:06Z
+**User Input**: "sigue saliendo solo el codigo de la aplicacion y el modal del mismo tamano"
+**AI Response**: "Found that the requirements modal was reading `app.name` while the Explorer API returns `applicationName`, so the option rendered only the application code. Also found `.app-modal` enforces `width: min(100%, 420px)`, so `maxWidth: 760` did not enlarge it. Updated the modal to read either `name` or `applicationName`, persist the resolved application name, and override the modal width with `width: min(96vw, 760px)`. Vite HMR applied the update."
+**Context**: New requirement modal application label and width correction.
+
+---
+
+## Explorer Runtime Review
+**Timestamp**: 2026-04-13T08:51:06Z
+**User Input**: "revisa el explorador"
+**AI Response**: "Reviewed the running Explorer flow end to end. The CHINU connection was already able to return APEX applications and pages through ORDS, but the API was returning conditional `304` responses on Explorer JSON endpoints, which Axios treats as failed responses. Disabled Express ETags for the authenticated JSON API so Explorer returns full `200` bodies, verified new Explorer requests in the API log now return `200`, and updated Explorer component caching to include `appId` so pages with the same page number in different APEX applications cannot reuse the wrong cached components."
+**Context**: Explorer runtime troubleshooting, 304 response fix, and component cache isolation.
+
+---

@@ -3,7 +3,7 @@ import { tenantQuery } from '../../lib/tenant-db.js';
 import { NotFoundError, ValidationError } from '../../lib/errors.js';
 import type { CreateIssueInput, UpdateIssueInput, ListIssuesQuery } from './issues.validation.js';
 import type { PoolClient } from 'pg';
-import type { Issue, IssueStatus } from '@apex-dev-manager/shared-types';
+import type { Issue, IssueRequirementDocument, IssueStatus } from '@apex-dev-manager/shared-types';
 import { ISSUE_STATUS_FLOW } from '@apex-dev-manager/shared-types';
 
 // ── Row mapper ──────────────────────────────────────────────────────────────
@@ -20,6 +20,9 @@ function rowToIssue(row: Record<string, unknown>): Issue {
     status: row.status as Issue['status'],
     connectionId: (row.connection_id as string) ?? undefined,
     appId: (row.app_id as number) ?? undefined,
+    appName: (row.app_name as string) ?? undefined,
+    pageId: (row.page_id as number) ?? undefined,
+    pageName: (row.page_name as string) ?? undefined,
     prdSessionId: (row.prd_session_id as string) ?? undefined,
     changeSetId: (row.change_set_id as string) ?? undefined,
     releaseId: (row.release_id as string) ?? undefined,
@@ -34,6 +37,16 @@ function rowToIssue(row: Record<string, unknown>): Issue {
     clientName: (row.client_name as string) ?? undefined,
     clientCode: (row.client_code as string) ?? undefined,
     assignedToName: (row.assigned_to_name as string) ?? undefined,
+  };
+}
+
+function rowToRequirementDocument(row: Record<string, unknown>): IssueRequirementDocument {
+  return {
+    id: row.id as string,
+    filename: row.filename as string,
+    mimeType: row.mime_type as string,
+    fileSize: row.file_size as number,
+    createdAt: (row.created_at as Date).toISOString(),
   };
 }
 
@@ -61,7 +74,8 @@ async function logAudit(
 // ── Select columns (with JOINs) ────────────────────────────────────────────
 const SELECT_WITH_JOINS = `
   i.id, i.tenant_id, i.client_id, i.code, i.title, i.description,
-  i.priority, i.type, i.status, i.connection_id, i.app_id,
+  i.priority, i.type, i.status, i.connection_id, i.app_id, i.app_name,
+  i.page_id, i.page_name,
   i.prd_session_id, i.change_set_id, i.release_id, i.test_suite_id,
   i.assigned_to, i.requested_by, i.tags, i.created_by, i.created_at, i.updated_at,
   c.name AS client_name, c.code AS client_code,
@@ -96,6 +110,7 @@ export async function createIssue(
   const clientCode = clientRow.code as string;
   const inheritedConnectionId = clientRow.connection_id as string | null;
   const inheritedAppId = clientRow.app_id as number | null;
+  const selectedAppId = data.appId ?? inheritedAppId;
 
   // Get next sequence number
   const seqResult = await tenantQuery(
@@ -116,10 +131,10 @@ export async function createIssue(
     client,
     `INSERT INTO issues (
        tenant_id, client_id, code, title, description,
-       priority, type, status, connection_id, app_id,
+       priority, type, status, connection_id, app_id, app_name, page_id, page_name,
        requested_by, tags, created_by
      )
-     VALUES ($1, $2, $3, $4, $5, $6, $7, 'intake', $8, $9, $10, $11, $12)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, 'intake', $8, $9, $10, $11, $12, $13, $14, $15)
      RETURNING id`,
     [
       tenantId,
@@ -130,7 +145,10 @@ export async function createIssue(
       data.priority ?? 'medium',
       data.type ?? 'feature',
       inheritedConnectionId,
-      inheritedAppId,
+      selectedAppId,
+      data.appName ?? null,
+      data.pageId ?? null,
+      data.pageName ?? null,
       data.requestedBy ?? null,
       data.tags ?? [],
       actorId,
@@ -139,11 +157,52 @@ export async function createIssue(
 
   const issueId = result.rows[0].id as string;
 
-  await logAudit(tenantId, actorId, 'issue.created', issueId, {
-    code,
-    title: data.title,
-    clientId: data.clientId,
-  }, client);
+  if (data.requirementDocument) {
+    await tenantQuery(
+      client,
+      `INSERT INTO issue_documents (
+         tenant_id, issue_id, filename, mime_type, file_size, content, created_by
+       )
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [
+        tenantId,
+        issueId,
+        data.requirementDocument.filename,
+        data.requirementDocument.mimeType,
+        data.requirementDocument.fileSize,
+        Buffer.from(data.requirementDocument.contentBase64, 'base64'),
+        actorId,
+      ],
+    );
+
+    await logActivity(
+      tenantId,
+      issueId,
+      'artifact_linked',
+      `Archivo de requerimientos agregado: ${data.requirementDocument.filename}`,
+      undefined,
+      undefined,
+      actorId,
+      client,
+    );
+  }
+
+  await logAudit(
+    tenantId,
+    actorId,
+    'issue.created',
+    issueId,
+    {
+      code,
+      title: data.title,
+      clientId: data.clientId,
+      appId: selectedAppId,
+      appName: data.appName,
+      pageId: data.pageId,
+      pageName: data.pageName,
+    },
+    client,
+  );
 
   logger.info({ tenantId, issueId, code }, 'Issue created');
 
@@ -212,11 +271,7 @@ export async function listIssues(
        LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
       [...params, filters.limit, offset],
     ),
-    tenantQuery(
-      client,
-      `SELECT COUNT(*)::int AS total FROM issues i WHERE ${whereClause}`,
-      params,
-    ),
+    tenantQuery(client, `SELECT COUNT(*)::int AS total FROM issues i WHERE ${whereClause}`, params),
   ]);
 
   return {
@@ -243,7 +298,17 @@ export async function getIssueById(
     throw new NotFoundError('Issue not found');
   }
 
-  return rowToIssue(result.rows[0]);
+  const issue = rowToIssue(result.rows[0]);
+  const documentsResult = await tenantQuery(
+    client,
+    `SELECT id, filename, mime_type, file_size, created_at
+     FROM issue_documents
+     WHERE tenant_id = $1 AND issue_id = $2
+     ORDER BY created_at DESC`,
+    [tenantId, id],
+  );
+  issue.requirementDocuments = documentsResult.rows.map(rowToRequirementDocument);
+  return issue;
 }
 
 // ── Update Issue ────────────────────────────────────────────────────────────
@@ -266,6 +331,10 @@ export async function updateIssue(
     assignedTo: 'assigned_to',
     requestedBy: 'requested_by',
     tags: 'tags',
+    appId: 'app_id',
+    appName: 'app_name',
+    pageId: 'page_id',
+    pageName: 'page_name',
     prdSessionId: 'prd_session_id',
     changeSetId: 'change_set_id',
     releaseId: 'release_id',
@@ -320,7 +389,7 @@ export async function transitionIssue(
   if (Math.abs(currentIndex - newIndex) > 1) {
     throw new ValidationError(
       `Invalid status transition from '${current.status}' to '${newStatus}'. ` +
-      `Only adjacent transitions are allowed.`,
+        `Only adjacent transitions are allowed.`,
     );
   }
 
@@ -335,10 +404,17 @@ export async function transitionIssue(
     [tenantId, id, newStatus],
   );
 
-  await logAudit(tenantId, actorId, 'issue.transitioned', id, {
-    old_status: current.status,
-    new_status: newStatus,
-  }, client);
+  await logAudit(
+    tenantId,
+    actorId,
+    'issue.transitioned',
+    id,
+    {
+      old_status: current.status,
+      new_status: newStatus,
+    },
+    client,
+  );
 
   logger.info({ tenantId, issueId: id, from: current.status, to: newStatus }, 'Issue transitioned');
 
@@ -424,7 +500,15 @@ export async function logActivity(
     client,
     `INSERT INTO issue_activities (tenant_id, issue_id, activity_type, description, artifact_type, artifact_id, actor_id)
      VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-    [tenantId, issueId, activityType, description, artifactType ?? null, artifactId ?? null, actorId ?? null],
+    [
+      tenantId,
+      issueId,
+      activityType,
+      description,
+      artifactType ?? null,
+      artifactId ?? null,
+      actorId ?? null,
+    ],
   );
   logger.info({ tenantId, issueId, activityType }, 'Issue activity logged');
 }

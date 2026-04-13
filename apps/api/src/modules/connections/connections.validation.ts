@@ -25,9 +25,7 @@ const baseConnectionFields = {
     .string({ required_error: 'Username is required' })
     .min(1, 'Username is required')
     .max(255),
-  password: z
-    .string({ required_error: 'Password is required' })
-    .min(1, 'Password is required'),
+  password: z.string({ required_error: 'Password is required' }).min(1, 'Password is required'),
   tags: z.array(z.string().max(100)).max(20).optional(),
   labels: z.record(z.string().max(255)).optional(),
   // APEX fields
@@ -78,8 +76,25 @@ export type CreateConnectionInput = z.infer<typeof CreateConnectionSchema>;
 export const UpdateConnectionSchema = z.object({
   name: z.string().min(1).max(255).optional(),
   environment: z.enum(ENVIRONMENTS).optional(),
+  username: z.string().min(1).max(255).optional(),
+  password: z.string().min(1).optional(),
   tags: z.array(z.string().max(100)).max(20).optional(),
   labels: z.record(z.string().max(255)).optional(),
+  description: z.string().max(500).optional(),
+  apexWorkspace: z.string().max(100).optional(),
+  schemaName: z.string().max(100).optional(),
+  workspaceName: z.string().max(100).optional(),
+  apexAppId: z.coerce.number().int().optional(),
+  apexBaseUrl: z.string().max(500).optional(),
+  apexVersion: z.string().max(20).optional(),
+  ordsUsername: z.string().max(100).optional(),
+  ordsBaseUrl: z.string().url('Invalid ORDS base URL').optional(),
+  host: z.string().max(255).optional(),
+  port: z.coerce.number().int().min(1).max(65535).optional(),
+  serviceName: z.string().max(255).optional(),
+  dbSid: z.string().max(100).optional(),
+  dbUsername: z.string().max(100).optional(),
+  dbPassword: z.string().max(255).optional(),
 });
 
 export type UpdateConnectionInput = z.infer<typeof UpdateConnectionSchema>;

@@ -7,7 +7,10 @@ import * as mcpAdapter from '../../integrations/mcp/mcp-apex-adapter.js';
 import * as ordsFallback from '../../integrations/mcp/ords-fallback.js';
 import { ExplorerCacheService } from './explorer.cache.js';
 import { decryptCredentials } from '../connections/encryption.service.js';
-import { getConnectionForTenant, type ResolvedConnection } from '../connections/connections.repository.js';
+import {
+  getConnectionForTenant,
+  type ResolvedConnection,
+} from '../connections/connections.repository.js';
 import type {
   ApexApplication,
   ApexPage,
@@ -35,11 +38,14 @@ export interface SyncStatus {
 
 // ── Sync tracking ────────────────────────────────────────────────────────────
 
-const syncTracking = new Map<string, {
-  status: 'syncing' | 'idle' | 'error';
-  lastSyncAt: Date | null;
-  error?: string;
-}>();
+const syncTracking = new Map<
+  string,
+  {
+    status: 'syncing' | 'idle' | 'error';
+    lastSyncAt: Date | null;
+    error?: string;
+  }
+>();
 
 // ── Cache singleton ──────────────────────────────────────────────────────────
 
@@ -109,10 +115,7 @@ async function withMcpFallback<T>(
       const result = await mcpFn(client);
       return result;
     } catch (err) {
-      logger.warn(
-        { err, connectionId: conn.id },
-        'MCP query failed, falling back to ORDS',
-      );
+      logger.warn({ err, connectionId: conn.id }, 'MCP query failed, falling back to ORDS');
       // Fall through to ORDS
     }
   }
@@ -143,9 +146,12 @@ export async function listApplications(
 ): Promise<ApexApplication[]> {
   // Check cache
   const cached = await cache.getApps(tenantId, connectionId);
-  if (cached) {
+  if (cached && cached.length > 0) {
     logger.debug({ tenantId, connectionId }, 'Explorer: apps cache hit');
     return cached;
+  }
+  if (cached) {
+    logger.info({ tenantId, connectionId }, 'Explorer: empty apps cache ignored; refetching');
   }
 
   const conn = await getConnectionDetails(tenantId, connectionId, client);
@@ -160,10 +166,7 @@ export async function listApplications(
   // Cache result
   await cache.setApps(tenantId, connectionId, apps);
 
-  logger.info(
-    { tenantId, connectionId, count: apps.length },
-    'Explorer: applications listed',
-  );
+  logger.info({ tenantId, connectionId, count: apps.length }, 'Explorer: applications listed');
 
   return apps;
 }
@@ -196,10 +199,7 @@ export async function listPages(
   // Cache result
   await cache.setPages(tenantId, connectionId, appId, pages);
 
-  logger.info(
-    { tenantId, connectionId, appId, count: pages.length },
-    'Explorer: pages listed',
-  );
+  logger.info({ tenantId, connectionId, appId, count: pages.length }, 'Explorer: pages listed');
 
   return pages;
 }
@@ -216,10 +216,15 @@ export async function listComponents(
   appId?: number,
   client?: PoolClient,
 ): Promise<ApexComponent[]> {
+  const cacheAppId = appId ?? 0;
+
   // Check cache
-  const cached = await cache.getComponents(tenantId, connectionId, pageId, type);
+  const cached = await cache.getComponents(tenantId, connectionId, cacheAppId, pageId, type);
   if (cached) {
-    logger.debug({ tenantId, connectionId, pageId, type }, 'Explorer: components cache hit');
+    logger.debug(
+      { tenantId, connectionId, appId: cacheAppId, pageId, type },
+      'Explorer: components cache hit',
+    );
     return cached;
   }
 
@@ -232,10 +237,10 @@ export async function listComponents(
   );
 
   // Cache result
-  await cache.setComponents(tenantId, connectionId, pageId, components, type);
+  await cache.setComponents(tenantId, connectionId, cacheAppId, pageId, components, type);
 
   logger.info(
-    { tenantId, connectionId, pageId, type, count: components.length },
+    { tenantId, connectionId, appId: cacheAppId, pageId, type, count: components.length },
     'Explorer: components listed',
   );
 
@@ -271,7 +276,7 @@ export async function getApplicationTree(
           connectionId,
           page.pageId,
           'regions',
-          undefined,
+          appId,
           client,
         );
         return { ...page, components };
@@ -361,10 +366,7 @@ export async function syncConnection(
       lastSyncAt: new Date(),
     });
 
-    logger.info(
-      { tenantId, connectionId, invalidatedKeys },
-      'Explorer: connection synced',
-    );
+    logger.info({ tenantId, connectionId, invalidatedKeys }, 'Explorer: connection synced');
 
     return { invalidatedKeys };
   } catch (err) {

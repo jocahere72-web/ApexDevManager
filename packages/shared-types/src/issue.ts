@@ -1,6 +1,14 @@
 export type IssuePriority = 'low' | 'medium' | 'high' | 'critical';
 export type IssueType = 'feature' | 'bug' | 'enhancement' | 'task';
-export type IssueStatus = 'intake' | 'prd' | 'design' | 'build' | 'review' | 'test' | 'deploy' | 'done';
+export type IssueStatus =
+  | 'intake'
+  | 'prd'
+  | 'design'
+  | 'build'
+  | 'review'
+  | 'test'
+  | 'deploy'
+  | 'done';
 
 export interface Issue {
   id: string;
@@ -14,6 +22,9 @@ export interface Issue {
   status: IssueStatus;
   connectionId?: string;
   appId?: number;
+  appName?: string;
+  pageId?: number;
+  pageName?: string;
   prdSessionId?: string;
   changeSetId?: string;
   releaseId?: string;
@@ -28,16 +39,37 @@ export interface Issue {
   clientName?: string;
   clientCode?: string;
   assignedToName?: string;
+  requirementDocuments?: IssueRequirementDocument[];
+}
+
+export interface IssueRequirementDocument {
+  id: string;
+  filename: string;
+  mimeType: string;
+  fileSize: number;
+  createdAt: string;
 }
 
 export interface CreateIssueRequest {
   clientId: string;
+  appId?: number;
+  appName?: string;
+  pageId?: number;
+  pageName?: string;
   title: string;
   description?: string;
   priority?: IssuePriority;
   type?: IssueType;
   requestedBy?: string;
   tags?: string[];
+  requirementDocument?: CreateIssueRequirementDocumentRequest;
+}
+
+export interface CreateIssueRequirementDocumentRequest {
+  filename: string;
+  mimeType?: string;
+  fileSize: number;
+  contentBase64: string;
 }
 
 export interface UpdateIssueRequest {
@@ -46,6 +78,10 @@ export interface UpdateIssueRequest {
   priority?: IssuePriority;
   type?: IssueType;
   status?: IssueStatus;
+  appId?: number | null;
+  appName?: string | null;
+  pageId?: number | null;
+  pageName?: string | null;
   assignedTo?: string | null;
   requestedBy?: string;
   tags?: string[];
@@ -55,4 +91,13 @@ export interface UpdateIssueRequest {
   testSuiteId?: string;
 }
 
-export const ISSUE_STATUS_FLOW: IssueStatus[] = ['intake', 'prd', 'design', 'build', 'review', 'test', 'deploy', 'done'];
+export const ISSUE_STATUS_FLOW: IssueStatus[] = [
+  'intake',
+  'prd',
+  'design',
+  'build',
+  'review',
+  'test',
+  'deploy',
+  'done',
+];

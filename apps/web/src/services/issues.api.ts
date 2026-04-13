@@ -50,6 +50,11 @@ export interface Issue {
   clientId: string;
   clientName: string;
   clientCode: string;
+  connectionId: string | null;
+  appId: number | null;
+  appName: string | null;
+  pageId: number | null;
+  pageName: string | null;
   assignedTo: string | null;
   assignedToName: string | null;
   requestedBy: string | null;
@@ -59,6 +64,7 @@ export interface Issue {
   releaseId: string | null;
   testSuiteId: string | null;
   transitions: IssueTransition[];
+  requirementDocuments?: IssueRequirementDocument[];
   createdAt: string;
   updatedAt: string;
 }
@@ -73,6 +79,11 @@ export interface IssueSummary {
   clientId: string;
   clientName: string;
   clientCode: string;
+  connectionId: string | null;
+  appId: number | null;
+  appName: string | null;
+  pageId: number | null;
+  pageName: string | null;
   assignedTo: string | null;
   assignedToName: string | null;
 }
@@ -97,6 +108,10 @@ export interface IssueFilters {
 
 export interface IssuePayload {
   clientId: string;
+  appId?: number | null;
+  appName?: string | null;
+  pageId?: number | null;
+  pageName?: string | null;
   title: string;
   description?: string;
   priority: IssuePriority;
@@ -104,6 +119,22 @@ export interface IssuePayload {
   assignedTo?: string | null;
   requestedBy?: string | null;
   tags?: string[];
+  requirementDocument?: IssueRequirementDocumentPayload;
+}
+
+export interface IssueRequirementDocument {
+  id: string;
+  filename: string;
+  mimeType: string;
+  fileSize: number;
+  createdAt: string;
+}
+
+export interface IssueRequirementDocumentPayload {
+  filename: string;
+  mimeType?: string;
+  fileSize: number;
+  contentBase64: string;
 }
 
 export interface IssueStats {
@@ -125,9 +156,7 @@ export interface PaginatedIssues {
 // API Functions
 // ---------------------------------------------------------------------------
 
-export async function fetchIssues(
-  filters: IssueFilters = {},
-): Promise<PaginatedIssues> {
+export async function fetchIssues(filters: IssueFilters = {}): Promise<PaginatedIssues> {
   const params: Record<string, string | number> = {};
   if (filters.search) params.search = filters.search;
   if (filters.clientId) params.clientId = filters.clientId;
@@ -159,25 +188,17 @@ export async function createIssue(payload: IssuePayload): Promise<Issue> {
   return response.data.data;
 }
 
-export async function updateIssue(
-  id: string,
-  payload: Partial<IssuePayload>,
-): Promise<Issue> {
+export async function updateIssue(id: string, payload: Partial<IssuePayload>): Promise<Issue> {
   const response = await apiClient.patch(`/issues/${id}`, payload);
   return response.data.data;
 }
 
-export async function transitionIssue(
-  id: string,
-  status: IssueStatus,
-): Promise<Issue> {
+export async function transitionIssue(id: string, status: IssueStatus): Promise<Issue> {
   const response = await apiClient.post(`/issues/${id}/transition`, { status });
   return response.data.data;
 }
 
-export async function fetchIssuesByClient(
-  clientId: string,
-): Promise<IssueSummary[]> {
+export async function fetchIssuesByClient(clientId: string): Promise<IssueSummary[]> {
   const response = await apiClient.get(`/issues/by-client/${clientId}`);
   return response.data.data ?? [];
 }
@@ -198,9 +219,7 @@ export interface IssueActivity {
   createdAt: string;
 }
 
-export async function fetchIssueActivities(
-  issueId: string,
-): Promise<IssueActivity[]> {
+export async function fetchIssueActivities(issueId: string): Promise<IssueActivity[]> {
   const response = await apiClient.get(`/issues/${issueId}/activities`);
   return response.data.data ?? [];
 }
