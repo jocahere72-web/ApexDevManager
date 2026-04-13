@@ -18,6 +18,7 @@ import { fetchApplications, fetchPages } from '@/services/explorer.api';
 import type { ApexApplication } from '@apex-dev-manager/shared-types';
 import IssueCard from './components/IssueCard';
 import IssueDetail from './components/IssueDetail';
+import { useAuth } from '@/hooks/useAuth';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -77,6 +78,8 @@ const STATUS_COL_COLORS: Record<IssueStatus, string> = {
 
 export default function IssuesPage() {
   const { t } = useTranslation();
+  const { user } = useAuth();
+  const isLeader = user?.roles?.some(r => ['admin', 'tech_lead', 'ops_lead'].includes(r)) ?? false;
   const [issues, setIssues] = useState<IssueSummary[]>([]);
   const [clients, setClients] = useState<ClientSummary[]>([]);
   const [applications, setApplications] = useState<IssueApexApplication[]>([]);
@@ -123,6 +126,8 @@ export default function IssuesPage() {
       if (filterClient) filters.clientId = filterClient;
       if (filterStatus) filters.status = filterStatus;
       if (filterPriority) filters.priority = filterPriority;
+      // Non-leaders only see their assigned issues
+      if (!isLeader && user?.id) filters.assignedTo = user.id;
       const result = await fetchIssues(filters);
       setIssues(result.data);
     } catch (err) {
@@ -130,7 +135,7 @@ export default function IssuesPage() {
     } finally {
       setLoading(false);
     }
-  }, [debouncedSearch, filterClient, filterStatus, filterPriority]);
+  }, [debouncedSearch, filterClient, filterStatus, filterPriority, isLeader, user?.id]);
 
   useEffect(() => {
     loadIssues();
