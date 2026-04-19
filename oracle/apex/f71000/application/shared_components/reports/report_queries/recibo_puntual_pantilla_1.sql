@@ -1,0 +1,107 @@
+prompt --application/shared_components/reports/report_queries/recibo_puntual_pantilla_1
+begin
+wwv_flow_api.create_shared_query(
+ p_id=>wwv_flow_api.id(31199734357884853)
+,p_name=>'Recibo_Puntual_Pantilla_1'
+,p_query_text=>wwv_flow_string.join(wwv_flow_t_varchar2(
+' select a.cdgo_clnte,',
+'        upper(a.nmbre_clnte)nmbre_clnte, ',
+'        upper(a.slgan)slgan,',
+'        a.id_ofcna,',
+'        b.nmbre_ofcna',
+'  from  df_s_clientes a',
+'  left join df_c_oficinas b on a.id_ofcna = b.id_ofcna',
+'  where a.cdgo_clnte = :F_CDGO_CLNTE;'))
+,p_report_layout_id=>wwv_flow_api.id(35281051621340968)
+,p_format=>'PDF'
+,p_output_file_name=>'Recibo_Puntual_Pantilla_1'
+,p_content_disposition=>'ATTACHMENT'
+);
+wwv_flow_api.create_shared_query_stmnt(
+ p_id=>wwv_flow_api.id(50261564362711126)
+,p_shared_query_id=>wwv_flow_api.id(31199734357884853)
+,p_sql_statement=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'-- Consulta que retorna:',
+unistr('-- 1.Informaci\00F3n del cliente'),
+'-- Consulta que retorna:',
+unistr('-- 1.Informaci\00F3n del cliente'),
+unistr('-- 2.Informaci\00F3n del impuesto, usuario y fecha-hora que fue generado el documento '),
+unistr('-- 3.Informaci\00F3n del Sujeto Impuesto - Predio'),
+unistr('-- 4.Informaci\00F3n del Responsable Principal'),
+unistr('-- 5.Informaci\00F3n del recibo, numero del documeto, fecha del documento, valores, c\00F3digo de barra, vigencias del recibo'),
+unistr('-- 6.Informaci\00F3n de la tasa diaria vigente'),
+unistr('-- 7.Informaci\00F3n del avaluo y tarifa de la ultima liquidaci\00F3n del sujeto impuesto'),
+unistr('-- 8.Informaci\00F3n del ultimo pago'),
+unistr('-- 9.Informaci\00F3n de Bancos Recaudadores'),
+unistr('-- 10.Informaci\00F3n de las Vigencias con Saldo'),
+'-- 11.Detalle del Documento',
+' select a.cdgo_clnte,',
+'        b.id_dcmnto,',
+'        b.id_sjto_impsto,',
+'        b.nmro_dcmnto,',
+'        trunc (b.fcha_vncmnto) fcha_vncmnto,',
+'        upper(a.nmbre_clnte)nmbre_clnte, ',
+'        upper(a.slgan)slgan,',
+'        a.nmbre_ofcna,',
+'        upper (b.nmbre_impsto) nmbre_impsto,',
+'        (:F_NMBRE_USRIO)nmbre_usrio,',
+'        to_char (b.fcha_dcmnto, ''YYYYMMDD-HH24:MI:SS'') fcha_dcmnto,',
+'        pkg_gn_generalidades.fnc_cl_formato_texto(b.idntfccion_sjto,''XX-XX-XX-XX-XXXX-XXXX-X-XX-XX-XXXX'',''-'')idntfccion,',
+'        pkg_gn_generalidades.fnc_cl_formato_texto(b.idntfccion_antrior,''XX-XX-XXXX-XXXX-XXX'',''-'')idntfccion_antrior,',
+'        e.drccion,',
+'        d.mtrcla_inmblria,',
+'        e.drccion_ntfccion,',
+'        e.cdgo_pstal,',
+'        d.area_trrno,',
+'        d.area_cnstrda,',
+'        d.area_grvble,',
+'        d.dscrpcion_prdo_dstno,',
+'        d.dscrpcion_estrto,',
+'        f.nmbre_rzon_scial,',
+'        f.cdgo_idntfccion_tpo,',
+'        f.idntfccion_rspnsble,',
+'        pkg_re_documentos.fnc_co_documentos_vigencias(b.id_dcmnto) vgncias_dcmnto, ',
+'        to_char(g.vlor_cptal + g.vlor_intres,''999,999,999,999,999'')vlor_ttal,',
+'        to_char(g.vlor_dscnto,''999,999,999,999,999'')vlor_dscnto,',
+'        to_char((g.vlor_cptal + g.vlor_intres)- g.vlor_dscnto,''999,999,999,999,999'')vlor_ttal_pgar,',
+'        h.cdgo_ean,',
+'        pkgbarcode.funcadfac(null,null, null, b.nmro_dcmnto, b.vlor_ttal, b.fcha_vncmnto, h.cdgo_ean, ''S'') txto_cdgo_brra,',
+'        pkgbarcode.fungencod(''EANUCC128'',pkgbarcode.funcadfac(null,null, null, b.nmro_dcmnto, b.vlor_ttal, b.fcha_vncmnto, h.cdgo_ean, ''N'' ) )cdgo_brra,',
+'        i.tsa_dria, ',
+'        to_char(i.fcha_dsde,''DD/MM/YYYY'') || '' Hasta '' || to_char(i.fcha_hsta,''DD/MM/YYYY'') fchas_tsa_mra,',
+'        m.vgncia_sldo, ',
+'        trim(m.vlor_ttal) vgncia_sldo_ttal,',
+'        j.nmro_dcmnto nmro_dcmnto_rcdo,',
+'        to_char(j.fcha_rcdo,''DD/MM/YYYY'') fcha_rcbdo,',
+'        to_char(j.vlor_dcmnto,''999,999,999,999,999'')vlor_dcmnto,',
+'        j.nmbre_bnco_mdio_pgo nmbre_bnco,',
+'        pkg_gn_generalidades.fnc_co_bancos_recaudadores (p_cdgo_clnte => a.cdgo_clnte, p_id_impsto => b.id_impsto, p_id_impsto_sbmpsto	=> b.id_impsto_sbmpsto) bncos_rcddres,',
+'        n.bse_grvble avluo,',
+'        n.txto_trfa,',
+'        pkg_gn_generalidades.fnc_cl_convertir_blob_a_base64( p_blob => l.file_blob ) as lgo_slgan,',
+'        -- Detalle del documento',
+'        n.vgncia vgncia_dtlle,',
+'        n.cdgo_mvnt_fncro_estdo cdgo_mvnt_fncro_estdo_dtlle,',
+'        n.bse_grvble bse_grvble_dtlle,',
+'        n.txto_trfa txto_trfa_dtlle,',
+'        n.vlor_cptal_ipu vlor_cptal_ipu_dtlle,',
+'        n.vlor_intres_ipu vlor_intres_ipu_dtlle,',
+'        n.vlor_ttal vlor_ttal_dtlle',
+'   from v_df_s_clientes             a',
+'   join v_re_g_documentos           b on a.cdgo_clnte           = b.cdgo_clnte      and b.id_dcmnto in ( select cdna from table (pkg_gn_generalidades.fnc_ca_split_table(:F_ID_DCMNTO ,'','')))',
+'   --join v_si_c_sujetos            c on b.id_sjto              = c.id_sjto',
+'   join v_si_i_predios              d on b.id_sjto              = d.id_sjto',
+'   join v_si_i_sujetos_impuesto     e on b.id_sjto_impsto       = e.id_sjto_impsto',
+'   join v_si_i_sujetos_responsable  f on b.id_sjto              = f.id_sjto         and f.prncpal_s_n = ''S''',
+'   join v_re_g_documentos_detalle   g on b.id_dcmnto            = g.id_dcmnto',
+'   join df_i_impuestos_subimpuesto  h on b.id_impsto_sbmpsto    = h.id_impsto_sbmpsto',
+'   join df_i_tasas_mora             i on a.cdgo_clnte           = i.cdgo_clnte      and b.id_impsto = i.id_impsto and sysdate between i.fcha_dsde and i.fcha_hsta                                                            ',
+'   join df_c_imagenes_cliente l on l.cdgo_clnte = a.cdgo_clnte and l.cdgo_imgen_clnte = ''L_E''',
+'   join table ( pkg_gn_generalidades.fnc_co_vigencias_con_saldo (:F_CDGO_CLNTE, b.id_sjto_impsto)) m on m.vgncia_sldo = m.vgncia_sldo',
+'   join table ( pkg_re_documentos.fnc_co_documento_detalle (b.id_dcmnto)) n on n.vgncia  = n.vgncia',
+'   left join table (pkg_re_documentos.fnc_co_ultmo_rcdo (b.id_sjto_impsto)) j on b.id_sjto_impsto = b.id_sjto_impsto  ',
+'  where a.cdgo_clnte = :F_CDGO_CLNTE',
+'  order by b.nmro_dcmnto;'))
+);
+end;
+/

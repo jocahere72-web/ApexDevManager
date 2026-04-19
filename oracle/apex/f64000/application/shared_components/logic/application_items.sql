@@ -1,0 +1,34 @@
+prompt --application/shared_components/logic/application_items
+begin
+wwv_flow_api.create_flow_item(
+ p_id=>wwv_flow_api.id(305540053487219307)
+,p_name=>'F_CDGO_CLNTE'
+,p_scope=>'GLOBAL'
+,p_protection_level=>'I'
+);
+wwv_flow_api.create_flow_item(
+ p_id=>wwv_flow_api.id(2241562824258252)
+,p_name=>'F_ID_APLCCION_GRPO'
+,p_scope=>'GLOBAL'
+,p_protection_level=>'I'
+);
+wwv_flow_api.create_flow_item(
+ p_id=>wwv_flow_api.id(45297694587035746)
+,p_name=>'F_ID_MNU'
+,p_scope=>'GLOBAL'
+,p_protection_level=>'N'
+);
+wwv_flow_api.create_flow_item(
+ p_id=>wwv_flow_api.id(11498897973802294)
+,p_name=>'F_ID_USRIO_TKEN'
+,p_scope=>'GLOBAL'
+,p_protection_level=>'I'
+);
+wwv_flow_api.create_flow_item(
+ p_id=>wwv_flow_api.id(103904874578726514)
+,p_name=>'F_NMBRE_USRIO'
+,p_scope=>'GLOBAL'
+,p_protection_level=>'I'
+);
+end;
+/

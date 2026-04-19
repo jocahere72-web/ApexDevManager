@@ -1,0 +1,320 @@
+prompt --application/pages/page_00090
+begin
+wwv_flow_api.create_page(
+ p_id=>90
+,p_user_interface_id=>wwv_flow_api.id(36090105988528368)
+,p_name=>unistr('Expediente An\00E1lisis Observaci\00F3n')
+,p_page_mode=>'MODAL'
+,p_step_title=>unistr('Expediente An\00E1lisis Observaci\00F3n')
+,p_autocomplete_on_off=>'OFF'
+,p_javascript_code=>'var htmldb_delete_message=''"DELETE_CONFIRM_MSG"'';'
+,p_page_template_options=>'#DEFAULT#'
+,p_protection_level=>'C'
+,p_last_updated_by=>'BVILLEGAS'
+,p_last_upd_yyyymmddhh24miss=>'20240425173335'
+);
+wwv_flow_api.create_page_plug(
+ p_id=>wwv_flow_api.id(213148996969193401)
+,p_plug_name=>unistr('Propiedades Observaci\00F3n')
+,p_region_template_options=>'#DEFAULT#:t-Region--scrollBody'
+,p_plug_template=>wwv_flow_api.id(36503027129968651)
+,p_plug_display_sequence=>20
+,p_include_in_reg_disp_sel_yn=>'Y'
+,p_plug_display_point=>'BODY'
+,p_plug_query_options=>'DERIVED_REPORT_COLUMNS'
+,p_attribute_01=>'N'
+,p_attribute_02=>'HTML'
+);
+wwv_flow_api.create_page_button(
+ p_id=>wwv_flow_api.id(213140571013057061)
+,p_button_sequence=>30
+,p_button_plug_id=>wwv_flow_api.id(213148996969193401)
+,p_button_name=>'SAVE'
+,p_button_action=>'SUBMIT'
+,p_button_template_options=>'#DEFAULT#:t-Button--iconRight'
+,p_button_template_id=>wwv_flow_api.id(36555682372968674)
+,p_button_is_hot=>'Y'
+,p_button_image_alt=>'Aplicar Cambios'
+,p_button_position=>'REGION_TEMPLATE_CHANGE'
+,p_button_condition=>'(:P90_ID_EXPDNTE_ANLSS_OBSVCN is not null and :P90_ID_USRIO_RCHZO = :F_ID_USRIO and :P90_INDCDOR_CNFRMDO = ''N'')'
+,p_button_condition_type=>'PLSQL_EXPRESSION'
+,p_icon_css_classes=>'fa-save-as'
+,p_grid_new_grid=>false
+);
+wwv_flow_api.create_page_button(
+ p_id=>wwv_flow_api.id(213138524980057058)
+,p_button_sequence=>10
+,p_button_plug_id=>wwv_flow_api.id(213148996969193401)
+,p_button_name=>'CANCEL'
+,p_button_action=>'SUBMIT'
+,p_button_template_options=>'#DEFAULT#:t-Button--iconRight'
+,p_button_template_id=>wwv_flow_api.id(36555682372968674)
+,p_button_image_alt=>'Cancelar'
+,p_button_position=>'REGION_TEMPLATE_CLOSE'
+,p_icon_css_classes=>'fa-window-x'
+,p_grid_new_grid=>false
+);
+wwv_flow_api.create_page_button(
+ p_id=>wwv_flow_api.id(213140171464057060)
+,p_button_sequence=>20
+,p_button_plug_id=>wwv_flow_api.id(213148996969193401)
+,p_button_name=>'DELETE'
+,p_button_action=>'SUBMIT'
+,p_button_template_options=>'#DEFAULT#:t-Button--iconRight'
+,p_button_template_id=>wwv_flow_api.id(36555682372968674)
+,p_button_image_alt=>'Eliminar'
+,p_button_position=>'REGION_TEMPLATE_CLOSE'
+,p_button_condition=>':P90_ID_EXPDNTE_ANLSS_OBSVCN is not null and :P90_ID_USRIO_RCHZO = :F_ID_USRIO and :P90_INDCDOR_CNFRMDO = ''N'''
+,p_button_condition_type=>'PLSQL_EXPRESSION'
+,p_icon_css_classes=>'fa-trash-o'
+,p_grid_new_grid=>false
+);
+wwv_flow_api.create_page_button(
+ p_id=>wwv_flow_api.id(213140988373057061)
+,p_button_sequence=>40
+,p_button_plug_id=>wwv_flow_api.id(213148996969193401)
+,p_button_name=>'CREATE'
+,p_button_action=>'SUBMIT'
+,p_button_template_options=>'#DEFAULT#:t-Button--iconRight'
+,p_button_template_id=>wwv_flow_api.id(36555682372968674)
+,p_button_is_hot=>'Y'
+,p_button_image_alt=>'Insertar'
+,p_button_position=>'REGION_TEMPLATE_CREATE'
+,p_button_condition=>'(:P90_ID_EXPDNTE_ANLSS_OBSVCN is null )'
+,p_button_condition_type=>'PLSQL_EXPRESSION'
+,p_icon_css_classes=>'fa-save'
+,p_grid_new_grid=>false
+);
+wwv_flow_api.create_page_branch(
+ p_id=>wwv_flow_api.id(213175862834947405)
+,p_branch_name=>unistr('Env\00EDar al flujo')
+,p_branch_action=>'f?p=&APP_ID.:90:&SESSION.::&DEBUG.:RP,90::&success_msg=#SUCCESS_MSG#'
+,p_branch_point=>'AFTER_PROCESSING'
+,p_branch_type=>'REDIRECT_URL'
+,p_branch_sequence=>10
+,p_branch_condition_type=>'REQUEST_IN_CONDITION'
+,p_branch_condition=>'SAVE,DELETE,CANCEL'
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(213132182137057012)
+,p_name=>'P90_ID_EXPDNTE_ANLSS_OBSVCN'
+,p_item_sequence=>10
+,p_item_plug_id=>wwv_flow_api.id(213148996969193401)
+,p_use_cache_before_default=>'NO'
+,p_source=>'ID_EXPDNTE_ANLSS_OBSVCN'
+,p_source_type=>'DB_COLUMN'
+,p_display_as=>'NATIVE_HIDDEN'
+,p_protection_level=>'S'
+,p_attribute_01=>'Y'
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(213132507893057030)
+,p_name=>'P90_ID_EXPDNTE_ANLSIS'
+,p_item_sequence=>20
+,p_item_plug_id=>wwv_flow_api.id(213148996969193401)
+,p_use_cache_before_default=>'NO'
+,p_source=>'ID_EXPDNTE_ANLSIS'
+,p_source_type=>'DB_COLUMN'
+,p_display_as=>'NATIVE_HIDDEN'
+,p_attribute_01=>'Y'
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(213132922191057032)
+,p_name=>'P90_ID_FSCLZCION_EXPDNTE'
+,p_item_sequence=>140
+,p_item_plug_id=>wwv_flow_api.id(213148996969193401)
+,p_display_as=>'NATIVE_HIDDEN'
+,p_attribute_01=>'Y'
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(213133321346057032)
+,p_name=>'P90_ID_FLJO_TREA'
+,p_item_sequence=>30
+,p_item_plug_id=>wwv_flow_api.id(213148996969193401)
+,p_use_cache_before_default=>'NO'
+,p_source=>'ID_FLJO_TREA'
+,p_source_type=>'DB_COLUMN'
+,p_display_as=>'NATIVE_HIDDEN'
+,p_attribute_01=>'Y'
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(213133771279057033)
+,p_name=>'P90_FCHA_RCHZO'
+,p_item_sequence=>40
+,p_item_plug_id=>wwv_flow_api.id(213148996969193401)
+,p_use_cache_before_default=>'NO'
+,p_item_default=>'to_char(systimestamp, ''DD/MM/YYYY HH:MI:SS'')'
+,p_item_default_type=>'PLSQL_EXPRESSION'
+,p_source=>'FCHA'
+,p_source_type=>'DB_COLUMN'
+,p_display_as=>'NATIVE_HIDDEN'
+,p_attribute_01=>'Y'
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(213134530280057040)
+,p_name=>'P90_ID_USRIO_RCHZO'
+,p_item_sequence=>60
+,p_item_plug_id=>wwv_flow_api.id(213148996969193401)
+,p_use_cache_before_default=>'NO'
+,p_source=>'ID_USRIO'
+,p_source_type=>'DB_COLUMN'
+,p_display_as=>'NATIVE_HIDDEN'
+,p_attribute_01=>'Y'
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(213134991475057041)
+,p_name=>'P90_OBSRVCION_RCHZO'
+,p_item_sequence=>120
+,p_item_plug_id=>wwv_flow_api.id(213148996969193401)
+,p_use_cache_before_default=>'NO'
+,p_prompt=>unistr('Observaci\00F3n')
+,p_source=>'OBSRVCION'
+,p_source_type=>'DB_COLUMN'
+,p_display_as=>'NATIVE_TEXTAREA'
+,p_cSize=>110
+,p_cMaxlength=>3000
+,p_cHeight=>5
+,p_read_only_when=>'(:P90_INDCDOR_CNFRMDO = ''S'' and :P90_ID_EXPDNTE_ANLSS_OBSVCN IS NOT NULL)'
+,p_read_only_when_type=>'PLSQL_EXPRESSION'
+,p_field_template=>wwv_flow_api.id(36555380291968673)
+,p_item_template_options=>'#DEFAULT#'
+,p_attribute_01=>'N'
+,p_attribute_02=>'N'
+,p_attribute_03=>'Y'
+,p_attribute_04=>'BOTH'
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(213135314642057041)
+,p_name=>'P90_INDCDOR_CNFRMDO'
+,p_item_sequence=>90
+,p_item_plug_id=>wwv_flow_api.id(213148996969193401)
+,p_use_cache_before_default=>'NO'
+,p_item_default=>'N'
+,p_source=>'INDCDOR_CNFRMDO'
+,p_source_type=>'DB_COLUMN'
+,p_display_as=>'NATIVE_HIDDEN'
+,p_attribute_01=>'Y'
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(213159383191443401)
+,p_name=>'P90_FCHA_OBSRVCION'
+,p_item_sequence=>100
+,p_item_plug_id=>wwv_flow_api.id(213148996969193401)
+,p_use_cache_before_default=>'NO'
+,p_item_default=>'to_char(systimestamp, ''DD/MM/YYYY HH:MI:SS'')'
+,p_item_default_type=>'PLSQL_EXPRESSION'
+,p_prompt=>'Fecha'
+,p_format_mask=>'DD/MM/YYYY HH:MI:SS'
+,p_source=>'FCHA_OBSRVCION'
+,p_source_type=>'DB_COLUMN'
+,p_display_as=>'NATIVE_DATE_PICKER'
+,p_cSize=>30
+,p_read_only_when_type=>'ALWAYS'
+,p_field_template=>wwv_flow_api.id(36554931184968673)
+,p_item_template_options=>'#DEFAULT#'
+,p_attribute_04=>'button'
+,p_attribute_05=>'N'
+,p_attribute_07=>'NONE'
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(213175461169947401)
+,p_name=>'P90_ASNTO_OBSRVCION'
+,p_is_required=>true
+,p_item_sequence=>110
+,p_item_plug_id=>wwv_flow_api.id(213148996969193401)
+,p_use_cache_before_default=>'NO'
+,p_prompt=>'Asunto'
+,p_source=>'ASNTO_OBSRVCION'
+,p_source_type=>'DB_COLUMN'
+,p_display_as=>'NATIVE_TEXTAREA'
+,p_cSize=>100
+,p_cMaxlength=>100
+,p_cHeight=>1
+,p_read_only_when=>'(:P90_INDCDOR_CNFRMDO = ''S'' and :P90_ID_EXPDNTE_ANLSS_OBSVCN IS NOT NULL)'
+,p_read_only_when_type=>'PLSQL_EXPRESSION'
+,p_field_template=>wwv_flow_api.id(36555380291968673)
+,p_item_template_options=>'#DEFAULT#:t-Form-fieldContainer--stretchInputs:t-Form-fieldContainer--large'
+,p_attribute_01=>'N'
+,p_attribute_02=>'N'
+,p_attribute_03=>'Y'
+,p_attribute_04=>'BOTH'
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(213291034448507901)
+,p_name=>'P90_ID_INSTNCIA_FLJO'
+,p_item_sequence=>130
+,p_item_plug_id=>wwv_flow_api.id(213148996969193401)
+,p_display_as=>'NATIVE_HIDDEN'
+,p_attribute_01=>'Y'
+);
+wwv_flow_api.create_page_validation(
+ p_id=>wwv_flow_api.id(213134251241057039)
+,p_validation_name=>'P90_FCHA_RCHZO must be timestamp'
+,p_validation_sequence=>40
+,p_validation=>'P90_FCHA_RCHZO'
+,p_validation_type=>'ITEM_IS_TIMESTAMP'
+,p_error_message=>'#LABEL# must be a valid timestamp.'
+,p_validation_condition_type=>'NEVER'
+,p_associated_item=>wwv_flow_api.id(213133771279057033)
+,p_error_display_location=>'INLINE_WITH_FIELD_AND_NOTIFICATION'
+);
+wwv_flow_api.create_page_da_event(
+ p_id=>wwv_flow_api.id(213138610527057058)
+,p_name=>'Cerrar Ventana de Dialogo'
+,p_event_sequence=>10
+,p_triggering_element_type=>'BUTTON'
+,p_triggering_button_id=>wwv_flow_api.id(213138524980057058)
+,p_bind_type=>'bind'
+,p_bind_event_type=>'click'
+,p_display_when_type=>'NEVER'
+);
+wwv_flow_api.create_page_da_action(
+ p_id=>wwv_flow_api.id(213139497200057059)
+,p_event_id=>wwv_flow_api.id(213138610527057058)
+,p_event_result=>'TRUE'
+,p_action_sequence=>10
+,p_execute_on_page_init=>'N'
+,p_action=>'NATIVE_DIALOG_CANCEL'
+,p_stop_execution_on_error=>'Y'
+);
+wwv_flow_api.create_page_process(
+ p_id=>wwv_flow_api.id(213175547085947402)
+,p_process_sequence=>10
+,p_process_point=>'AFTER_SUBMIT'
+,p_process_type=>'NATIVE_FORM_PROCESS'
+,p_process_name=>unistr('Procesamiento Autom\00E1tico expediente observacion')
+,p_attribute_02=>'FI_G_EXPNDNTS_ANALISIS_OBSVCION'
+,p_attribute_03=>'P90_ID_EXPDNTE_ANLSS_OBSVCN'
+,p_attribute_04=>'ID_EXPDNTE_ANLSS_OBSVCN'
+,p_attribute_09=>'P90_ID_EXPDNTE_ANLSS_OBSVCN'
+,p_attribute_11=>'I:U:D'
+,p_attribute_12=>'Y'
+,p_process_error_message=>'#SQLERRM#'
+,p_error_display_location=>'INLINE_IN_NOTIFICATION'
+,p_process_success_message=>unistr('Acci\00F3n Procesada con \00E9xito.')
+);
+wwv_flow_api.create_page_process(
+ p_id=>wwv_flow_api.id(213142153833057067)
+,p_process_sequence=>20
+,p_process_point=>'AFTER_SUBMIT'
+,p_process_type=>'NATIVE_CLOSE_WINDOW'
+,p_process_name=>'Cerrar Cuadro de Dialogo'
+,p_error_display_location=>'INLINE_IN_NOTIFICATION'
+,p_process_when=>'SAVE,DELETE,CANCEL'
+,p_process_when_type=>'REQUEST_IN_CONDITION'
+);
+wwv_flow_api.create_page_process(
+ p_id=>wwv_flow_api.id(213149200256193404)
+,p_process_sequence=>10
+,p_process_point=>'BEFORE_HEADER'
+,p_process_type=>'NATIVE_FORM_FETCH'
+,p_process_name=>unistr('Recuperaci\00F3n Autom\00E1tica expedientes observacion')
+,p_attribute_02=>'FI_G_EXPNDNTS_ANALISIS_OBSVCION'
+,p_attribute_03=>'P90_ID_EXPDNTE_ANLSS_OBSVCN'
+,p_attribute_04=>'ID_EXPDNTE_ANLSS_OBSVCN'
+,p_error_display_location=>'INLINE_IN_NOTIFICATION'
+,p_process_when=>'P90_ID_EXPDNTE_ANLSS_OBSVCN'
+,p_process_when_type=>'ITEM_IS_NOT_NULL'
+);
+end;
+/

@@ -1,0 +1,121 @@
+prompt --application/pages/page_00900
+begin
+wwv_flow_api.create_page(
+ p_id=>900
+,p_user_interface_id=>wwv_flow_api.id(95249231080808714)
+,p_name=>'Consulta Sujeto Impuesto'
+,p_step_title=>'Consulta Sujeto Tributo'
+,p_autocomplete_on_off=>'OFF'
+,p_page_template_options=>'#DEFAULT#'
+,p_last_upd_yyyymmddhh24miss=>'20190201031553'
+);
+wwv_flow_api.create_page_plug(
+ p_id=>wwv_flow_api.id(169365713747363132)
+,p_plug_name=>'Constructor'
+,p_region_template_options=>'#DEFAULT#:t-Region--scrollBody'
+,p_plug_template=>wwv_flow_api.id(29552524947068508)
+,p_plug_display_sequence=>60
+,p_include_in_reg_disp_sel_yn=>'Y'
+,p_plug_display_point=>'BODY'
+,p_plug_query_options=>'DERIVED_REPORT_COLUMNS'
+,p_attribute_01=>'N'
+,p_attribute_02=>'HTML'
+);
+wwv_flow_api.create_page_button(
+ p_id=>wwv_flow_api.id(169365841583363133)
+,p_button_sequence=>20
+,p_button_plug_id=>wwv_flow_api.id(169365713747363132)
+,p_button_name=>'constructor_sql'
+,p_button_action=>'REDIRECT_PAGE'
+,p_button_template_options=>'#DEFAULT#'
+,p_button_template_id=>wwv_flow_api.id(29604648415068538)
+,p_button_image_alt=>'SQL'
+,p_button_position=>'BODY'
+,p_button_redirect_url=>'f?p=&APP_ID.:902:&SESSION.::&DEBUG.:RP,902:P902_COD_PROCESO,P902_PAGE_ID,P902_APP_ID,P902_ITEM_ID:GCB,&APP_PAGE_ID.,&APP_ID.,P900_PROCESO_SQL'
+,p_grid_new_grid=>false
+,p_grid_new_row=>'N'
+,p_grid_column=>11
+);
+wwv_flow_api.create_page_button(
+ p_id=>wwv_flow_api.id(181804018468724626)
+,p_button_sequence=>10
+,p_button_plug_id=>wwv_flow_api.id(169365713747363132)
+,p_button_name=>'EditarPredio'
+,p_button_action=>'REDIRECT_PAGE'
+,p_button_template_options=>'#DEFAULT#:t-Button--iconRight'
+,p_button_template_id=>wwv_flow_api.id(29604728434068538)
+,p_button_is_hot=>'Y'
+,p_button_image_alt=>'Editar Predio'
+,p_button_position=>'REGION_TEMPLATE_CREATE'
+,p_button_redirect_url=>'f?p=&APP_ID.:103:&SESSION.::&DEBUG.:RP:P103_ID_PRDIO:&P900_SUJETO.'
+,p_icon_css_classes=>'fa-save-as'
+,p_grid_new_grid=>false
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(2162807461701228)
+,p_name=>'P900_PROCESO_SQL'
+,p_item_sequence=>70
+,p_item_plug_id=>wwv_flow_api.id(169365713747363132)
+,p_item_default=>'1'
+,p_prompt=>'Proceso Sql'
+,p_display_as=>'NATIVE_TEXT_FIELD'
+,p_cSize=>30
+,p_field_template=>wwv_flow_api.id(29603993160068537)
+,p_item_template_options=>'#DEFAULT#'
+,p_attribute_01=>'N'
+,p_attribute_02=>'N'
+,p_attribute_04=>'TEXT'
+,p_attribute_05=>'BOTH'
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(181803824212724624)
+,p_name=>'P900_SUJETO'
+,p_item_sequence=>50
+,p_item_plug_id=>wwv_flow_api.id(169365713747363132)
+,p_item_default=>'2'
+,p_display_as=>'NATIVE_HIDDEN'
+,p_attribute_01=>'Y'
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(184260345868219834)
+,p_name=>'P900_COD_PROCESO'
+,p_item_sequence=>10
+,p_item_plug_id=>wwv_flow_api.id(169365713747363132)
+,p_source=>'DET'
+,p_source_type=>'STATIC'
+,p_display_as=>'NATIVE_HIDDEN'
+,p_attribute_01=>'Y'
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(184644330396640401)
+,p_name=>'P900_CONSULTA_SQL'
+,p_item_sequence=>60
+,p_item_plug_id=>wwv_flow_api.id(169365713747363132)
+,p_item_default=>'2'
+,p_prompt=>'Consulta sql'
+,p_display_as=>'NATIVE_TEXTAREA'
+,p_cSize=>30
+,p_cHeight=>5
+,p_field_template=>wwv_flow_api.id(29603993160068537)
+,p_item_template_options=>'#DEFAULT#'
+,p_attribute_01=>'N'
+,p_attribute_02=>'N'
+,p_attribute_03=>'N'
+,p_attribute_04=>'BOTH'
+);
+wwv_flow_api.create_page_process(
+ p_id=>wwv_flow_api.id(184677188756791549)
+,p_process_sequence=>10
+,p_process_point=>'AFTER_HEADER'
+,p_process_type=>'NATIVE_PLSQL'
+,p_process_name=>'al_cargar_pagina'
+,p_process_sql_clob=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'select fnc_co_sql_dinamica( p_id_cnslta_mstro => :P900_PROCESO_SQL )',
+'  into :P900_CONSULTA_SQL',
+'  from dual; ',
+'',
+''))
+,p_error_display_location=>'INLINE_IN_NOTIFICATION'
+);
+end;
+/

@@ -1,0 +1,324 @@
+prompt --application/pages/page_00084
+begin
+wwv_flow_api.create_page(
+ p_id=>84
+,p_user_interface_id=>wwv_flow_api.id(17431055073919422)
+,p_name=>unistr('Causales de Finalizaci\00F3n de Medida de Secuestre')
+,p_step_title=>unistr('Causales de Finalizaci\00F3n de Medida de Secuestre')
+,p_autocomplete_on_off=>'OFF'
+,p_javascript_file_urls=>'#IMAGE_PREFIX#javascript/infortributos/js/utilidades.js'
+,p_javascript_code_onload=>'ocultarAyudaD();'
+,p_step_template=>wwv_flow_api.id(17324973689919355)
+,p_page_template_options=>'#DEFAULT#'
+,p_required_role=>wwv_flow_api.id(17445683081942948)
+,p_last_upd_yyyymmddhh24miss=>'20200725113320'
+);
+wwv_flow_api.create_page_plug(
+ p_id=>wwv_flow_api.id(337520723857202029)
+,p_plug_name=>'Ayuda'
+,p_region_template_options=>'#DEFAULT#:t-Region--removeHeader:t-Region--scrollBody'
+,p_plug_template=>wwv_flow_api.id(17356902947919375)
+,p_plug_display_sequence=>30
+,p_include_in_reg_disp_sel_yn=>'Y'
+,p_plug_display_point=>'REGION_POSITION_03'
+,p_plug_source=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'       ',
+'<br>',
+'<h5>',
+'    <b>',
+'        <i>',
+'            <center>Ayuda <i class="fa fa-question-circle" aria-hidden="true"></i></center>',
+' ',
+'    </b>',
+'</h5>',
+unistr('	Funcionalidad que permite ingresar, consultar, modificar y eliminar los causales de finalizaci\00F3n o anulaci\00F3n de una medida de secuestre'),
+'<br><br>	',
+unistr('Si desea conocer m\00E1s informaci\00F3n referente a la funcionalidad dir\00EDjase al Manual de Usuario.'),
+'        </i>'))
+,p_plug_query_options=>'DERIVED_REPORT_COLUMNS'
+,p_attribute_01=>'N'
+,p_attribute_02=>'HTML'
+);
+wwv_flow_api.create_page_plug(
+ p_id=>wwv_flow_api.id(338690599872581260)
+,p_plug_name=>unistr('Causales de Finalizaci\00F3n')
+,p_region_template_options=>'#DEFAULT#'
+,p_component_template_options=>'#DEFAULT#'
+,p_plug_template=>wwv_flow_api.id(17356902947919375)
+,p_plug_display_sequence=>20
+,p_plug_display_point=>'BODY'
+,p_plug_source=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'select id_csl_fnlzcion,',
+'       cdgo_clnte,',
+'       cdgo_csal,',
+'       dscrpcion_csal,',
+'       actvo',
+'  from mc_d_causales_finalizacion',
+'where cdgo_clnte = :F_CDGO_CLNTE;'))
+,p_plug_source_type=>'NATIVE_IG'
+,p_plug_query_options=>'DERIVED_REPORT_COLUMNS'
+);
+wwv_flow_api.create_region_column(
+ p_id=>wwv_flow_api.id(111711725903384429)
+,p_name=>'ID_CSL_FNLZCION'
+,p_source_type=>'DB_COLUMN'
+,p_source_expression=>'ID_CSL_FNLZCION'
+,p_data_type=>'NUMBER'
+,p_is_query_only=>false
+,p_item_type=>'NATIVE_HIDDEN'
+,p_display_sequence=>30
+,p_attribute_01=>'Y'
+,p_use_as_row_header=>false
+,p_enable_sort_group=>true
+,p_enable_control_break=>true
+,p_enable_hide=>true
+,p_is_primary_key=>true
+,p_duplicate_value=>true
+,p_include_in_export=>false
+);
+wwv_flow_api.create_region_column(
+ p_id=>wwv_flow_api.id(111711811709384430)
+,p_name=>'CDGO_CSAL'
+,p_source_type=>'DB_COLUMN'
+,p_source_expression=>'CDGO_CSAL'
+,p_data_type=>'VARCHAR2'
+,p_is_query_only=>false
+,p_item_type=>'NATIVE_TEXT_FIELD'
+,p_heading=>unistr('C\00F3digo ')
+,p_heading_alignment=>'CENTER'
+,p_display_sequence=>50
+,p_value_alignment=>'CENTER'
+,p_attribute_05=>'BOTH'
+,p_item_attributes=>' onkeypress="return validarExpresion(event, ''letraNumero'')" onkeyup="campoMayuscula(this)" '
+,p_is_required=>true
+,p_max_length=>3
+,p_enable_filter=>true
+,p_filter_operators=>'C:S:CASE_INSENSITIVE:REGEXP'
+,p_filter_is_required=>false
+,p_filter_text_case=>'MIXED'
+,p_filter_exact_match=>true
+,p_filter_lov_type=>'DISTINCT'
+,p_use_as_row_header=>false
+,p_enable_sort_group=>true
+,p_enable_control_break=>true
+,p_enable_hide=>true
+,p_is_primary_key=>false
+,p_duplicate_value=>true
+,p_include_in_export=>true
+);
+wwv_flow_api.create_region_column(
+ p_id=>wwv_flow_api.id(111711947168384431)
+,p_name=>'DSCRPCION_CSAL'
+,p_source_type=>'DB_COLUMN'
+,p_source_expression=>'DSCRPCION_CSAL'
+,p_data_type=>'VARCHAR2'
+,p_is_query_only=>false
+,p_item_type=>'NATIVE_TEXT_FIELD'
+,p_heading=>unistr('Descripci\00F3n Causal')
+,p_heading_alignment=>'CENTER'
+,p_display_sequence=>60
+,p_value_alignment=>'CENTER'
+,p_attribute_05=>'BOTH'
+,p_item_attributes=>'onkeyup="campoMayuscula(this)"  onkeypress="return validarExpresion(event, ''letra'')"'
+,p_is_required=>true
+,p_enable_filter=>true
+,p_filter_operators=>'C:S:CASE_INSENSITIVE:REGEXP'
+,p_filter_is_required=>false
+,p_filter_text_case=>'MIXED'
+,p_filter_lov_type=>'NONE'
+,p_use_as_row_header=>false
+,p_enable_sort_group=>false
+,p_enable_hide=>true
+,p_is_primary_key=>false
+,p_duplicate_value=>true
+,p_include_in_export=>true
+);
+wwv_flow_api.create_region_column(
+ p_id=>wwv_flow_api.id(338691794287581279)
+,p_name=>'APEX$ROW_SELECTOR'
+,p_item_type=>'NATIVE_ROW_SELECTOR'
+,p_display_sequence=>10
+,p_attribute_01=>'Y'
+,p_attribute_02=>'Y'
+,p_attribute_03=>'N'
+,p_enable_hide=>true
+,p_is_primary_key=>false
+);
+wwv_flow_api.create_region_column(
+ p_id=>wwv_flow_api.id(338692315264581281)
+,p_name=>'APEX$ROW_ACTION'
+,p_item_type=>'NATIVE_ROW_ACTION'
+,p_label=>'Acciones'
+,p_heading_alignment=>'CENTER'
+,p_display_sequence=>20
+,p_value_alignment=>'CENTER'
+,p_enable_hide=>true
+,p_is_primary_key=>false
+);
+wwv_flow_api.create_region_column(
+ p_id=>wwv_flow_api.id(338693544448581285)
+,p_name=>'CDGO_CLNTE'
+,p_source_type=>'DB_COLUMN'
+,p_source_expression=>'CDGO_CLNTE'
+,p_data_type=>'NUMBER'
+,p_is_query_only=>false
+,p_item_type=>'NATIVE_HIDDEN'
+,p_display_sequence=>40
+,p_attribute_01=>'Y'
+,p_filter_is_required=>false
+,p_use_as_row_header=>false
+,p_enable_sort_group=>true
+,p_enable_control_break=>true
+,p_enable_hide=>true
+,p_enable_pivot=>false
+,p_is_primary_key=>false
+,p_default_type=>'ITEM'
+,p_default_expression=>'F_CDGO_CLNTE'
+,p_duplicate_value=>true
+,p_include_in_export=>false
+);
+wwv_flow_api.create_region_column(
+ p_id=>wwv_flow_api.id(338698274696581295)
+,p_name=>'ACTVO'
+,p_source_type=>'DB_COLUMN'
+,p_source_expression=>'ACTVO'
+,p_data_type=>'VARCHAR2'
+,p_is_query_only=>false
+,p_item_type=>'NATIVE_YES_NO'
+,p_heading=>unistr('\00BFActivo?')
+,p_heading_alignment=>'CENTER'
+,p_display_sequence=>70
+,p_value_alignment=>'CENTER'
+,p_attribute_01=>'CUSTOM'
+,p_attribute_02=>'S'
+,p_attribute_03=>unistr('S\00ED')
+,p_attribute_04=>'N'
+,p_attribute_05=>'No'
+,p_is_required=>true
+,p_enable_filter=>true
+,p_filter_operators=>'C:S:CASE_INSENSITIVE:REGEXP'
+,p_filter_is_required=>false
+,p_filter_text_case=>'MIXED'
+,p_filter_exact_match=>true
+,p_filter_lov_type=>'LOV'
+,p_use_as_row_header=>false
+,p_enable_sort_group=>true
+,p_enable_control_break=>true
+,p_enable_hide=>true
+,p_enable_pivot=>false
+,p_is_primary_key=>false
+,p_default_type=>'STATIC'
+,p_default_expression=>'S'
+,p_duplicate_value=>true
+,p_include_in_export=>true
+);
+wwv_flow_api.create_interactive_grid(
+ p_id=>wwv_flow_api.id(338691148873581266)
+,p_internal_uid=>338691148873581266
+,p_is_editable=>true
+,p_edit_operations=>'i:u:d'
+,p_lost_update_check_type=>'VALUES'
+,p_add_row_if_empty=>true
+,p_submit_checked_rows=>false
+,p_lazy_loading=>false
+,p_requires_filter=>false
+,p_show_nulls_as=>'-'
+,p_select_first_row=>true
+,p_fixed_row_height=>true
+,p_pagination_type=>'SET'
+,p_show_total_row_count=>true
+,p_show_toolbar=>true
+,p_toolbar_buttons=>'SEARCH_COLUMN:SEARCH_FIELD:ACTIONS_MENU:SEARCH_COLUMN:SEARCH_FIELD:ACTIONS_MENU:RESET:SAVE'
+,p_enable_save_public_report=>false
+,p_enable_subscriptions=>true
+,p_enable_flashback=>true
+,p_define_chart_view=>true
+,p_enable_download=>true
+,p_enable_mail_download=>true
+,p_fixed_header=>'PAGE'
+,p_show_icon_view=>false
+,p_show_detail_view=>false
+);
+wwv_flow_api.create_ig_report(
+ p_id=>wwv_flow_api.id(338691554979581273)
+,p_interactive_grid_id=>wwv_flow_api.id(338691148873581266)
+,p_type=>'PRIMARY'
+,p_default_view=>'GRID'
+,p_show_row_number=>false
+,p_settings_area_expanded=>true
+);
+wwv_flow_api.create_ig_report_view(
+ p_id=>wwv_flow_api.id(338691598973581278)
+,p_report_id=>wwv_flow_api.id(338691554979581273)
+,p_view_type=>'GRID'
+,p_stretch_columns=>true
+,p_srv_exclude_null_values=>false
+,p_srv_only_display_columns=>true
+,p_edit_mode=>false
+);
+wwv_flow_api.create_ig_report_column(
+ p_id=>wwv_flow_api.id(112919162132972353)
+,p_view_id=>wwv_flow_api.id(338691598973581278)
+,p_display_seq=>13
+,p_column_id=>wwv_flow_api.id(111711725903384429)
+,p_is_visible=>true
+,p_is_frozen=>false
+);
+wwv_flow_api.create_ig_report_column(
+ p_id=>wwv_flow_api.id(112919696826972355)
+,p_view_id=>wwv_flow_api.id(338691598973581278)
+,p_display_seq=>3
+,p_column_id=>wwv_flow_api.id(111711811709384430)
+,p_is_visible=>true
+,p_is_frozen=>false
+,p_width=>137
+);
+wwv_flow_api.create_ig_report_column(
+ p_id=>wwv_flow_api.id(112920182979972356)
+,p_view_id=>wwv_flow_api.id(338691598973581278)
+,p_display_seq=>4
+,p_column_id=>wwv_flow_api.id(111711947168384431)
+,p_is_visible=>true
+,p_is_frozen=>false
+,p_width=>738
+);
+wwv_flow_api.create_ig_report_column(
+ p_id=>wwv_flow_api.id(338692683566581283)
+,p_view_id=>wwv_flow_api.id(338691598973581278)
+,p_display_seq=>0
+,p_column_id=>wwv_flow_api.id(338692315264581281)
+,p_is_visible=>true
+,p_is_frozen=>true
+);
+wwv_flow_api.create_ig_report_column(
+ p_id=>wwv_flow_api.id(338693929156581286)
+,p_view_id=>wwv_flow_api.id(338691598973581278)
+,p_display_seq=>2
+,p_column_id=>wwv_flow_api.id(338693544448581285)
+,p_is_visible=>true
+,p_is_frozen=>false
+);
+wwv_flow_api.create_ig_report_column(
+ p_id=>wwv_flow_api.id(338698738059581296)
+,p_view_id=>wwv_flow_api.id(338691598973581278)
+,p_display_seq=>5
+,p_column_id=>wwv_flow_api.id(338698274696581295)
+,p_is_visible=>true
+,p_is_frozen=>false
+,p_width=>83
+);
+wwv_flow_api.create_page_process(
+ p_id=>wwv_flow_api.id(112916381167953369)
+,p_process_sequence=>10
+,p_process_point=>'AFTER_SUBMIT'
+,p_region_id=>wwv_flow_api.id(338690599872581260)
+,p_process_type=>'NATIVE_IG_DML'
+,p_process_name=>unistr(': Guardar Datos de Cuadr\00EDcula Interactiva')
+,p_attribute_01=>'REGION_SOURCE'
+,p_attribute_05=>'Y'
+,p_attribute_06=>'Y'
+,p_attribute_08=>'Y'
+,p_error_display_location=>'INLINE_IN_NOTIFICATION'
+);
+end;
+/

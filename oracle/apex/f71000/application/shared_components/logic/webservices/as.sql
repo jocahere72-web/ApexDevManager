@@ -1,0 +1,28 @@
+prompt --application/shared_components/logic/webservices/as
+begin
+wwv_flow_api.create_web_service(
+ p_id=>wwv_flow_api.id(39237821508152371)
+,p_name=>'as'
+,p_url=>'http://192.168.11.33:8033/ords/genesys/recaudo/mtd1'
+,p_action=>'REST'
+,p_static_parm_04=>'POST'
+,p_static_parm_05=>'json'
+,p_static_parm_07=>'\n'
+,p_static_parm_08=>','
+,p_static_parm_10=>'nvp'
+);
+wwv_flow_api.create_ws_operations(
+ p_id=>wwv_flow_api.id(39238055215152376)
+,p_ws_id=>wwv_flow_api.id(39237821508152371)
+,p_name=>'doREST'
+);
+wwv_flow_api.create_ws_parameters(
+ p_id=>wwv_flow_api.id(39238389974152383)
+,p_ws_opers_id=>wwv_flow_api.id(39238055215152376)
+,p_name=>'json'
+,p_input_or_output=>'O'
+,p_parm_type=>'json'
+,p_type_is_xsd=>'N'
+);
+end;
+/

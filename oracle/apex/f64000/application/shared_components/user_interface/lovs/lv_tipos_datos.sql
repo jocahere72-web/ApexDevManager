@@ -1,0 +1,27 @@
+prompt --application/shared_components/user_interface/lovs/lv_tipos_datos
+begin
+wwv_flow_api.create_list_of_values(
+ p_id=>wwv_flow_api.id(305396456962386538)
+,p_lov_name=>'LV_TIPOS_DATOS'
+,p_lov_query=>'.'||wwv_flow_api.id(305396456962386538)||'.'
+);
+wwv_flow_api.create_static_lov_data(
+ p_id=>wwv_flow_api.id(305396732988386556)
+,p_lov_disp_sequence=>1
+,p_lov_disp_value=>'Caracter'
+,p_lov_return_value=>'C'
+);
+wwv_flow_api.create_static_lov_data(
+ p_id=>wwv_flow_api.id(305397128332386558)
+,p_lov_disp_sequence=>2
+,p_lov_disp_value=>'Numero'
+,p_lov_return_value=>'N'
+);
+wwv_flow_api.create_static_lov_data(
+ p_id=>wwv_flow_api.id(305397476362386558)
+,p_lov_disp_sequence=>3
+,p_lov_disp_value=>'Fecha'
+,p_lov_return_value=>'F'
+);
+end;
+/

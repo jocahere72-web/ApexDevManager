@@ -1,0 +1,31 @@
+prompt --application/pages/page_00017
+begin
+wwv_flow_api.create_page(
+ p_id=>17
+,p_user_interface_id=>wwv_flow_api.id(71889596252951620)
+,p_name=>'Visor'
+,p_page_mode=>'MODAL'
+,p_step_title=>'Visor'
+,p_autocomplete_on_off=>'OFF'
+,p_page_template_options=>'#DEFAULT#'
+,p_last_updated_by=>'MCARO'
+,p_last_upd_yyyymmddhh24miss=>'20190218181711'
+);
+wwv_flow_api.create_page_plug(
+ p_id=>wwv_flow_api.id(85594461501167003)
+,p_plug_name=>'Visor'
+,p_region_template_options=>'#DEFAULT#:t-Region--scrollBody'
+,p_plug_template=>wwv_flow_api.id(71815592755951563)
+,p_plug_display_sequence=>10
+,p_include_in_reg_disp_sel_yn=>'Y'
+,p_plug_display_point=>'BODY'
+,p_plug_source=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'<div>',
+'    <iframe></iframe>',
+'</div>'))
+,p_plug_query_options=>'DERIVED_REPORT_COLUMNS'
+,p_attribute_01=>'N'
+,p_attribute_02=>'HTML'
+);
+end;
+/

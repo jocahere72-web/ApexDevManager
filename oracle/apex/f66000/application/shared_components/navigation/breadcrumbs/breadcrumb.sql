@@ -1,0 +1,20 @@
+prompt --application/shared_components/navigation/breadcrumbs/breadcrumb
+begin
+wwv_flow_api.create_menu(
+ p_id=>wwv_flow_api.id(35695862687290388)
+,p_name=>'Breadcrumb'
+);
+wwv_flow_api.create_menu_option(
+ p_id=>wwv_flow_api.id(35696084275290389)
+,p_short_name=>'Inicio'
+,p_link=>'f?p=&APP_ID.:1:&APP_SESSION.::&DEBUG.'
+,p_page_id=>1
+);
+wwv_flow_api.create_menu_option(
+ p_id=>wwv_flow_api.id(35885333039290638)
+,p_short_name=>unistr('Administraci\00F3n')
+,p_link=>'f?p=&APP_ID.:10000:&SESSION.'
+,p_page_id=>10000
+);
+end;
+/

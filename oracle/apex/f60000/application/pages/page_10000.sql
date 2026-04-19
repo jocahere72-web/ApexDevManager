@@ -1,0 +1,42 @@
+prompt --application/pages/page_10000
+begin
+wwv_flow_api.create_page(
+ p_id=>10000
+,p_user_interface_id=>wwv_flow_api.id(103265655096132800)
+,p_name=>'global'
+,p_step_title=>'global'
+,p_autocomplete_on_off=>'OFF'
+,p_page_template_options=>'#DEFAULT#'
+,p_protection_level=>'D'
+,p_last_updated_by=>'ADMIN'
+,p_last_upd_yyyymmddhh24miss=>'20180918165524'
+);
+wwv_flow_api.create_page_plug(
+ p_id=>wwv_flow_api.id(334985848329767673)
+,p_plug_name=>'Breadcrumb'
+,p_region_template_options=>'#DEFAULT#:t-BreadcrumbRegion--useBreadcrumbTitle'
+,p_component_template_options=>'#DEFAULT#'
+,p_plug_template=>wwv_flow_api.id(29954190010317097)
+,p_plug_display_sequence=>10
+,p_plug_display_point=>'REGION_POSITION_01'
+,p_plug_source=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'begin',
+'htp.print(:P10000_BREADCRUMB);',
+'end;'))
+,p_plug_source_type=>'NATIVE_PLSQL'
+,p_plug_query_options=>'DERIVED_REPORT_COLUMNS'
+,p_plug_display_condition_type=>'PLSQL_EXPRESSION'
+,p_plug_display_when_condition=>'pkg_sg_autenticacion.fnc_gti_generar_breadcrumbs(:F_CDGO_CLNTE, :APP_ID, :APP_PAGE_ID,:APP_SESSION) is not null'
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(135989894414890437)
+,p_name=>'P10000_BREADCRUMB'
+,p_item_sequence=>10
+,p_item_plug_id=>wwv_flow_api.id(334985848329767673)
+,p_source=>'pkg_sg_autenticacion.fnc_gti_generar_breadcrumbs(:F_CDGO_CLNTE, :APP_ID, :APP_PAGE_ID,:APP_SESSION)'
+,p_source_type=>'FUNCTION'
+,p_display_as=>'NATIVE_HIDDEN'
+,p_attribute_01=>'Y'
+);
+end;
+/

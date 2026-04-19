@@ -1,0 +1,163 @@
+prompt --application/shared_components/logic/application_items
+begin
+wwv_flow_api.create_flow_item(
+ p_id=>wwv_flow_api.id(164195568297377448)
+,p_name=>'F_CDGO_CLNTE'
+,p_scope=>'GLOBAL'
+,p_protection_level=>'I'
+);
+wwv_flow_api.create_flow_item(
+ p_id=>wwv_flow_api.id(164197841829409132)
+,p_name=>'F_CDGO_DPRTMNTO_CLNTE'
+,p_scope=>'GLOBAL'
+,p_protection_level=>'I'
+);
+wwv_flow_api.create_flow_item(
+ p_id=>wwv_flow_api.id(164197252493402019)
+,p_name=>'F_CDGO_MNCPIO_CLNTE'
+,p_scope=>'GLOBAL'
+,p_protection_level=>'I'
+);
+wwv_flow_api.create_flow_item(
+ p_id=>wwv_flow_api.id(164198301256412489)
+,p_name=>'F_CDGO_PAIS_CLNTE'
+,p_scope=>'GLOBAL'
+,p_protection_level=>'I'
+);
+wwv_flow_api.create_flow_item(
+ p_id=>wwv_flow_api.id(44613359656943291)
+,p_name=>'F_DRCCION_SRVDOR'
+,p_protection_level=>'I'
+);
+wwv_flow_api.create_flow_item(
+ p_id=>wwv_flow_api.id(44613576846943820)
+,p_name=>'F_DRCCION_SRVDOR_PBLCO'
+,p_protection_level=>'I'
+);
+wwv_flow_api.create_flow_item(
+ p_id=>wwv_flow_api.id(44613769197944308)
+,p_name=>'F_DRCCION_SRVDOR_PRVDO'
+,p_protection_level=>'I'
+);
+wwv_flow_api.create_flow_item(
+ p_id=>wwv_flow_api.id(18768461598057212)
+,p_name=>'F_FRMTO_MNDA'
+,p_scope=>'GLOBAL'
+,p_protection_level=>'I'
+);
+wwv_flow_api.create_flow_item(
+ p_id=>wwv_flow_api.id(2241960065262884)
+,p_name=>'F_ID_APLCCION_GRPO'
+,p_scope=>'GLOBAL'
+,p_protection_level=>'I'
+);
+wwv_flow_api.create_flow_item(
+ p_id=>wwv_flow_api.id(39097566923676048)
+,p_name=>'F_ID_DCMNTO'
+,p_scope=>'GLOBAL'
+,p_protection_level=>'I'
+);
+wwv_flow_api.create_flow_item(
+ p_id=>wwv_flow_api.id(164198073813410825)
+,p_name=>'F_ID_DPRTMNTO_CLNTE'
+,p_scope=>'GLOBAL'
+,p_protection_level=>'I'
+);
+wwv_flow_api.create_flow_item(
+ p_id=>wwv_flow_api.id(4280203192815636)
+,p_name=>'F_ID_FLJO_TREA'
+,p_scope=>'GLOBAL'
+,p_protection_level=>'I'
+);
+wwv_flow_api.create_flow_item(
+ p_id=>wwv_flow_api.id(164195761244379314)
+,p_name=>'F_ID_IMPSTO'
+,p_scope=>'GLOBAL'
+,p_protection_level=>'I'
+);
+wwv_flow_api.create_flow_item(
+ p_id=>wwv_flow_api.id(4280084486811574)
+,p_name=>'F_ID_INSTNCIA_FLJO'
+,p_scope=>'GLOBAL'
+,p_protection_level=>'I'
+);
+wwv_flow_api.create_flow_item(
+ p_id=>wwv_flow_api.id(164197649450406464)
+,p_name=>'F_ID_MNCPIO_CLNTE'
+,p_scope=>'GLOBAL'
+,p_protection_level=>'I'
+);
+wwv_flow_api.create_flow_item(
+ p_id=>wwv_flow_api.id(45298832470044830)
+,p_name=>'F_ID_MNU'
+,p_scope=>'GLOBAL'
+,p_protection_level=>'N'
+);
+wwv_flow_api.create_flow_item(
+ p_id=>wwv_flow_api.id(164198438457414558)
+,p_name=>'F_ID_PAIS_CLNTE'
+,p_scope=>'GLOBAL'
+,p_protection_level=>'I'
+);
+wwv_flow_api.create_flow_item(
+ p_id=>wwv_flow_api.id(164196650950388784)
+,p_name=>'F_ID_TRCRO'
+,p_scope=>'GLOBAL'
+,p_protection_level=>'I'
+);
+wwv_flow_api.create_flow_item(
+ p_id=>wwv_flow_api.id(2344226341604833)
+,p_name=>'F_ID_USRIO'
+,p_scope=>'GLOBAL'
+,p_protection_level=>'I'
+);
+wwv_flow_api.create_flow_item(
+ p_id=>wwv_flow_api.id(11500078513816041)
+,p_name=>'F_ID_USRIO_TKEN'
+,p_scope=>'GLOBAL'
+,p_protection_level=>'I'
+);
+wwv_flow_api.create_flow_item(
+ p_id=>wwv_flow_api.id(164197092687389864)
+,p_name=>'F_IP'
+,p_scope=>'GLOBAL'
+,p_protection_level=>'I'
+);
+wwv_flow_api.create_flow_item(
+ p_id=>wwv_flow_api.id(164195993986380485)
+,p_name=>'F_NMBRE_APLCCION'
+,p_scope=>'GLOBAL'
+,p_protection_level=>'I'
+);
+wwv_flow_api.create_flow_item(
+ p_id=>wwv_flow_api.id(2251971612421133)
+,p_name=>'F_NMBRE_APLCCION_GRPO'
+,p_scope=>'GLOBAL'
+,p_protection_level=>'I'
+);
+wwv_flow_api.create_flow_item(
+ p_id=>wwv_flow_api.id(175231850359479023)
+,p_name=>'F_NMBRE_ARCHVO'
+,p_scope=>'GLOBAL'
+,p_protection_level=>'I'
+);
+wwv_flow_api.create_flow_item(
+ p_id=>wwv_flow_api.id(164196397836382872)
+,p_name=>'F_NMBRE_CLNTE'
+,p_scope=>'GLOBAL'
+,p_protection_level=>'I'
+);
+wwv_flow_api.create_flow_item(
+ p_id=>wwv_flow_api.id(164196194260381794)
+,p_name=>'F_NMBRE_USRIO'
+,p_scope=>'GLOBAL'
+,p_protection_level=>'I'
+);
+wwv_flow_api.create_flow_item(
+ p_id=>wwv_flow_api.id(175231645628476041)
+,p_name=>'F_SQL'
+,p_scope=>'GLOBAL'
+,p_protection_level=>'I'
+);
+end;
+/

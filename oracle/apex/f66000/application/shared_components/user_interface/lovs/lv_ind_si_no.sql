@@ -1,0 +1,21 @@
+prompt --application/shared_components/user_interface/lovs/lv_ind_si_no
+begin
+wwv_flow_api.create_list_of_values(
+ p_id=>wwv_flow_api.id(35995387926896349)
+,p_lov_name=>'LV_IND_SI_NO'
+,p_lov_query=>'.'||wwv_flow_api.id(35995387926896349)||'.'
+);
+wwv_flow_api.create_static_lov_data(
+ p_id=>wwv_flow_api.id(35995646183896349)
+,p_lov_disp_sequence=>1
+,p_lov_disp_value=>'SI'
+,p_lov_return_value=>'S'
+);
+wwv_flow_api.create_static_lov_data(
+ p_id=>wwv_flow_api.id(35996082809896351)
+,p_lov_disp_sequence=>2
+,p_lov_disp_value=>'NO'
+,p_lov_return_value=>'N'
+);
+end;
+/

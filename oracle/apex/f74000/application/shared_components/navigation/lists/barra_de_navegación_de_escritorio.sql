@@ -1,0 +1,35 @@
+prompt --application/shared_components/navigation/lists/barra_de_navegación_de_escritorio
+begin
+wwv_flow_api.create_list(
+ p_id=>wwv_flow_api.id(36089810814528367)
+,p_name=>unistr('Barra de navegaci\00F3n de escritorio')
+,p_list_status=>'PUBLIC'
+);
+wwv_flow_api.create_list_item(
+ p_id=>wwv_flow_api.id(36101485019528582)
+,p_list_item_display_sequence=>10
+,p_list_item_link_text=>'&APP_USER.'
+,p_list_item_link_target=>'#'
+,p_list_item_icon=>'fa-user'
+,p_list_text_02=>'has-username'
+,p_list_item_current_type=>'TARGET_PAGE'
+);
+wwv_flow_api.create_list_item(
+ p_id=>wwv_flow_api.id(36101951601528582)
+,p_list_item_display_sequence=>20
+,p_list_item_link_text=>'---'
+,p_list_item_link_target=>'separator'
+,p_parent_list_item_id=>wwv_flow_api.id(36101485019528582)
+,p_list_item_current_type=>'TARGET_PAGE'
+);
+wwv_flow_api.create_list_item(
+ p_id=>wwv_flow_api.id(36102335263528582)
+,p_list_item_display_sequence=>30
+,p_list_item_link_text=>'Desconectar'
+,p_list_item_link_target=>'&LOGOUT_URL.'
+,p_list_item_icon=>'fa-sign-out'
+,p_parent_list_item_id=>wwv_flow_api.id(36101485019528582)
+,p_list_item_current_type=>'TARGET_PAGE'
+);
+end;
+/

@@ -1,0 +1,141 @@
+prompt --application/pages/page_00050
+begin
+wwv_flow_api.create_page(
+ p_id=>50
+,p_user_interface_id=>wwv_flow_api.id(177366559650050652)
+,p_name=>unistr('Par\00E1metricas')
+,p_step_title=>unistr('Par\00E1metricas')
+,p_autocomplete_on_off=>'OFF'
+,p_inline_css=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'.t-LinksList--showArrow .t-LinksList-link::before, .t-LinksList-icon {',
+'    color: #838383;',
+'}',
+''))
+,p_page_template_options=>'#DEFAULT#'
+,p_last_updated_by=>'JDIAZ'
+,p_last_upd_yyyymmddhh24miss=>'20191022153017'
+);
+wwv_flow_api.create_page_plug(
+ p_id=>wwv_flow_api.id(7049113173439118)
+,p_plug_name=>unistr('<div class="fa fa-usd"> T\00EDtulos Judiciales</div>')
+,p_region_template_options=>'#DEFAULT#:t-Region--scrollBody'
+,p_component_template_options=>'#DEFAULT#'
+,p_plug_template=>wwv_flow_api.id(177332998617050607)
+,p_plug_display_sequence=>90
+,p_include_in_reg_disp_sel_yn=>'Y'
+,p_plug_new_grid_row=>false
+,p_plug_grid_column_span=>2
+,p_plug_display_point=>'BODY'
+,p_list_id=>wwv_flow_api.id(7196767273691067)
+,p_plug_source_type=>'NATIVE_LIST'
+,p_list_template_id=>wwv_flow_api.id(177353113379050626)
+,p_plug_query_options=>'DERIVED_REPORT_COLUMNS'
+);
+wwv_flow_api.create_page_plug(
+ p_id=>wwv_flow_api.id(14029469523256901)
+,p_plug_name=>'<div class="fa fa-money"> Recaudos</div>'
+,p_region_template_options=>'#DEFAULT#:t-Region--scrollBody'
+,p_component_template_options=>'#DEFAULT#'
+,p_plug_template=>wwv_flow_api.id(177332998617050607)
+,p_plug_display_sequence=>50
+,p_include_in_reg_disp_sel_yn=>'Y'
+,p_plug_new_grid_row=>false
+,p_plug_display_column=>8
+,p_plug_display_point=>'BODY'
+,p_list_id=>wwv_flow_api.id(14027197828235432)
+,p_plug_source_type=>'NATIVE_LIST'
+,p_list_template_id=>wwv_flow_api.id(177353113379050626)
+,p_plug_query_options=>'DERIVED_REPORT_COLUMNS'
+);
+wwv_flow_api.create_page_plug(
+ p_id=>wwv_flow_api.id(30166027033586808)
+,p_plug_name=>'<div class="fa fa-handshake-o"> Acuerdos de Pago</div>'
+,p_region_template_options=>'#DEFAULT#:t-Region--scrollBody'
+,p_component_template_options=>'#DEFAULT#'
+,p_plug_template=>wwv_flow_api.id(177332998617050607)
+,p_plug_display_sequence=>60
+,p_include_in_reg_disp_sel_yn=>'Y'
+,p_plug_new_grid_row=>false
+,p_plug_display_point=>'BODY'
+,p_list_id=>wwv_flow_api.id(33202988864063642)
+,p_plug_source_type=>'NATIVE_LIST'
+,p_list_template_id=>wwv_flow_api.id(177353113379050626)
+,p_plug_query_options=>'DERIVED_REPORT_COLUMNS'
+);
+wwv_flow_api.create_page_plug(
+ p_id=>wwv_flow_api.id(84968216704404101)
+,p_plug_name=>'<div class="fa fa-calendar-clock"> Prescripciones</div>'
+,p_region_template_options=>'#DEFAULT#:t-Region--scrollBody'
+,p_component_template_options=>'#DEFAULT#'
+,p_plug_template=>wwv_flow_api.id(177332998617050607)
+,p_plug_display_sequence=>70
+,p_include_in_reg_disp_sel_yn=>'Y'
+,p_plug_grid_column_span=>2
+,p_plug_display_point=>'BODY'
+,p_list_id=>wwv_flow_api.id(84978746077444945)
+,p_plug_source_type=>'NATIVE_LIST'
+,p_list_template_id=>wwv_flow_api.id(177353113379050626)
+,p_plug_query_options=>'DERIVED_REPORT_COLUMNS'
+);
+wwv_flow_api.create_page_plug(
+ p_id=>wwv_flow_api.id(91942084849941715)
+,p_plug_name=>'<div class="fa fa-usd"> Saldo a Favor</div>'
+,p_region_template_options=>'#DEFAULT#:t-Region--scrollBody'
+,p_component_template_options=>'#DEFAULT#'
+,p_plug_template=>wwv_flow_api.id(177332998617050607)
+,p_plug_display_sequence=>80
+,p_include_in_reg_disp_sel_yn=>'Y'
+,p_plug_new_grid_row=>false
+,p_plug_grid_column_span=>2
+,p_plug_display_point=>'BODY'
+,p_list_id=>wwv_flow_api.id(91967478641264222)
+,p_plug_source_type=>'NATIVE_LIST'
+,p_list_template_id=>wwv_flow_api.id(177353113379050626)
+,p_plug_query_options=>'DERIVED_REPORT_COLUMNS'
+);
+wwv_flow_api.create_page_plug(
+ p_id=>wwv_flow_api.id(175613094843849580)
+,p_plug_name=>'<div class="fa fa-usd">Movimientos</div>'
+,p_region_template_options=>'#DEFAULT#:t-Region--scrollBody'
+,p_component_template_options=>'#DEFAULT#:t-LinksList--showTopIcons'
+,p_plug_template=>wwv_flow_api.id(177332998617050607)
+,p_plug_display_sequence=>10
+,p_include_in_reg_disp_sel_yn=>'Y'
+,p_plug_display_point=>'BODY'
+,p_list_id=>wwv_flow_api.id(180366332803041509)
+,p_plug_source_type=>'NATIVE_LIST'
+,p_list_template_id=>wwv_flow_api.id(177353113379050626)
+,p_plug_query_options=>'DERIVED_REPORT_COLUMNS'
+);
+wwv_flow_api.create_page_plug(
+ p_id=>wwv_flow_api.id(175613221312849581)
+,p_plug_name=>'<div class="fa fa-exchange"> Ajustes</div>'
+,p_region_template_options=>'#DEFAULT#:t-Region--scrollBody'
+,p_component_template_options=>'#DEFAULT#:t-LinksList--showTopIcons'
+,p_plug_template=>wwv_flow_api.id(177332998617050607)
+,p_plug_display_sequence=>30
+,p_include_in_reg_disp_sel_yn=>'Y'
+,p_plug_new_grid_row=>false
+,p_plug_display_point=>'BODY'
+,p_list_id=>wwv_flow_api.id(180374054057056898)
+,p_plug_source_type=>'NATIVE_LIST'
+,p_list_template_id=>wwv_flow_api.id(177353113379050626)
+,p_plug_query_options=>'DERIVED_REPORT_COLUMNS'
+);
+wwv_flow_api.create_page_plug(
+ p_id=>wwv_flow_api.id(175613378554849583)
+,p_plug_name=>'<div class="fa fa-window-restore">  Documentos</div>'
+,p_region_template_options=>'#DEFAULT#:t-Region--scrollBody'
+,p_component_template_options=>'#DEFAULT#:t-LinksList--showIcons'
+,p_plug_template=>wwv_flow_api.id(177332998617050607)
+,p_plug_display_sequence=>40
+,p_include_in_reg_disp_sel_yn=>'Y'
+,p_plug_new_grid_row=>false
+,p_plug_display_point=>'BODY'
+,p_list_id=>wwv_flow_api.id(180384257122068032)
+,p_plug_source_type=>'NATIVE_LIST'
+,p_list_template_id=>wwv_flow_api.id(177353113379050626)
+,p_plug_query_options=>'DERIVED_REPORT_COLUMNS'
+);
+end;
+/

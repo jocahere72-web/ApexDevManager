@@ -1,0 +1,192 @@
+prompt --application/pages/page_00032
+begin
+wwv_flow_api.create_page(
+ p_id=>32
+,p_user_interface_id=>wwv_flow_api.id(30413944355578333)
+,p_name=>unistr('Configuraci\00F3n Notificaciones  ')
+,p_step_title=>unistr('Configuraci\00F3n Notificaciones  ')
+,p_autocomplete_on_off=>'OFF'
+,p_page_template_options=>'#DEFAULT#'
+,p_last_updated_by=>'AMOLINA'
+,p_last_upd_yyyymmddhh24miss=>'20210304081725'
+);
+wwv_flow_api.create_page_plug(
+ p_id=>wwv_flow_api.id(5930036017332901)
+,p_plug_name=>unistr('Configuraci\00F3n Notificaciones ')
+,p_region_template_options=>'#DEFAULT#:t-Region--scrollBody'
+,p_plug_template=>wwv_flow_api.id(30339999956578288)
+,p_plug_display_sequence=>10
+,p_include_in_reg_disp_sel_yn=>'Y'
+,p_plug_display_point=>'BODY'
+,p_plug_query_options=>'DERIVED_REPORT_COLUMNS'
+,p_attribute_01=>'N'
+,p_attribute_02=>'HTML'
+);
+wwv_flow_api.create_page_button(
+ p_id=>wwv_flow_api.id(5931104570332912)
+,p_button_sequence=>10
+,p_button_plug_id=>wwv_flow_api.id(5930036017332901)
+,p_button_name=>'Btn_Guardar'
+,p_button_action=>'SUBMIT'
+,p_button_template_options=>'#DEFAULT#'
+,p_button_template_id=>wwv_flow_api.id(30392085768578313)
+,p_button_is_hot=>'Y'
+,p_button_image_alt=>'Aplicar Cambios'
+,p_button_position=>'BELOW_BOX'
+,p_button_condition=>'P32_ID_NTFCCNES_CNFGRCION'
+,p_button_condition_type=>'ITEM_IS_NOT_NULL'
+,p_grid_new_grid=>false
+,p_database_action=>'UPDATE'
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(5930151041332902)
+,p_name=>'P32_ID_NTFCCNES_CNFGRCION'
+,p_item_sequence=>10
+,p_item_plug_id=>wwv_flow_api.id(5930036017332901)
+,p_use_cache_before_default=>'NO'
+,p_source=>'ID_NTFCCNES_CNFGRCION'
+,p_source_type=>'DB_COLUMN'
+,p_display_as=>'NATIVE_HIDDEN'
+,p_attribute_01=>'Y'
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(5930276341332903)
+,p_name=>'P32_CDGO_CLNTE'
+,p_item_sequence=>20
+,p_item_plug_id=>wwv_flow_api.id(5930036017332901)
+,p_use_cache_before_default=>'NO'
+,p_source=>'CDGO_CLNTE'
+,p_source_type=>'DB_COLUMN'
+,p_display_as=>'NATIVE_HIDDEN'
+,p_attribute_01=>'Y'
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(5930345102332904)
+,p_name=>'P32_ID_PRFIL_NTFCA'
+,p_item_sequence=>40
+,p_item_plug_id=>wwv_flow_api.id(5930036017332901)
+,p_use_cache_before_default=>'NO'
+,p_prompt=>'Perfil Notificador '
+,p_source=>'ID_PRFIL_NTFCA'
+,p_source_type=>'DB_COLUMN'
+,p_display_as=>'PLUGIN_BE.CTB.SELECT2'
+,p_lov=>wwv_flow_string.join(wwv_flow_t_varchar2(
+' select nmbre_prfil as v',
+'      , id_prfil    as r',
+'   from sg_g_perfiles',
+'  where cdgo_clnte = :F_CDGO_CLNTE'))
+,p_lov_display_null=>'YES'
+,p_begin_on_new_line=>'N'
+,p_field_template=>wwv_flow_api.id(30391672326578312)
+,p_item_template_options=>'#DEFAULT#'
+,p_lov_display_extra=>'YES'
+,p_attribute_01=>'SINGLE'
+,p_attribute_08=>'CIC'
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(5930466167332905)
+,p_name=>'P32_INDCDOR_PRFIL_NTFCDOR'
+,p_item_sequence=>30
+,p_item_plug_id=>wwv_flow_api.id(5930036017332901)
+,p_use_cache_before_default=>'NO'
+,p_item_default=>'N'
+,p_prompt=>unistr('\00BFPerfil Notificador?')
+,p_source=>'INDCDOR_PRFIL_NTFCDOR'
+,p_source_type=>'DB_COLUMN'
+,p_display_as=>'NATIVE_YES_NO'
+,p_field_template=>wwv_flow_api.id(30391672326578312)
+,p_item_template_options=>'#DEFAULT#'
+,p_attribute_01=>'CUSTOM'
+,p_attribute_02=>'S'
+,p_attribute_03=>unistr('S\00ED')
+,p_attribute_04=>'N'
+,p_attribute_05=>'No'
+);
+wwv_flow_api.create_page_computation(
+ p_id=>wwv_flow_api.id(5930690525332907)
+,p_computation_sequence=>10
+,p_computation_item=>'P32_ID_NTFCCNES_CNFGRCION'
+,p_computation_point=>'BEFORE_HEADER'
+,p_computation_type=>'QUERY'
+,p_computation=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'select id_ntfccnes_cnfgrcion',
+'  from nt_d_notificaciones_cnfgrcn',
+' where cdgo_clnte = :F_CDGO_CLNTE'))
+);
+wwv_flow_api.create_page_da_event(
+ p_id=>wwv_flow_api.id(5930713841332908)
+,p_name=>'Al seleccionar indicador '
+,p_event_sequence=>10
+,p_triggering_element_type=>'ITEM'
+,p_triggering_element=>'P32_INDCDOR_PRFIL_NTFCDOR'
+,p_condition_element=>'P32_INDCDOR_PRFIL_NTFCDOR'
+,p_triggering_condition_type=>'EQUALS'
+,p_triggering_expression=>'N'
+,p_bind_type=>'bind'
+,p_bind_event_type=>'change'
+);
+wwv_flow_api.create_page_da_action(
+ p_id=>wwv_flow_api.id(5930837161332909)
+,p_event_id=>wwv_flow_api.id(5930713841332908)
+,p_event_result=>'TRUE'
+,p_action_sequence=>10
+,p_execute_on_page_init=>'Y'
+,p_action=>'NATIVE_HIDE'
+,p_affected_elements_type=>'ITEM'
+,p_affected_elements=>'P32_ID_PRFIL_NTFCA'
+,p_attribute_01=>'N'
+,p_stop_execution_on_error=>'Y'
+);
+wwv_flow_api.create_page_da_action(
+ p_id=>wwv_flow_api.id(5931053270332911)
+,p_event_id=>wwv_flow_api.id(5930713841332908)
+,p_event_result=>'FALSE'
+,p_action_sequence=>10
+,p_execute_on_page_init=>'Y'
+,p_action=>'NATIVE_SHOW'
+,p_affected_elements_type=>'ITEM'
+,p_affected_elements=>'P32_ID_PRFIL_NTFCA'
+,p_attribute_01=>'N'
+,p_stop_execution_on_error=>'Y'
+);
+wwv_flow_api.create_page_da_action(
+ p_id=>wwv_flow_api.id(5930973492332910)
+,p_event_id=>wwv_flow_api.id(5930713841332908)
+,p_event_result=>'TRUE'
+,p_action_sequence=>20
+,p_execute_on_page_init=>'Y'
+,p_action=>'NATIVE_SET_VALUE'
+,p_affected_elements_type=>'ITEM'
+,p_affected_elements=>'P32_ID_PRFIL_NTFCA'
+,p_attribute_01=>'STATIC_ASSIGNMENT'
+,p_attribute_09=>'N'
+,p_stop_execution_on_error=>'Y'
+,p_wait_for_result=>'Y'
+);
+wwv_flow_api.create_page_process(
+ p_id=>wwv_flow_api.id(5931225017332913)
+,p_process_sequence=>10
+,p_process_point=>'AFTER_SUBMIT'
+,p_process_type=>'NATIVE_FORM_PROCESS'
+,p_process_name=>'Procesar pantalla '
+,p_attribute_02=>'NT_D_NOTIFICACIONES_CNFGRCN'
+,p_attribute_03=>'P32_ID_NTFCCNES_CNFGRCION'
+,p_attribute_04=>'ID_NTFCCNES_CNFGRCION'
+,p_attribute_11=>'I:U:D'
+,p_attribute_12=>'Y'
+,p_error_display_location=>'INLINE_IN_NOTIFICATION'
+,p_process_when_button_id=>wwv_flow_api.id(5931104570332912)
+);
+wwv_flow_api.create_page_process(
+ p_id=>wwv_flow_api.id(5930508504332906)
+,p_process_sequence=>10
+,p_process_point=>'BEFORE_HEADER'
+,p_process_type=>'NATIVE_FORM_FETCH'
+,p_process_name=>unistr('Recuperar configuraci\00F3n')
+,p_attribute_02=>'NT_D_NOTIFICACIONES_CNFGRCN'
+,p_attribute_03=>'P32_ID_NTFCCNES_CNFGRCION'
+,p_attribute_04=>'ID_NTFCCNES_CNFGRCION'
+,p_error_display_location=>'INLINE_IN_NOTIFICATION'
+);
+end;
+/

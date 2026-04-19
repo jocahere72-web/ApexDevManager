@@ -1,0 +1,21 @@
+prompt --application/shared_components/user_interface/lovs/lv_tipos_ajuste
+begin
+wwv_flow_api.create_list_of_values(
+ p_id=>wwv_flow_api.id(39429438658673718)
+,p_lov_name=>'LV_TIPOS_AJUSTE'
+,p_lov_query=>'.'||wwv_flow_api.id(39429438658673718)||'.'
+);
+wwv_flow_api.create_static_lov_data(
+ p_id=>wwv_flow_api.id(39429784762673721)
+,p_lov_disp_sequence=>1
+,p_lov_disp_value=>unistr('D\00E9bito')
+,p_lov_return_value=>'DB'
+);
+wwv_flow_api.create_static_lov_data(
+ p_id=>wwv_flow_api.id(39430130495673731)
+,p_lov_disp_sequence=>2
+,p_lov_disp_value=>unistr('Cr\00E9dito')
+,p_lov_return_value=>'CR'
+);
+end;
+/

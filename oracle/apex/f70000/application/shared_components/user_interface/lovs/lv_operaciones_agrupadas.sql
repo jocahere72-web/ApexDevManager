@@ -1,0 +1,39 @@
+prompt --application/shared_components/user_interface/lovs/lv_operaciones_agrupadas
+begin
+wwv_flow_api.create_list_of_values(
+ p_id=>wwv_flow_api.id(12777803354581544)
+,p_lov_name=>'LV_OPERACIONES_AGRUPADAS'
+,p_lov_query=>'.'||wwv_flow_api.id(12777803354581544)||'.'
+);
+wwv_flow_api.create_static_lov_data(
+ p_id=>wwv_flow_api.id(13768962197772660)
+,p_lov_disp_sequence=>1
+,p_lov_disp_value=>'CON'
+,p_lov_return_value=>'CON'
+);
+wwv_flow_api.create_static_lov_data(
+ p_id=>wwv_flow_api.id(13629313205090378)
+,p_lov_disp_sequence=>2
+,p_lov_disp_value=>'DIST'
+,p_lov_return_value=>'DIST'
+);
+wwv_flow_api.create_static_lov_data(
+ p_id=>wwv_flow_api.id(12778152005581544)
+,p_lov_disp_sequence=>3
+,p_lov_disp_value=>'SUM'
+,p_lov_return_value=>'SUM'
+);
+wwv_flow_api.create_static_lov_data(
+ p_id=>wwv_flow_api.id(54401298489155208)
+,p_lov_disp_sequence=>4
+,p_lov_disp_value=>'FMI'
+,p_lov_return_value=>'FMI'
+);
+wwv_flow_api.create_static_lov_data(
+ p_id=>wwv_flow_api.id(65793949334904316)
+,p_lov_disp_sequence=>5
+,p_lov_disp_value=>'MAX'
+,p_lov_return_value=>'MAX'
+);
+end;
+/

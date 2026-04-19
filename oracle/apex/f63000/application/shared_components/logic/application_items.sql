@@ -1,0 +1,69 @@
+prompt --application/shared_components/logic/application_items
+begin
+wwv_flow_api.create_flow_item(
+ p_id=>wwv_flow_api.id(203125507961448123)
+,p_name=>'F_BRANCH'
+,p_protection_level=>'N'
+);
+wwv_flow_api.create_flow_item(
+ p_id=>wwv_flow_api.id(197949703230337386)
+,p_name=>'F_CDGO_CLNTE'
+,p_scope=>'GLOBAL'
+,p_protection_level=>'I'
+);
+wwv_flow_api.create_flow_item(
+ p_id=>wwv_flow_api.id(2241305045256452)
+,p_name=>'F_ID_APLCCION_GRPO'
+,p_scope=>'GLOBAL'
+,p_protection_level=>'I'
+);
+wwv_flow_api.create_flow_item(
+ p_id=>wwv_flow_api.id(197950277086465198)
+,p_name=>'F_ID_IMPSTO'
+,p_scope=>'GLOBAL'
+,p_protection_level=>'I'
+);
+wwv_flow_api.create_flow_item(
+ p_id=>wwv_flow_api.id(45297469106033460)
+,p_name=>'F_ID_MNU'
+,p_scope=>'GLOBAL'
+,p_protection_level=>'N'
+);
+wwv_flow_api.create_flow_item(
+ p_id=>wwv_flow_api.id(75887419291327856)
+,p_name=>'F_ID_USRIO'
+,p_scope=>'GLOBAL'
+,p_protection_level=>'I'
+);
+wwv_flow_api.create_flow_item(
+ p_id=>wwv_flow_api.id(11498578230799887)
+,p_name=>'F_ID_USRIO_TKEN'
+,p_scope=>'GLOBAL'
+,p_protection_level=>'I'
+);
+wwv_flow_api.create_flow_item(
+ p_id=>wwv_flow_api.id(197949942803341491)
+,p_name=>'F_NMBRE_APLCCION'
+,p_scope=>'GLOBAL'
+,p_protection_level=>'I'
+);
+wwv_flow_api.create_flow_item(
+ p_id=>wwv_flow_api.id(2251566757415547)
+,p_name=>'F_NMBRE_APLCCION_GRPO'
+,p_scope=>'GLOBAL'
+,p_protection_level=>'I'
+);
+wwv_flow_api.create_flow_item(
+ p_id=>wwv_flow_api.id(38719631472627630)
+,p_name=>'F_NMBRE_CLNTE'
+,p_scope=>'GLOBAL'
+,p_protection_level=>'I'
+);
+wwv_flow_api.create_flow_item(
+ p_id=>wwv_flow_api.id(197950130989436942)
+,p_name=>'F_NMBRE_USRIO'
+,p_scope=>'GLOBAL'
+,p_protection_level=>'I'
+);
+end;
+/

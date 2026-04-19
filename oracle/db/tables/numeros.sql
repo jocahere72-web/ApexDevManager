@@ -1,0 +1,5 @@
+
+  CREATE TABLE "NUMEROS"
+   (	"NUM" NUMBER
+   ) ;
+

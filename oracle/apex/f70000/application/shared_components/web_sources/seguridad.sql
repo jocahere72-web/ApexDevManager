@@ -1,0 +1,21 @@
+prompt --application/shared_components/web_sources/seguridad
+begin
+wwv_flow_api.create_web_source_module(
+ p_id=>wwv_flow_api.id(49711037407308008)
+,p_name=>'seguridad'
+,p_static_id=>'seguridad'
+,p_web_source_type=>'ORDS_2'
+,p_data_profile_id=>wwv_flow_api.id(49710432287307997)
+,p_remote_server_id=>wwv_flow_api.id(51900781955558937)
+,p_url_path_prefix=>'/seguridad/test'
+);
+wwv_flow_api.create_web_source_operation(
+ p_id=>wwv_flow_api.id(49711369870308010)
+,p_web_src_module_id=>wwv_flow_api.id(49711037407308008)
+,p_operation=>'GET'
+,p_database_operation=>'FETCH_COLLECTION'
+,p_url_pattern=>'.'
+,p_allow_fetch_all_rows=>false
+);
+end;
+/

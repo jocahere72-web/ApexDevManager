@@ -1,0 +1,27 @@
+prompt --application/shared_components/user_interface/lovs/lv_definicion_cliente_formato
+begin
+wwv_flow_api.create_list_of_values(
+ p_id=>wwv_flow_api.id(30506528396463315)
+,p_lov_name=>'LV_DEFINICION_CLIENTE_FORMATO'
+,p_lov_query=>'.'||wwv_flow_api.id(30506528396463315)||'.'
+);
+wwv_flow_api.create_static_lov_data(
+ p_id=>wwv_flow_api.id(30506977189463315)
+,p_lov_disp_sequence=>1
+,p_lov_disp_value=>'Caracter'
+,p_lov_return_value=>'C'
+);
+wwv_flow_api.create_static_lov_data(
+ p_id=>wwv_flow_api.id(30507382931463315)
+,p_lov_disp_sequence=>2
+,p_lov_disp_value=>unistr('N\00FAmero')
+,p_lov_return_value=>'N'
+);
+wwv_flow_api.create_static_lov_data(
+ p_id=>wwv_flow_api.id(30507773667463316)
+,p_lov_disp_sequence=>3
+,p_lov_disp_value=>'Fecha'
+,p_lov_return_value=>'F'
+);
+end;
+/

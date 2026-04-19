@@ -1,0 +1,133 @@
+prompt --application/shared_components/reports/report_queries/si_g_nvddes_x_usrio
+begin
+wwv_flow_api.create_shared_query(
+ p_id=>wwv_flow_api.id(38244025567068867)
+,p_name=>'si_g_nvddes_x_usrio'
+,p_query_text=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'--1. Encabezado y pie de pagina',
+'	 select upper(b.nmbre_clnte)nmbre_clnte,',
+'   upper(b.slgan)slgan,',
+'   pkg_gn_generalidades.fnc_cl_convertir_blob_a_base64( p_blob => a.file_blob ) as lgo_slgan,',
+'   to_char(systimestamp, ''DD/MM/YYYY HH:MI AM'') HOY,',
+'   :F_IP as ipaddr,',
+'   :F_NMBRE_USRIO as Usuario,       ',
+'   a.file_mimetype,',
+'   json_value(:P37_JSON,''$.fcha_i'') as fcha_incial,',
+'   json_value(:P37_JSON,''$.fcha_f'') as fcha_fnal,',
+'   upper(json_value(:P37_JSON,''$.nmbre_rprte'')) as nmbre_rprte',
+'from df_c_imagenes_cliente a',
+'join df_s_clientes b on a.cdgo_clnte = b.cdgo_clnte ',
+'where a.cdgo_clnte = :F_CDGO_CLNTE',
+'and a.cdgo_imgen_clnte = ''L_E'' '))
+,p_format=>'PDF'
+,p_output_file_name=>'si_g_nvddes_x_usrio'
+,p_content_disposition=>'ATTACHMENT'
+);
+wwv_flow_api.create_shared_query_stmnt(
+ p_id=>wwv_flow_api.id(82890781132130746)
+,p_shared_query_id=>wwv_flow_api.id(38244025567068867)
+,p_sql_statement=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'--1. Encabezado y pie de pagina',
+'	 select upper(b.nmbre_clnte)nmbre_clnte,',
+'   upper(b.slgan)slgan,',
+'   pkg_gn_generalidades.fnc_cl_convertir_blob_a_base64( p_blob => a.file_blob ) as lgo_slgan,',
+'   to_char(systimestamp, ''DD/MM/YYYY HH:MI AM'') HOY,',
+'   :F_IP as ipaddr,',
+'   :F_NMBRE_USRIO as Usuario,       ',
+'   a.file_mimetype,',
+'   json_value(:P37_JSON,''$.fcha_i'') as fcha_incial,',
+'   json_value(:P37_JSON,''$.fcha_f'') as fcha_fnal,',
+'   upper(json_value(:P37_JSON,''$.nmbre_rprte'')) as nmbre_rprte',
+'from df_c_imagenes_cliente a',
+'join df_s_clientes b on a.cdgo_clnte = b.cdgo_clnte ',
+'where a.cdgo_clnte = :F_CDGO_CLNTE',
+'and a.cdgo_imgen_clnte = ''L_E'' '))
+);
+wwv_flow_api.create_shared_query_stmnt(
+ p_id=>wwv_flow_api.id(82890929990130746)
+,p_shared_query_id=>wwv_flow_api.id(38244025567068867)
+,p_sql_statement=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'--2. datos basicos ',
+'with novedades as',
+' (select g.nmro_rdcdo,',
+'         a.id_usrio,',
+'         d.nmbre_trcro as usrio_rgistra,',
+'         trunc(a.fcha_rgstro) as fcha_rgstro,',
+'         f.nmbre_trcro as usrio_aplca,',
+'         trunc(a.fcha_incio_aplccion) as fcha_incio_aplccion,',
+'         c.nmro_acto,',
+'         trunc(c.fcha) as fcha_acto,',
+'         e.dscrpcion as tpo_acto,',
+'         h.dscrpcion as estado,',
+'         i.prmer_nmbre || '' '' || i.sgndo_nmbre || '' '' || i.prmer_aplldo || '' '' ||',
+'         i.sgndo_aplldo as rspnsble,',
+'         i.idntfccion_rspnsble,',
+'         i.idntfccion_sjto,',
+'         null tpo_mtcion,',
+'         ''NOVEDAD'' tpo_nvdad',
+'    from si_g_novedades_predio a',
+'    join si_g_novedades_predio_dtlle b',
+'      on a.id_nvdad_prdio = b.id_nvdad_prdio',
+'    left join v_gn_g_actos c',
+'      on b.id_acto = c.id_acto',
+'    left join gn_d_actos_tipo e',
+'      on c.id_acto_tpo = e.id_acto_tpo',
+'    join v_sg_g_usuarios d',
+'      on a.id_usrio = d.id_usrio',
+'    left join v_sg_g_usuarios f',
+'      on a.id_usrio_aplco = f.id_usrio',
+'    left join pq_g_solicitudes g',
+'      on a.id_slctud = g.id_slctud',
+'    join df_s_novedades_predio_estdo h',
+'      on b.cdgo_nvdad_estdo = h.cdgo_nvdad_estdo',
+'    join v_si_i_sujetos_responsable i',
+'      on b.id_sjto_impsto = i.id_sjto_impsto',
+'   where a.cdgo_clnte = :F_CDGO_CLNTE',
+'     and a.id_usrio = nvl(json_value(:P37_JSON, ''$.id_usrio''), a.id_usrio)',
+'     and trunc(a.fcha_rgstro) between json_value(:P37_JSON, ''$.fcha_i'') and',
+'         json_value(:P37_JSON, ''$.fcha_f'')),',
+'resoluciones as',
+' (select null,',
+'         b.id_usrio,',
+'         c.nmbre_trcro as usrio_rgistra,',
+'         TRUNC(b.fcha_aplccion) fcha_rgstro,',
+'         c.nmbre_trcro,',
+'         trunc(b.fcha_aplccion) fcha_incio_aplccion,',
+'         a.rslcion,',
+'         TRUNC(b.fcha_aplccion) fcha_acto,',
+'         ''RESOLUCION CATASTRAL'',',
+'         ''Aplicado'',',
+'         LISTAGG(trim(a.nmbre_prptrio), chr(13)) WITHIN GROUP (ORDER BY a.rfrncia_igac),',
+'         LISTAGG(trim(a.nmro_dcmnto), chr(13)) WITHIN GROUP (ORDER BY a.rfrncia_igac),',
+'         LISTAGG(trim(a.rfrncia_igac), chr(13)) WITHIN GROUP (ORDER BY a.rfrncia_igac),',
+'         j.dscrpcion,',
+'         ''RESOLUCION''',
+'    from SI_G_RESOLUCION_IGAC_T1 a',
+'    join si_g_resolucion_aplicada b',
+'      on b.id_rslcion_aplcda = a.id_rslcion_aplcda',
+'    join v_sg_g_usuarios c',
+'      on c.id_usrio = b.id_usrio',
+'    join df_s_mutaciones_clase j',
+'      on j.cdgo_mtcion_clse = a.clse_mtcion',
+'   where a.nmro_orden = ''001''',
+'     and a.cncla_inscrbe = ''C''',
+'     and b.cdgo_clnte = :F_CDGO_CLNTE',
+'     and b.id_usrio = nvl(json_value(:P37_JSON, ''$.id_usrio''), b.id_usrio)',
+'     and trunc(b.fcha_aplccion) between json_value(:P37_JSON, ''$.fcha_i'') and',
+'         json_value(:P37_JSON, ''$.fcha_f'')',
+' group by b.id_usrio,',
+'         c.nmbre_trcro,',
+'         TRUNC(b.fcha_aplccion) ,',
+'         c.nmbre_trcro,',
+'         trunc(b.fcha_aplccion) ,',
+'         a.rslcion,',
+'         TRUNC(b.fcha_aplccion),',
+'            j.dscrpcion)',
+'',
+'select *',
+'  from (select n.* from novedades n union all select r.* from resoluciones r)',
+' where tpo_nvdad = nvl(json_value(:P37_JSON, ''$.tpo_nvdad''), tpo_nvdad)',
+' order by tpo_nvdad,fcha_rgstro'))
+);
+end;
+/

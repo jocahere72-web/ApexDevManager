@@ -1,0 +1,7 @@
+
+  CREATE TABLE "MIGRA_LOG"
+   (	"T_001" TIMESTAMP (6),
+	"V_001" VARCHAR2(4000),
+	"N_001" NUMBER
+   ) ;
+

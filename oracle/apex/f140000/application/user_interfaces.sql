@@ -1,0 +1,27 @@
+prompt --application/user_interfaces
+begin
+wwv_flow_api.create_user_interface(
+ p_id=>wwv_flow_api.id(22508582753660970)
+,p_ui_type_name=>'DESKTOP'
+,p_display_name=>'Escritorio'
+,p_display_seq=>10
+,p_use_auto_detect=>false
+,p_is_default=>true
+,p_theme_id=>101
+,p_home_url=>'f?p=&APP_ID.:1:&SESSION.'
+,p_login_url=>'f?p=50000:101:&SESSION.'
+,p_theme_style_by_user_pref=>false
+,p_built_with_love=>false
+,p_global_page_id=>0
+,p_navigation_list_id=>wwv_flow_api.id(22550131688851299)
+,p_navigation_list_position=>'TOP'
+,p_navigation_list_template_id=>wwv_flow_api.id(52177098305074828)
+,p_nav_list_template_options=>'#DEFAULT#:js-tabLike'
+,p_include_legacy_javascript=>'18'
+,p_nav_bar_type=>'LIST'
+,p_nav_bar_list_id=>wwv_flow_api.id(22537165399812394)
+,p_nav_bar_list_template_id=>wwv_flow_api.id(52174876574074827)
+,p_nav_bar_template_options=>'#DEFAULT#'
+);
+end;
+/

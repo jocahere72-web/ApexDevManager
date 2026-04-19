@@ -1,0 +1,58 @@
+
+  CREATE OR REPLACE FORCE EDITIONABLE VIEW "V_RE_G_DESCUENTOS_CONDICION" ("ID_DSCNTO_RGLA", "CDGO_DSCNTO_CNDCION_TPO", "DSCRP_CDGO_DSCNTO_CNDCION_TPO", "ID_DSCNTO_CNDCION", "CDGO_CLNTE", "NMBRE_CLNTE", "DSCRPCION", "ID_IMPSTO", "NMBRE_IMPSTO", "ID_IMPSTO_SBMPSTO", "NMBRE_IMPSTO_SBMPSTO", "VGNCIA_DSDE", "ID_PRDO_DSDE", "VGNCIA_HSTA", "ID_PRDO_HSTA", "PRDO_DSDE", "PRDO_HSTA", "ID_CNCPTO", "CDGO_CNCPTO", "DSCRPCION_CNCPTO", "ID_CNCPTO_DSCNTO", "CDGO_CNCPTO_DSCNTO", "DSCRPCION_CNCPTO_DSCNTO", "ID_CNCPTO_DSCNTO_GRPO", "CDGO_CNCPTO_DSCNTO_GRPO", "DSCRPCION_CNCPTO_DSCNTO_GRPO", "PRCNTJE_DSCNTO", "PRCNTJE_DSCNTO_ENTRO", "CDGO_DSCNTO_TPO", "DSCRPCION_CDGO_TPO_DSCNTO", "ACTVO", "DSCRPCION_ACTVO", "FCHA_DSDE", "FCHA_HSTA", "VGNCIA_DSDE_PGO", "ID_PRDO_DSDE_PGO", "PRDO_DSDE_PGO", "VGNCIA_HSTA_PGO", "ID_PRDO_HSTA_PGO", "PRDO_HSTA_PGO", "VGNCIA_DSDE_PAZ_SLVO", "ID_PRDO_DSDE_PAZ_SLVO", "PRDO_DSDE_PAZ_SLVO", "VGNCIA_HSTA_PAZ_SLVO", "ID_PRDO_HSTA_PAZ_SLVO", "PRDO_HSTA_PAZ_SLVO", "FCHA_LMTE_PAZ_SLVO", "ACTVO_CNDCION", "DSCRPCION_ACTVO_CNDCION") AS
+  select b.id_dscnto_rgla,
+		a.cdgo_dscnto_cndcion_tpo,
+		decode (cdgo_dscnto_cndcion_tpo, 'DCM', 'Documento', 'PYS', 'Paz y Salvo', 'FNC', 'Función') dscrp_cdgo_dscnto_cndcion_tpo,
+		a.id_dscnto_cndcion,
+		b.cdgo_clnte,
+		b.nmbre_clnte,
+		b.dscrpcion,
+		b.id_impsto,
+		b.nmbre_impsto,
+		b.id_impsto_sbmpsto,
+		b.nmbre_impsto_sbmpsto,
+		b.vgncia_dsde,
+		b.id_prdo_dsde,
+		b.vgncia_hsta,
+		b.id_prdo_hsta,
+		b.prdo_dsde,
+		b.prdo_hsta,
+		b.id_cncpto,
+		b.cdgo_cncpto,
+		b.dscrpcion_cncpto,
+		b.id_cncpto_dscnto,
+		b.cdgo_cncpto_dscnto,
+		b.dscrpcion_cncpto_dscnto,
+		b.id_cncpto_dscnto_grpo,
+		b.cdgo_cncpto_dscnto_grpo,
+		b.dscrpcion_cncpto_dscnto_grpo,
+		b.prcntje_dscnto,
+		b.prcntje_dscnto_entro,
+		b.cdgo_dscnto_tpo,
+		b.dscrpcion_cdgo_tpo_dscnto,
+		b.actvo,
+		b.dscrpcion_actvo,
+		b.fcha_dsde,
+		b.fcha_hsta,
+		a.vgncia_dsde_pgo,
+		a.id_prdo_dsde_pgo,
+		c.prdo								prdo_dsde_pgo,
+		a.vgncia_hsta_pgo,
+		a.id_prdo_hsta_pgo,
+		d.prdo								prdo_hsta_pgo,
+		a.vgncia_dsde_paz_slvo,
+		a.id_prdo_dsde_paz_slvo,
+		e.prdo								prdo_dsde_paz_slvo,
+		a.vgncia_hsta_paz_slvo,
+		a.id_prdo_hsta_paz_slvo,
+		f.prdo								prdo_hsta_paz_slvo,
+		a.fcha_lmte_paz_slvo,
+		a.actvo								actvo_cndcion,
+		decode(a.actvo, 'S','Sí','N','No')	dscrpcion_actvo_cndcion
+   from re_g_descuentos_condicion       a
+   join v_re_g_descuentos_regla         b on b.id_dscnto_rgla			= a.id_dscnto_rgla
+   left join df_i_periodos				c on a.id_prdo_dsde_pgo			= c.id_prdo  -- Desde Pago
+   left join df_i_periodos				d on a.id_prdo_hsta_pgo			= d.id_prdo  -- Hasta Pago
+   left join df_i_periodos				e on a.id_prdo_dsde_paz_slvo	= e.id_prdo  -- Desde Paz y Salvo
+   left join df_i_periodos				f on a.id_prdo_hsta_paz_slvo	= f.id_prdo;
+

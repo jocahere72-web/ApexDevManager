@@ -1,0 +1,565 @@
+prompt --application/pages/page_00058
+begin
+wwv_flow_api.create_page(
+ p_id=>58
+,p_user_interface_id=>wwv_flow_api.id(95249231080808714)
+,p_name=>unistr('Definici\00F3n de impuesto')
+,p_step_title=>unistr('Definici\00F3n de impuesto')
+,p_warn_on_unsaved_changes=>'N'
+,p_autocomplete_on_off=>'OFF'
+,p_javascript_file_urls=>'#IMAGE_PREFIX#javascript/infortributos/js/utilidades.js'
+,p_javascript_code_onload=>'mostrarAyudaD();'
+,p_step_template=>wwv_flow_api.id(29519719109068494)
+,p_page_template_options=>'#DEFAULT#'
+,p_last_updated_by=>'ADMIN'
+,p_last_upd_yyyymmddhh24miss=>'20201222101359'
+);
+wwv_flow_api.create_page_plug(
+ p_id=>wwv_flow_api.id(23937366883019823)
+,p_plug_name=>unistr('Definici\00F3n de Tributos')
+,p_region_template_options=>'#DEFAULT#:t-Region--scrollBody'
+,p_component_template_options=>'#DEFAULT#'
+,p_plug_template=>wwv_flow_api.id(29552524947068508)
+,p_plug_display_sequence=>20
+,p_include_in_reg_disp_sel_yn=>'Y'
+,p_plug_display_point=>'BODY'
+,p_plug_source=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'select ID_DFNCN_IMPSTO,',
+'       CDGO_CLNTE,',
+'       ID_IMPSTO,',
+'       CDGO_DFNCN_IMPSTO,',
+'       DSCRPCION,',
+'       FRMTO,',
+'       VLOR',
+'  from df_i_definiciones_impuesto',
+' where (cdgo_clnte = :F_CDGO_CLNTE)',
+'  and (ID_IMPSTO = :P58_ID_IMPSTO) ',
+'  /* and (nvl(:P58_ID_IMPSTO,''xxx'') = ''xxx'' or ID_IMPSTO = :P58_ID_IMPSTO) */'))
+,p_plug_source_type=>'NATIVE_IG'
+,p_ajax_items_to_submit=>'P58_ID_IMPSTO'
+,p_plug_query_options=>'DERIVED_REPORT_COLUMNS'
+,p_plug_display_condition_type=>'ITEM_IS_NOT_NULL'
+,p_plug_display_when_condition=>'P58_ID_IMPSTO'
+);
+wwv_flow_api.create_region_column(
+ p_id=>wwv_flow_api.id(23937527380019825)
+,p_name=>'ID_DFNCN_IMPSTO'
+,p_source_type=>'DB_COLUMN'
+,p_source_expression=>'ID_DFNCN_IMPSTO'
+,p_data_type=>'NUMBER'
+,p_is_query_only=>false
+,p_item_type=>'NATIVE_HIDDEN'
+,p_display_sequence=>30
+,p_attribute_01=>'Y'
+,p_use_as_row_header=>false
+,p_enable_sort_group=>true
+,p_enable_control_break=>true
+,p_is_primary_key=>true
+,p_duplicate_value=>true
+,p_include_in_export=>false
+);
+wwv_flow_api.create_region_column(
+ p_id=>wwv_flow_api.id(23937699858019826)
+,p_name=>'CDGO_CLNTE'
+,p_source_type=>'DB_COLUMN'
+,p_source_expression=>'CDGO_CLNTE'
+,p_data_type=>'NUMBER'
+,p_is_query_only=>false
+,p_item_type=>'NATIVE_HIDDEN'
+,p_display_sequence=>40
+,p_attribute_01=>'N'
+,p_use_as_row_header=>false
+,p_enable_sort_group=>true
+,p_enable_control_break=>true
+,p_is_primary_key=>false
+,p_default_type=>'STATIC'
+,p_default_expression=>'&F_CDGO_CLNTE.'
+,p_duplicate_value=>true
+,p_include_in_export=>false
+);
+wwv_flow_api.create_region_column(
+ p_id=>wwv_flow_api.id(23937793314019827)
+,p_name=>'ID_IMPSTO'
+,p_source_type=>'DB_COLUMN'
+,p_source_expression=>'ID_IMPSTO'
+,p_data_type=>'NUMBER'
+,p_is_query_only=>false
+,p_item_type=>'NATIVE_HIDDEN'
+,p_display_sequence=>50
+,p_attribute_01=>'Y'
+,p_filter_is_required=>false
+,p_use_as_row_header=>false
+,p_enable_sort_group=>true
+,p_enable_control_break=>true
+,p_is_primary_key=>false
+,p_default_type=>'ITEM'
+,p_default_expression=>'P58_ID_IMPSTO'
+,p_duplicate_value=>true
+,p_include_in_export=>false
+);
+wwv_flow_api.create_region_column(
+ p_id=>wwv_flow_api.id(23937825702019828)
+,p_name=>'CDGO_DFNCN_IMPSTO'
+,p_source_type=>'DB_COLUMN'
+,p_source_expression=>'CDGO_DFNCN_IMPSTO'
+,p_data_type=>'VARCHAR2'
+,p_is_query_only=>false
+,p_item_type=>'NATIVE_TEXT_FIELD'
+,p_heading=>unistr('C\00F3digo')
+,p_heading_alignment=>'CENTER'
+,p_display_sequence=>60
+,p_value_alignment=>'CENTER'
+,p_attribute_05=>'BOTH'
+,p_item_attributes=>'onkeyup="campoMayuscula(this)" onkeypress="return validarExpresion(event, ''letraNumero'');"'
+,p_is_required=>true
+,p_max_length=>3
+,p_enable_filter=>true
+,p_filter_operators=>'C:S:CASE_INSENSITIVE:REGEXP'
+,p_filter_is_required=>false
+,p_filter_text_case=>'MIXED'
+,p_filter_exact_match=>true
+,p_filter_lov_type=>'DISTINCT'
+,p_use_as_row_header=>false
+,p_enable_sort_group=>true
+,p_enable_control_break=>true
+,p_enable_hide=>true
+,p_is_primary_key=>false
+,p_duplicate_value=>false
+,p_include_in_export=>true
+);
+wwv_flow_api.create_region_column(
+ p_id=>wwv_flow_api.id(23937918296019829)
+,p_name=>'DSCRPCION'
+,p_source_type=>'DB_COLUMN'
+,p_source_expression=>'DSCRPCION'
+,p_data_type=>'VARCHAR2'
+,p_is_query_only=>false
+,p_item_type=>'NATIVE_TEXT_FIELD'
+,p_heading=>unistr('Descripci\00F3n')
+,p_heading_alignment=>'CENTER'
+,p_display_sequence=>70
+,p_value_alignment=>'CENTER'
+,p_attribute_05=>'BOTH'
+,p_item_attributes=>'onkeypress="return validarExpresion(event, ''letraNumeroEspacio'');"'
+,p_is_required=>true
+,p_max_length=>150
+,p_enable_filter=>true
+,p_filter_operators=>'C:S:CASE_INSENSITIVE:REGEXP'
+,p_filter_is_required=>false
+,p_filter_text_case=>'MIXED'
+,p_filter_exact_match=>true
+,p_filter_lov_type=>'DISTINCT'
+,p_use_as_row_header=>false
+,p_enable_sort_group=>true
+,p_enable_control_break=>true
+,p_enable_hide=>true
+,p_is_primary_key=>false
+,p_duplicate_value=>false
+,p_include_in_export=>true
+);
+wwv_flow_api.create_region_column(
+ p_id=>wwv_flow_api.id(23938086253019830)
+,p_name=>'FRMTO'
+,p_source_type=>'DB_COLUMN'
+,p_source_expression=>'FRMTO'
+,p_data_type=>'VARCHAR2'
+,p_is_query_only=>false
+,p_item_type=>'NATIVE_SELECT_LIST'
+,p_heading=>'Formato'
+,p_heading_alignment=>'CENTER'
+,p_display_sequence=>80
+,p_value_alignment=>'CENTER'
+,p_is_required=>true
+,p_lov_type=>'SHARED'
+,p_lov_id=>wwv_flow_api.id(101485767406622186)
+,p_lov_display_extra=>true
+,p_lov_display_null=>true
+,p_lov_null_text=>'Seleccione Formato'
+,p_enable_filter=>true
+,p_filter_operators=>'C:S:CASE_INSENSITIVE:REGEXP'
+,p_filter_is_required=>false
+,p_filter_text_case=>'MIXED'
+,p_filter_exact_match=>true
+,p_filter_lov_type=>'LOV'
+,p_use_as_row_header=>false
+,p_enable_sort_group=>true
+,p_enable_control_break=>true
+,p_enable_hide=>true
+,p_is_primary_key=>false
+,p_duplicate_value=>true
+,p_include_in_export=>true
+);
+wwv_flow_api.create_region_column(
+ p_id=>wwv_flow_api.id(23938139406019831)
+,p_name=>'VLOR'
+,p_source_type=>'DB_COLUMN'
+,p_source_expression=>'VLOR'
+,p_data_type=>'VARCHAR2'
+,p_is_query_only=>false
+,p_item_type=>'NATIVE_TEXT_FIELD'
+,p_heading=>'Valor'
+,p_heading_alignment=>'CENTER'
+,p_display_sequence=>90
+,p_value_alignment=>'CENTER'
+,p_attribute_05=>'BOTH'
+,p_is_required=>true
+,p_max_length=>50
+,p_enable_filter=>true
+,p_filter_operators=>'C:S:CASE_INSENSITIVE:REGEXP'
+,p_filter_is_required=>false
+,p_filter_text_case=>'MIXED'
+,p_filter_exact_match=>true
+,p_filter_lov_type=>'DISTINCT'
+,p_use_as_row_header=>false
+,p_enable_sort_group=>true
+,p_enable_control_break=>true
+,p_enable_hide=>true
+,p_is_primary_key=>false
+,p_duplicate_value=>true
+,p_include_in_export=>true
+);
+wwv_flow_api.create_region_column(
+ p_id=>wwv_flow_api.id(23939202888019842)
+,p_name=>'APEX$ROW_ACTION'
+,p_item_type=>'NATIVE_ROW_ACTION'
+,p_display_sequence=>20
+);
+wwv_flow_api.create_region_column(
+ p_id=>wwv_flow_api.id(23939324469019843)
+,p_name=>'APEX$ROW_SELECTOR'
+,p_item_type=>'NATIVE_ROW_SELECTOR'
+,p_display_sequence=>10
+,p_attribute_01=>'Y'
+,p_attribute_02=>'Y'
+,p_attribute_03=>'N'
+);
+wwv_flow_api.create_interactive_grid(
+ p_id=>wwv_flow_api.id(23937467750019824)
+,p_internal_uid=>23937467750019824
+,p_is_editable=>true
+,p_edit_operations=>'i:u:d'
+,p_lost_update_check_type=>'VALUES'
+,p_add_row_if_empty=>false
+,p_submit_checked_rows=>false
+,p_lazy_loading=>false
+,p_requires_filter=>false
+,p_show_nulls_as=>'-'
+,p_select_first_row=>true
+,p_fixed_row_height=>true
+,p_pagination_type=>'SCROLL'
+,p_show_total_row_count=>true
+,p_show_toolbar=>true
+,p_toolbar_buttons=>'SEARCH_COLUMN:SEARCH_FIELD:ACTIONS_MENU:SEARCH_COLUMN:SEARCH_FIELD:ACTIONS_MENU:RESET:SAVE'
+,p_enable_save_public_report=>false
+,p_enable_subscriptions=>true
+,p_enable_flashback=>true
+,p_define_chart_view=>true
+,p_enable_download=>true
+,p_enable_mail_download=>true
+,p_fixed_header=>'PAGE'
+,p_show_icon_view=>false
+,p_show_detail_view=>false
+);
+wwv_flow_api.create_ig_report(
+ p_id=>wwv_flow_api.id(23986136646218110)
+,p_interactive_grid_id=>wwv_flow_api.id(23937467750019824)
+,p_type=>'PRIMARY'
+,p_default_view=>'GRID'
+,p_show_row_number=>false
+,p_settings_area_expanded=>true
+);
+wwv_flow_api.create_ig_report_view(
+ p_id=>wwv_flow_api.id(23986253152218110)
+,p_report_id=>wwv_flow_api.id(23986136646218110)
+,p_view_type=>'GRID'
+,p_srv_exclude_null_values=>false
+,p_srv_only_display_columns=>true
+,p_edit_mode=>false
+);
+wwv_flow_api.create_ig_report_column(
+ p_id=>wwv_flow_api.id(23986708145218114)
+,p_view_id=>wwv_flow_api.id(23986253152218110)
+,p_display_seq=>1
+,p_column_id=>wwv_flow_api.id(23937527380019825)
+,p_is_visible=>true
+,p_is_frozen=>false
+);
+wwv_flow_api.create_ig_report_column(
+ p_id=>wwv_flow_api.id(23987275427218115)
+,p_view_id=>wwv_flow_api.id(23986253152218110)
+,p_display_seq=>2
+,p_column_id=>wwv_flow_api.id(23937699858019826)
+,p_is_visible=>true
+,p_is_frozen=>false
+);
+wwv_flow_api.create_ig_report_column(
+ p_id=>wwv_flow_api.id(23987712622218117)
+,p_view_id=>wwv_flow_api.id(23986253152218110)
+,p_display_seq=>3
+,p_column_id=>wwv_flow_api.id(23937793314019827)
+,p_is_visible=>true
+,p_is_frozen=>false
+);
+wwv_flow_api.create_ig_report_column(
+ p_id=>wwv_flow_api.id(23988206209218119)
+,p_view_id=>wwv_flow_api.id(23986253152218110)
+,p_display_seq=>4
+,p_column_id=>wwv_flow_api.id(23937825702019828)
+,p_is_visible=>true
+,p_is_frozen=>false
+);
+wwv_flow_api.create_ig_report_column(
+ p_id=>wwv_flow_api.id(23988749042218124)
+,p_view_id=>wwv_flow_api.id(23986253152218110)
+,p_display_seq=>5
+,p_column_id=>wwv_flow_api.id(23937918296019829)
+,p_is_visible=>true
+,p_is_frozen=>false
+);
+wwv_flow_api.create_ig_report_column(
+ p_id=>wwv_flow_api.id(23989213103218126)
+,p_view_id=>wwv_flow_api.id(23986253152218110)
+,p_display_seq=>6
+,p_column_id=>wwv_flow_api.id(23938086253019830)
+,p_is_visible=>true
+,p_is_frozen=>false
+);
+wwv_flow_api.create_ig_report_column(
+ p_id=>wwv_flow_api.id(23989701040218129)
+,p_view_id=>wwv_flow_api.id(23986253152218110)
+,p_display_seq=>7
+,p_column_id=>wwv_flow_api.id(23938139406019831)
+,p_is_visible=>true
+,p_is_frozen=>false
+);
+wwv_flow_api.create_ig_report_column(
+ p_id=>wwv_flow_api.id(24080941645665743)
+,p_view_id=>wwv_flow_api.id(23986253152218110)
+,p_display_seq=>0
+,p_column_id=>wwv_flow_api.id(23939202888019842)
+,p_is_visible=>true
+,p_is_frozen=>false
+);
+wwv_flow_api.create_page_plug(
+ p_id=>wwv_flow_api.id(23938523347019835)
+,p_plug_name=>unistr('Par\00E1metros de B\00FAsqueda')
+,p_region_template_options=>'#DEFAULT#:is-expanded:t-Region--scrollBody'
+,p_plug_template=>wwv_flow_api.id(29541487623068504)
+,p_plug_display_sequence=>10
+,p_include_in_reg_disp_sel_yn=>'Y'
+,p_plug_display_point=>'BODY'
+,p_plug_query_options=>'DERIVED_REPORT_COLUMNS'
+,p_attribute_01=>'N'
+,p_attribute_02=>'HTML'
+);
+wwv_flow_api.create_page_plug(
+ p_id=>wwv_flow_api.id(29429288881772713)
+,p_plug_name=>'Ayuda'
+,p_region_template_options=>'#DEFAULT#:t-Region--removeHeader:t-Region--scrollBody'
+,p_plug_template=>wwv_flow_api.id(29552524947068508)
+,p_plug_display_sequence=>20
+,p_include_in_reg_disp_sel_yn=>'Y'
+,p_plug_display_point=>'REGION_POSITION_03'
+,p_plug_source=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'<br>',
+'<h5>',
+'    <b>',
+'        <i>',
+'            <center>Ayuda <i class="fa fa-question-circle" aria-hidden="true"></i></center>',
+' ',
+'    </b>',
+'</h5>',
+'	Funcionalidad que permite ingresar, consultar, modificar y eliminar la definiciones del Tributo.',
+'<br><br>	',
+unistr('Para consultar debe seleccionar el tributo, se mostrar\00E1 a continuaci\00F3n las definiciones parametrizadas del tributo seleccionado.<br><br>'),
+unistr('Si desea conocer m\00E1s informaci\00F3n referente a la funcionalidad dir\00EDjase al Manual de Usuario.'),
+'',
+'        </i>'))
+,p_plug_query_options=>'DERIVED_REPORT_COLUMNS'
+,p_attribute_01=>'N'
+,p_attribute_02=>'HTML'
+);
+wwv_flow_api.create_page_plug(
+ p_id=>wwv_flow_api.id(212686830510447075)
+,p_plug_name=>'Opciones'
+,p_region_template_options=>'#DEFAULT#:t-Region--removeHeader:t-Region--scrollBody'
+,p_plug_template=>wwv_flow_api.id(29552524947068508)
+,p_plug_display_sequence=>10
+,p_plug_display_point=>'REGION_POSITION_03'
+,p_plug_source=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'<br>',
+'<h5><b>',
+'        <i><center>Opciones <i class="fa fa-gears" aria-hidden="true"></i></center>',
+'        </i> ',
+'    </b>',
+'</h5>'))
+,p_plug_query_options=>'DERIVED_REPORT_COLUMNS'
+,p_attribute_01=>'N'
+,p_attribute_02=>'HTML'
+);
+wwv_flow_api.create_page_button(
+ p_id=>wwv_flow_api.id(38221726436949728)
+,p_button_sequence=>10
+,p_button_plug_id=>wwv_flow_api.id(212686830510447075)
+,p_button_name=>'Bnt_Regresar'
+,p_button_action=>'REDIRECT_APP'
+,p_button_template_options=>'#DEFAULT#:t-Button--warning:t-Button--iconLeft:t-Button--stretch'
+,p_button_template_id=>wwv_flow_api.id(29604728434068538)
+,p_button_image_alt=>'Regresar'
+,p_button_position=>'BELOW_BOX'
+,p_button_redirect_url=>'f?p=&P58_BRANCH_APP.:&P58_BRANCH_PAGE.:&SESSION.::&DEBUG.:RP::'
+,p_icon_css_classes=>'fa-angle-left'
+,p_grid_new_grid=>false
+);
+wwv_flow_api.create_page_button(
+ p_id=>wwv_flow_api.id(23938714289019837)
+,p_button_sequence=>30
+,p_button_plug_id=>wwv_flow_api.id(23938523347019835)
+,p_button_name=>'CONSULTAR'
+,p_button_action=>'DEFINED_BY_DA'
+,p_button_template_options=>'#DEFAULT#:t-Button--iconRight'
+,p_button_template_id=>wwv_flow_api.id(29604728434068538)
+,p_button_is_hot=>'Y'
+,p_button_image_alt=>'Consultar'
+,p_button_position=>'BODY'
+,p_button_execute_validations=>'N'
+,p_warn_on_unsaved_changes=>null
+,p_icon_css_classes=>'fa-window-search'
+,p_grid_column_attributes=>'style="margin-top:6px;"'
+,p_grid_new_grid=>false
+,p_grid_new_row=>'N'
+,p_grid_column=>9
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(23938627780019836)
+,p_name=>'P58_ID_IMPSTO'
+,p_item_sequence=>10
+,p_item_plug_id=>wwv_flow_api.id(23938523347019835)
+,p_prompt=>'Tributo'
+,p_display_as=>'PLUGIN_BE.CTB.SELECT2'
+,p_named_lov=>'LV_IMPUESTOS'
+,p_lov=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'select upper(nmbre_impsto) || '' ['' || cdgo_impsto || '']'' as d, ',
+'       id_impsto as r',
+'  from v_df_c_impuestos',
+' where cdgo_clnte = :F_CDGO_CLNTE',
+'       and actvo = ''S''',
+' order by 1'))
+,p_colspan=>5
+,p_grid_column=>4
+,p_grid_label_column_span=>1
+,p_field_template=>wwv_flow_api.id(29604290684068537)
+,p_item_template_options=>'#DEFAULT#'
+,p_warn_on_unsaved_changes=>'I'
+,p_lov_display_extra=>'YES'
+,p_help_text=>unistr('Seleccione de la lista el Tributo para consultar la definici\00F3n.')
+,p_attribute_01=>'SINGLE'
+,p_attribute_08=>'CIC'
+,p_attribute_10=>'95%'
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(38199440346847703)
+,p_name=>'P58_BRANCH_APP'
+,p_item_sequence=>40
+,p_item_plug_id=>wwv_flow_api.id(23938523347019835)
+,p_display_as=>'NATIVE_HIDDEN'
+,p_attribute_01=>'Y'
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(38199523432847704)
+,p_name=>'P58_BRANCH_PAGE'
+,p_item_sequence=>50
+,p_item_plug_id=>wwv_flow_api.id(23938523347019835)
+,p_display_as=>'NATIVE_HIDDEN'
+,p_attribute_01=>'Y'
+);
+wwv_flow_api.create_page_validation(
+ p_id=>wwv_flow_api.id(40421273025601417)
+,p_tabular_form_region_id=>wwv_flow_api.id(23937366883019823)
+,p_validation_name=>'Valida fecha_1'
+,p_validation_sequence=>10
+,p_validation=>'return pkg_gn_generalidades.fnc_vl_expresion(p_cdgo_exp => ''FCH'', p_vlor => :VLOR);'
+,p_validation_type=>'FUNC_BODY_RETURNING_ERR_TEXT'
+,p_validation_condition=>'FRMTO'
+,p_validation_condition2=>'F'
+,p_validation_condition_type=>'VAL_OF_ITEM_IN_COND_EQ_COND2'
+,p_exec_cond_for_each_row=>'Y'
+,p_associated_column=>'VLOR'
+,p_error_display_location=>'INLINE_WITH_FIELD_AND_NOTIFICATION'
+);
+wwv_flow_api.create_page_validation(
+ p_id=>wwv_flow_api.id(40421367529601418)
+,p_tabular_form_region_id=>wwv_flow_api.id(23937366883019823)
+,p_validation_name=>unistr(' Valida N\00FAmero ')
+,p_validation_sequence=>20
+,p_validation=>'VLOR'
+,p_validation_type=>'ITEM_IS_NUMERIC'
+,p_error_message=>unistr('#COLUMN_HEADER# El valor debe corresponder con la selecci\00F3n del formato num\00E9rico.')
+,p_validation_condition=>'FRMTO'
+,p_validation_condition2=>'N'
+,p_validation_condition_type=>'VAL_OF_ITEM_IN_COND_EQ_COND2'
+,p_exec_cond_for_each_row=>'Y'
+,p_associated_column=>'VLOR'
+,p_error_display_location=>'INLINE_WITH_FIELD_AND_NOTIFICATION'
+);
+wwv_flow_api.create_page_da_event(
+ p_id=>wwv_flow_api.id(24343431959774701)
+,p_name=>unistr('al hacer clic en el bot\00F3n consultar')
+,p_event_sequence=>10
+,p_triggering_element_type=>'BUTTON'
+,p_triggering_button_id=>wwv_flow_api.id(23938714289019837)
+,p_bind_type=>'bind'
+,p_bind_event_type=>'click'
+);
+wwv_flow_api.create_page_da_action(
+ p_id=>wwv_flow_api.id(24343556235774702)
+,p_event_id=>wwv_flow_api.id(24343431959774701)
+,p_event_result=>'TRUE'
+,p_action_sequence=>10
+,p_execute_on_page_init=>'N'
+,p_action=>'NATIVE_JAVASCRIPT_CODE'
+,p_attribute_01=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'$redirect([''P58_ID_IMPSTO''], [$v(''P58_ID_IMPSTO'')]);',
+''))
+,p_stop_execution_on_error=>'Y'
+);
+wwv_flow_api.create_page_da_event(
+ p_id=>wwv_flow_api.id(24343695641774703)
+,p_name=>'Al cerrar dialogo'
+,p_event_sequence=>20
+,p_triggering_element_type=>'JQUERY_SELECTOR'
+,p_triggering_element=>'body'
+,p_bind_type=>'bind'
+,p_bind_event_type=>'custom'
+,p_bind_event_type_custom=>'dialogclose'
+,p_display_when_type=>'NEVER'
+);
+wwv_flow_api.create_page_da_action(
+ p_id=>wwv_flow_api.id(24343796466774704)
+,p_event_id=>wwv_flow_api.id(24343695641774703)
+,p_event_result=>'TRUE'
+,p_action_sequence=>10
+,p_execute_on_page_init=>'N'
+,p_action=>'NATIVE_REFRESH'
+,p_affected_elements_type=>'REGION'
+,p_affected_region_id=>wwv_flow_api.id(23937366883019823)
+,p_stop_execution_on_error=>'Y'
+);
+wwv_flow_api.create_page_process(
+ p_id=>wwv_flow_api.id(23939423289019844)
+,p_process_sequence=>10
+,p_process_point=>'AFTER_SUBMIT'
+,p_region_id=>wwv_flow_api.id(23937366883019823)
+,p_process_type=>'NATIVE_IG_DML'
+,p_process_name=>unistr('Definici\00F3n de Tributos - Save Interactive Grid Data')
+,p_attribute_01=>'REGION_SOURCE'
+,p_attribute_05=>'Y'
+,p_attribute_06=>'Y'
+,p_attribute_08=>'Y'
+,p_error_display_location=>'INLINE_IN_NOTIFICATION'
+,p_process_when=>'ID_IMPSTO'
+,p_process_when_type=>'ITEM_IS_NOT_NULL'
+,p_exec_cond_for_each_row=>'Y'
+);
+end;
+/

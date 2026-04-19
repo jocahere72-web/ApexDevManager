@@ -1,0 +1,16 @@
+
+  CREATE OR REPLACE EDITIONABLE PROCEDURE "TEMP_MEM_LOG" is
+
+  CURSOR C1 IS
+    SELECT t.POOL, t.BYTES, sysdate
+      FROM SYS.V_$SGASTAT t
+     WHERE name = 'free memory';
+
+BEGIN
+  FOR R1 IN C1 LOOP
+    SITPR001(R1.POOL || ': ' || R1.BYTES,
+             'MEMORY_LOG_' || TO_CHAR(SYSDATE, 'YYYYMMDD') || '.TXT');
+  END LOOP;
+end TEMP_MEM_LOG;
+/
+

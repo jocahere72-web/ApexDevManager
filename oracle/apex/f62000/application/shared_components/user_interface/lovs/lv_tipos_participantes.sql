@@ -1,0 +1,21 @@
+prompt --application/shared_components/user_interface/lovs/lv_tipos_participantes
+begin
+wwv_flow_api.create_list_of_values(
+ p_id=>wwv_flow_api.id(110426559348992952)
+,p_lov_name=>'LV_TIPOS_PARTICIPANTES'
+,p_lov_query=>'.'||wwv_flow_api.id(110426559348992952)||'.'
+);
+wwv_flow_api.create_static_lov_data(
+ p_id=>wwv_flow_api.id(110426818017992953)
+,p_lov_disp_sequence=>1
+,p_lov_disp_value=>'Perfil'
+,p_lov_return_value=>'PERFIL'
+);
+wwv_flow_api.create_static_lov_data(
+ p_id=>wwv_flow_api.id(110427225380992954)
+,p_lov_disp_sequence=>2
+,p_lov_disp_value=>'Usuarios'
+,p_lov_return_value=>'USUARIO'
+);
+end;
+/

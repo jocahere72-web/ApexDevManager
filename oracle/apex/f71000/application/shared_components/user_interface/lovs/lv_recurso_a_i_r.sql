@@ -1,0 +1,27 @@
+prompt --application/shared_components/user_interface/lovs/lv_recurso_a_i_r
+begin
+wwv_flow_api.create_list_of_values(
+ p_id=>wwv_flow_api.id(177371841997050686)
+,p_lov_name=>'LV_RECURSO_A_I_R'
+,p_lov_query=>'.'||wwv_flow_api.id(177371841997050686)||'.'
+);
+wwv_flow_api.create_static_lov_data(
+ p_id=>wwv_flow_api.id(177372006907050686)
+,p_lov_disp_sequence=>1
+,p_lov_disp_value=>unistr('Admisi\00F3n')
+,p_lov_return_value=>'A'
+);
+wwv_flow_api.create_static_lov_data(
+ p_id=>wwv_flow_api.id(177372093837050686)
+,p_lov_disp_sequence=>2
+,p_lov_disp_value=>unistr('Inadmisi\00F3n')
+,p_lov_return_value=>'I'
+);
+wwv_flow_api.create_static_lov_data(
+ p_id=>wwv_flow_api.id(177372221666050686)
+,p_lov_disp_sequence=>3
+,p_lov_disp_value=>'Rechazo'
+,p_lov_return_value=>'R'
+);
+end;
+/

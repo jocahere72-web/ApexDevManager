@@ -1,0 +1,247 @@
+prompt --application/pages/page_00039
+begin
+wwv_flow_api.create_page(
+ p_id=>39
+,p_user_interface_id=>wwv_flow_api.id(72999165452094574)
+,p_name=>unistr('Observaci\00F3n Recurso')
+,p_page_mode=>'MODAL'
+,p_step_title=>unistr('Observaci\00F3n Recurso')
+,p_autocomplete_on_off=>'OFF'
+,p_javascript_code=>'var htmldb_delete_message=''"DELETE_CONFIRM_MSG"'';'
+,p_step_template=>wwv_flow_api.id(72887696025094461)
+,p_page_template_options=>'#DEFAULT#'
+,p_protection_level=>'C'
+,p_last_updated_by=>'BVILLEGAS'
+,p_last_upd_yyyymmddhh24miss=>'20231031070709'
+);
+wwv_flow_api.create_page_plug(
+ p_id=>wwv_flow_api.id(71204267242192590)
+,p_plug_name=>'Crear Pantalla'
+,p_region_template_options=>'#DEFAULT#'
+,p_plug_template=>wwv_flow_api.id(72903782990094472)
+,p_plug_display_sequence=>10
+,p_plug_display_point=>'BODY'
+,p_query_type=>'TABLE'
+,p_query_table=>'GJ_G_RECURSOS_DETALLE'
+,p_include_rowid_column=>false
+,p_is_editable=>true
+,p_edit_operations=>'i:u:d'
+,p_lost_update_check_type=>'VALUES'
+,p_plug_source_type=>'NATIVE_FORM'
+);
+wwv_flow_api.create_page_plug(
+ p_id=>wwv_flow_api.id(71209886686192607)
+,p_plug_name=>'Botones'
+,p_region_template_options=>'#DEFAULT#'
+,p_plug_template=>wwv_flow_api.id(72904753757094472)
+,p_plug_display_sequence=>20
+,p_plug_display_point=>'REGION_POSITION_03'
+,p_attribute_01=>'N'
+,p_attribute_02=>'TEXT'
+,p_attribute_03=>'Y'
+);
+wwv_flow_api.create_page_button(
+ p_id=>wwv_flow_api.id(71210243968192607)
+,p_button_sequence=>10
+,p_button_plug_id=>wwv_flow_api.id(71209886686192607)
+,p_button_name=>'CANCEL'
+,p_button_action=>'DEFINED_BY_DA'
+,p_button_template_options=>'#DEFAULT#:t-Button--iconRight'
+,p_button_template_id=>wwv_flow_api.id(72977478175094544)
+,p_button_image_alt=>'Cancelar'
+,p_button_position=>'REGION_TEMPLATE_CLOSE'
+,p_warn_on_unsaved_changes=>null
+,p_icon_css_classes=>'fa-window-x'
+,p_grid_new_grid=>false
+);
+wwv_flow_api.create_page_button(
+ p_id=>wwv_flow_api.id(71211831725192609)
+,p_button_sequence=>20
+,p_button_plug_id=>wwv_flow_api.id(71209886686192607)
+,p_button_name=>'DELETE'
+,p_button_action=>'REDIRECT_URL'
+,p_button_template_options=>'#DEFAULT#'
+,p_button_template_id=>wwv_flow_api.id(72977356155094543)
+,p_button_image_alt=>'Delete'
+,p_button_position=>'REGION_TEMPLATE_DELETE'
+,p_button_redirect_url=>'javascript:apex.confirm(htmldb_delete_message,''DELETE'');'
+,p_button_execute_validations=>'N'
+,p_button_condition_type=>'NEVER'
+,p_grid_new_grid=>false
+,p_database_action=>'DELETE'
+);
+wwv_flow_api.create_page_button(
+ p_id=>wwv_flow_api.id(71212204856192609)
+,p_button_sequence=>30
+,p_button_plug_id=>wwv_flow_api.id(71209886686192607)
+,p_button_name=>'SAVE'
+,p_button_action=>'SUBMIT'
+,p_button_template_options=>'#DEFAULT#'
+,p_button_template_id=>wwv_flow_api.id(72977356155094543)
+,p_button_is_hot=>'Y'
+,p_button_image_alt=>'Apply Changes'
+,p_button_position=>'REGION_TEMPLATE_NEXT'
+,p_button_condition_type=>'NEVER'
+,p_grid_new_grid=>false
+,p_database_action=>'UPDATE'
+);
+wwv_flow_api.create_page_button(
+ p_id=>wwv_flow_api.id(71212686493192609)
+,p_button_sequence=>40
+,p_button_plug_id=>wwv_flow_api.id(71209886686192607)
+,p_button_name=>'CREATE'
+,p_button_action=>'SUBMIT'
+,p_button_template_options=>'#DEFAULT#:t-Button--iconRight'
+,p_button_template_id=>wwv_flow_api.id(72977478175094544)
+,p_button_is_hot=>'Y'
+,p_button_image_alt=>unistr('Registrar Observaci\00F3n')
+,p_button_position=>'REGION_TEMPLATE_NEXT'
+,p_button_condition=>'P39_ID_RCRSO_DTLLE'
+,p_button_condition_type=>'ITEM_IS_NULL'
+,p_icon_css_classes=>'fa-save'
+,p_grid_new_grid=>false
+,p_database_action=>'INSERT'
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(71204666354192590)
+,p_name=>'P39_ID_RCRSO_DTLLE'
+,p_source_data_type=>'NUMBER'
+,p_is_primary_key=>true
+,p_item_sequence=>10
+,p_item_plug_id=>wwv_flow_api.id(71204267242192590)
+,p_item_source_plug_id=>wwv_flow_api.id(71204267242192590)
+,p_source=>'ID_RCRSO_DTLLE'
+,p_source_type=>'REGION_SOURCE_COLUMN'
+,p_display_as=>'NATIVE_HIDDEN'
+,p_is_persistent=>'N'
+,p_protection_level=>'S'
+,p_attribute_01=>'Y'
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(71205022791192592)
+,p_name=>'P39_ID_RCRSO'
+,p_source_data_type=>'NUMBER'
+,p_item_sequence=>20
+,p_item_plug_id=>wwv_flow_api.id(71204267242192590)
+,p_item_source_plug_id=>wwv_flow_api.id(71204267242192590)
+,p_source=>'ID_RCRSO'
+,p_source_type=>'REGION_SOURCE_COLUMN'
+,p_display_as=>'NATIVE_HIDDEN'
+,p_is_persistent=>'N'
+,p_attribute_01=>'Y'
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(71205428971192594)
+,p_name=>'P39_ID_FLJO_TREA'
+,p_source_data_type=>'NUMBER'
+,p_item_sequence=>30
+,p_item_plug_id=>wwv_flow_api.id(71204267242192590)
+,p_item_source_plug_id=>wwv_flow_api.id(71204267242192590)
+,p_source=>'ID_FLJO_TREA'
+,p_source_type=>'REGION_SOURCE_COLUMN'
+,p_display_as=>'NATIVE_HIDDEN'
+,p_is_persistent=>'N'
+,p_attribute_01=>'Y'
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(71205726509192597)
+,p_name=>'P39_ID_MTVO_CLNTE'
+,p_source_data_type=>'NUMBER'
+,p_item_sequence=>40
+,p_item_plug_id=>wwv_flow_api.id(71204267242192590)
+,p_item_source_plug_id=>wwv_flow_api.id(71204267242192590)
+,p_source=>'ID_MTVO_CLNTE'
+,p_source_type=>'REGION_SOURCE_COLUMN'
+,p_display_as=>'NATIVE_HIDDEN'
+,p_is_persistent=>'N'
+,p_attribute_01=>'Y'
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(71206177055192598)
+,p_name=>'P39_OBSRVCION'
+,p_source_data_type=>'VARCHAR2'
+,p_item_sequence=>50
+,p_item_plug_id=>wwv_flow_api.id(71204267242192590)
+,p_item_source_plug_id=>wwv_flow_api.id(71204267242192590)
+,p_prompt=>unistr('Observaci\00F3n')
+,p_source=>'OBSRVCION'
+,p_source_type=>'REGION_SOURCE_COLUMN'
+,p_display_as=>'NATIVE_TEXTAREA'
+,p_cSize=>60
+,p_cMaxlength=>4000
+,p_cHeight=>8
+,p_read_only_when=>'P39_ID_RCRSO_DTLLE'
+,p_read_only_when_type=>'ITEM_IS_NOT_NULL'
+,p_field_template=>wwv_flow_api.id(72976600943094542)
+,p_item_template_options=>'#DEFAULT#'
+,p_is_persistent=>'N'
+,p_attribute_01=>'Y'
+,p_attribute_02=>'N'
+,p_attribute_03=>'N'
+,p_attribute_04=>'BOTH'
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(71206553384192599)
+,p_name=>'P39_ID_USRIO'
+,p_source_data_type=>'NUMBER'
+,p_item_sequence=>60
+,p_item_plug_id=>wwv_flow_api.id(71204267242192590)
+,p_item_source_plug_id=>wwv_flow_api.id(71204267242192590)
+,p_source=>'ID_USRIO'
+,p_source_type=>'REGION_SOURCE_COLUMN'
+,p_display_as=>'NATIVE_HIDDEN'
+,p_is_persistent=>'N'
+,p_attribute_01=>'Y'
+);
+wwv_flow_api.create_page_da_event(
+ p_id=>wwv_flow_api.id(71210307941192607)
+,p_name=>'Cancel Dialog'
+,p_event_sequence=>10
+,p_triggering_element_type=>'BUTTON'
+,p_triggering_button_id=>wwv_flow_api.id(71210243968192607)
+,p_bind_type=>'bind'
+,p_bind_event_type=>'click'
+);
+wwv_flow_api.create_page_da_action(
+ p_id=>wwv_flow_api.id(71211131575192608)
+,p_event_id=>wwv_flow_api.id(71210307941192607)
+,p_event_result=>'TRUE'
+,p_action_sequence=>10
+,p_execute_on_page_init=>'N'
+,p_action=>'NATIVE_DIALOG_CANCEL'
+,p_stop_execution_on_error=>'Y'
+);
+wwv_flow_api.create_page_process(
+ p_id=>wwv_flow_api.id(71213441649192610)
+,p_process_sequence=>10
+,p_process_point=>'AFTER_SUBMIT'
+,p_region_id=>wwv_flow_api.id(71204267242192590)
+,p_process_type=>'NATIVE_FORM_DML'
+,p_process_name=>'Procesar pantalla Crear Pantalla'
+,p_attribute_01=>'REGION_SOURCE'
+,p_attribute_05=>'Y'
+,p_attribute_06=>'Y'
+,p_attribute_08=>'Y'
+,p_error_display_location=>'INLINE_IN_NOTIFICATION'
+);
+wwv_flow_api.create_page_process(
+ p_id=>wwv_flow_api.id(71213846219192610)
+,p_process_sequence=>50
+,p_process_point=>'AFTER_SUBMIT'
+,p_process_type=>'NATIVE_CLOSE_WINDOW'
+,p_process_name=>unistr('Cerrar Recuadro de Di\00E1logo')
+,p_error_display_location=>'INLINE_IN_NOTIFICATION'
+,p_process_when=>'CREATE,SAVE,DELETE'
+,p_process_when_type=>'REQUEST_IN_CONDITION'
+);
+wwv_flow_api.create_page_process(
+ p_id=>wwv_flow_api.id(71213035210192609)
+,p_process_sequence=>10
+,p_process_point=>'BEFORE_HEADER'
+,p_region_id=>wwv_flow_api.id(71204267242192590)
+,p_process_type=>'NATIVE_FORM_INIT'
+,p_process_name=>'Inicializar pantalla Crear Pantalla'
+,p_error_display_location=>'INLINE_IN_NOTIFICATION'
+);
+end;
+/

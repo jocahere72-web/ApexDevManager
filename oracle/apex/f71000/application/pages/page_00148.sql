@@ -1,0 +1,95 @@
+prompt --application/pages/page_00148
+begin
+wwv_flow_api.create_page(
+ p_id=>148
+,p_user_interface_id=>wwv_flow_api.id(177366559650050652)
+,p_name=>'reportes'
+,p_step_title=>'reportes'
+,p_autocomplete_on_off=>'OFF'
+,p_page_template_options=>'#DEFAULT#'
+,p_last_updated_by=>'SROMERO'
+,p_last_upd_yyyymmddhh24miss=>'20191101165025'
+);
+wwv_flow_api.create_page_plug(
+ p_id=>wwv_flow_api.id(98425091061400501)
+,p_plug_name=>'reporte'
+,p_region_template_options=>'#DEFAULT#:t-Region--scrollBody'
+,p_plug_template=>wwv_flow_api.id(177332998617050607)
+,p_plug_display_sequence=>10
+,p_include_in_reg_disp_sel_yn=>'Y'
+,p_plug_display_point=>'BODY'
+,p_plug_query_options=>'DERIVED_REPORT_COLUMNS'
+,p_attribute_01=>'N'
+,p_attribute_02=>'HTML'
+);
+wwv_flow_api.create_page_button(
+ p_id=>wwv_flow_api.id(98425332520400504)
+,p_button_sequence=>40
+,p_button_plug_id=>wwv_flow_api.id(98425091061400501)
+,p_button_name=>'BTN_IMPRIMIR'
+,p_button_action=>'SUBMIT'
+,p_button_template_options=>'#DEFAULT#'
+,p_button_template_id=>wwv_flow_api.id(177355758530050632)
+,p_button_image_alt=>'Imprimir'
+,p_button_position=>'BODY'
+,p_grid_new_grid=>false
+,p_grid_new_row=>'N'
+,p_grid_new_column=>'Y'
+);
+wwv_flow_api.create_page_branch(
+ p_id=>wwv_flow_api.id(98425431540400505)
+,p_branch_action=>'f?p=66000:2:&SESSION.::&DEBUG.:RP::&success_msg=#SUCCESS_MSG#'
+,p_branch_point=>'BEFORE_PROCESSING'
+,p_branch_type=>'REDIRECT_URL'
+,p_branch_sequence=>10
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(98425156832400502)
+,p_name=>'P148_FCHA_INCIO'
+,p_item_sequence=>10
+,p_item_plug_id=>wwv_flow_api.id(98425091061400501)
+,p_prompt=>'Fecha Inicio'
+,p_display_as=>'NATIVE_DATE_PICKER'
+,p_cSize=>30
+,p_field_template=>wwv_flow_api.id(177355241449050629)
+,p_item_template_options=>'#DEFAULT#'
+,p_attribute_04=>'button'
+,p_attribute_05=>'N'
+,p_attribute_07=>'NONE'
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(98425206934400503)
+,p_name=>'P148_FCHA_FIN'
+,p_item_sequence=>20
+,p_item_plug_id=>wwv_flow_api.id(98425091061400501)
+,p_prompt=>'Fecha Final'
+,p_display_as=>'NATIVE_DATE_PICKER'
+,p_cSize=>30
+,p_begin_on_new_line=>'N'
+,p_field_template=>wwv_flow_api.id(177355241449050629)
+,p_item_template_options=>'#DEFAULT#'
+,p_attribute_04=>'button'
+,p_attribute_05=>'N'
+,p_attribute_07=>'NONE'
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(98425538309400506)
+,p_name=>'P148_RPRTE'
+,p_item_sequence=>30
+,p_item_plug_id=>wwv_flow_api.id(98425091061400501)
+,p_prompt=>'Reporte'
+,p_display_as=>'PLUGIN_BE.CTB.SELECT2'
+,p_lov=>wwv_flow_string.join(wwv_flow_t_varchar2(
+' select nmbre_rprte d ,',
+'        id_rprte r',
+'   from gn_d_reportes',
+'  where cdgo_rprte_grpo = ''RAP'';'))
+,p_lov_display_null=>'YES'
+,p_field_template=>wwv_flow_api.id(177355241449050629)
+,p_item_template_options=>'#DEFAULT#'
+,p_lov_display_extra=>'YES'
+,p_attribute_01=>'SINGLE'
+,p_attribute_08=>'CIC'
+);
+end;
+/

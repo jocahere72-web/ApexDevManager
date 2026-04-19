@@ -1,0 +1,65 @@
+
+  CREATE OR REPLACE FORCE EDITIONABLE VIEW "V_GF_G_CONVENIOS_MODIFICACION" ("ID_CNVNIO_MDFCCION", "ID_CNVNIO", "MTVO_RCHZO_SLCTUD", "NVO_NMRO_CTA", "IDNTFCCION_SJTO_FRMTDA", "DRCCION", "ID_CNVNIO_TPO", "CDGO_CLNTE", "ID_IMPSTO", "NMBRE_IMPSTO", "ID_IMPSTO_SBMPSTO", "NMBRE_IMPSTO_SBMPSTO", "ID_SJTO", "IDNTFCCION_SJTO", "NMRO_CNVNIO", "CDGO_CNVNIO_ESTDO", "FCHA_PRMRA_CTA", "VLOR_CTA_INCIAL", "NMRO_CTA", "FCHA_LMTE_CTA_INCIAL", "NMRO_MXMO_CTAS", "ID_SJTO_IMPSTO", "NMRO_RDCDO_DSPLAY", "CDGO_CNVNIO_MDFCCION_TPO", "DSCRPCION_CNVNIO_MDFCCION_TPO", "CDGO_MDFCCION_NMRO_CTA_TPO", "DSCRPCN_MDFCCION_NMRO_CTA_TPO", "FCHA_SGTE_CTA", "CDGO_PRDCDAD_CTA", "DSCRPCION_PRDCDAD_CTA", "ID_USRIO", "NMBRE_TRCRO", "FCHA_RGSTRO", "ID_INSTNCIA_FLJO_PDRE", "ID_INSTNCIA_FLJO_HJO", "ID_SLCTUD", "ID_ACTO", "CDGO_CNVNIO_MDFCCION_ESTDO", "DSCRPCN_CNVNIO_MDFCCION_ESTDO", "NMBRE_SLCTNTE", "CDGO_IDNTFCCION_TPO_SLCTNTE", "NMRO_IDNTFCCION_SLCTNTE", "DRCCION_NTFCCION", "ID_PAIS_NTFCCION", "NMBRE_PAIS_NTFCCION", "ID_DPRTMNTO_NTFCCION", "NMBRE_DPRTMNTO_NTFCCION", "ID_MNCPIO_NTFCCION", "NMBRE_MNCPIO_NTFCCION", "EMAIL", "TLFNO", "CLLAR", "NMRO_ACTO_DSPLAY", "NMRO_ACTO") AS
+  select  a.id_cnvnio_mdfccion,
+		a.id_cnvnio,
+        a.mtvo_rchzo_slctud,
+        a.nvo_nmro_cta,
+        b.idntfccion_sjto_frmtda,
+        b.drccion,
+        b.id_cnvnio_tpo,
+		b.cdgo_clnte,
+		b.id_impsto,
+		b.nmbre_impsto,
+		b.id_impsto_sbmpsto,
+		b.nmbre_impsto_sbmpsto,
+		b.id_sjto,
+		b.idntfccion_sjto,
+		b.nmro_cnvnio,
+        b.cdgo_cnvnio_estdo,
+        b.fcha_prmra_cta,
+        b.vlor_cta_incial,
+        b.nmro_cta,
+        b.fcha_lmte_cta_incial,
+        b.nmro_mxmo_ctas,
+        b.id_sjto_impsto,
+        b.nmro_rdcdo_dsplay,
+		a.cdgo_cnvnio_mdfccion_tpo,
+		c.dscrpcion						dscrpcion_cnvnio_mdfccion_tpo,
+		a.cdgo_mdfccion_nmro_cta_tpo,
+		decode(cdgo_mdfccion_nmro_cta_tpo, 'ADC', 'Adicion', 'RDC','Reduccion')	dscrpcn_mdfccion_nmro_cta_tpo,
+		a.fcha_sgte_cta,
+		a.cdgo_prdcdad_cta,
+		d.dscrpcion						dscrpcion_prdcdad_cta,
+		a.id_usrio,
+		e.nmbre_trcro,
+		a.fcha_rgstro,
+		a.id_instncia_fljo_pdre,
+		a.id_instncia_fljo_hjo,
+		a.id_slctud,
+		a.id_acto,
+		a.cdgo_cnvnio_mdfccion_estdo,
+		f.dscrpcion						dscrpcn_cnvnio_mdfccion_estdo,
+		g.nmbre_slctnte,
+		g.cdgo_idntfccion_tpo				cdgo_idntfccion_tpo_slctnte,
+		g.idntfccion						nmro_idntfccion_slctnte,
+		g.drccion_ntfccion,
+		g.id_pais_ntfccion,
+		g.nmbre_pais_ntfccion,
+		g.id_dprtmnto_ntfccion,
+		g.nmbre_dprtmnto_ntfccion,
+		g.id_mncpio_ntfccion,
+		g.nmbre_mncpio_ntfccion,
+		g.email,
+		g.tlfno,
+		g.cllar,
+        h.nmro_acto_dsplay,
+        h.nmro_acto
+   from gf_g_convenios_modificacion 	a
+   join v_gf_g_convenios 				      b on a.id_cnvnio 					          = b.id_cnvnio
+   join gf_d_convenios_mdfccn_tpo		  c on a.cdgo_cnvnio_mdfccion_tpo		  = c.cdgo_cnvnio_mdfccion_tpo
+   join v_sg_g_usuarios  				      e on a.id_usrio 					          = e.id_usrio
+   join gf_d_convenios_mdfccn_estdo		f on a.cdgo_cnvnio_mdfccion_estdo 	= f.cdgo_cnvnio_mdfccion_estdo
+   join v_pq_g_solicitantes			      g on a.id_slctud			              = g.id_slctud
+   left join df_s_periodicidad		    d on a.cdgo_prdcdad_cta 			      = d.cdgo_prdcdad
+   left join v_gn_g_actos			        h on a.id_acto 				              = h.id_acto;
+

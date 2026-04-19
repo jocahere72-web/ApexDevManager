@@ -1,0 +1,109 @@
+prompt --application/pages/page_00004
+begin
+wwv_flow_api.create_page(
+ p_id=>4
+,p_user_interface_id=>wwv_flow_api.id(177366559650050652)
+,p_name=>unistr('Recaudo Manual Editar Observaci\00F3n ')
+,p_page_mode=>'MODAL'
+,p_step_title=>unistr('Editar Observaci\00F3n')
+,p_autocomplete_on_off=>'OFF'
+,p_step_template=>wwv_flow_api.id(177320258117050591)
+,p_page_template_options=>'#DEFAULT#'
+,p_last_updated_by=>'NARDILA'
+,p_last_upd_yyyymmddhh24miss=>'20200615233005'
+);
+wwv_flow_api.create_page_plug(
+ p_id=>wwv_flow_api.id(38330139646496719)
+,p_plug_name=>unistr('Editar Observaci\00F3n')
+,p_region_template_options=>'#DEFAULT#:t-Region--noPadding:t-Region--removeHeader:t-Region--noBorder:t-Region--scrollBody'
+,p_plug_template=>wwv_flow_api.id(177332998617050607)
+,p_plug_display_sequence=>20
+,p_include_in_reg_disp_sel_yn=>'Y'
+,p_plug_display_point=>'BODY'
+,p_query_type=>'TABLE'
+,p_query_table=>'RE_G_RECAUDOS'
+,p_include_rowid_column=>false
+,p_is_editable=>false
+,p_plug_source_type=>'NATIVE_FORM'
+,p_plug_query_options=>'DERIVED_REPORT_COLUMNS'
+);
+wwv_flow_api.create_page_button(
+ p_id=>wwv_flow_api.id(38329489411496712)
+,p_button_sequence=>10
+,p_button_plug_id=>wwv_flow_api.id(38330139646496719)
+,p_button_name=>'Btn_Aplicar_Cambios'
+,p_button_action=>'SUBMIT'
+,p_button_template_options=>'#DEFAULT#:t-Button--iconRight:t-Button--stretch'
+,p_button_template_id=>wwv_flow_api.id(177355914201050632)
+,p_button_is_hot=>'Y'
+,p_button_image_alt=>'Aplicar Cambios'
+,p_button_position=>'REGION_TEMPLATE_CHANGE'
+,p_icon_css_classes=>'fa-save-as'
+,p_grid_new_grid=>false
+);
+wwv_flow_api.create_page_branch(
+ p_id=>wwv_flow_api.id(38331604349496734)
+,p_branch_name=>'Ir Pagina 132'
+,p_branch_action=>'f?p=&APP_ID.:132:&SESSION.::&DEBUG.:RP::&success_msg=#SUCCESS_MSG#'
+,p_branch_point=>'AFTER_PROCESSING'
+,p_branch_type=>'REDIRECT_URL'
+,p_branch_sequence=>10
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(38330344204496721)
+,p_name=>'P4_ID_RCDO'
+,p_source_data_type=>'NUMBER'
+,p_is_primary_key=>true
+,p_item_sequence=>10
+,p_item_plug_id=>wwv_flow_api.id(38330139646496719)
+,p_item_source_plug_id=>wwv_flow_api.id(38330139646496719)
+,p_source=>'ID_RCDO'
+,p_source_type=>'REGION_SOURCE_COLUMN'
+,p_display_as=>'NATIVE_HIDDEN'
+,p_is_persistent=>'N'
+,p_attribute_01=>'Y'
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(38331063808496728)
+,p_name=>'P4_OBSRVCION'
+,p_source_data_type=>'VARCHAR2'
+,p_item_sequence=>80
+,p_item_plug_id=>wwv_flow_api.id(38330139646496719)
+,p_item_source_plug_id=>wwv_flow_api.id(38330139646496719)
+,p_prompt=>unistr('<b>Observaci\00F3n:</b>')
+,p_source=>'OBSRVCION'
+,p_source_type=>'REGION_SOURCE_COLUMN'
+,p_display_as=>'NATIVE_TEXTAREA'
+,p_cSize=>100
+,p_cMaxlength=>900
+,p_cHeight=>1
+,p_field_template=>wwv_flow_api.id(177355349858050629)
+,p_item_template_options=>'#DEFAULT#:t-Form-fieldContainer--stretchInputs'
+,p_is_persistent=>'N'
+,p_attribute_01=>'Y'
+,p_attribute_02=>'N'
+,p_attribute_03=>'Y'
+,p_attribute_04=>'BOTH'
+);
+wwv_flow_api.create_page_process(
+ p_id=>wwv_flow_api.id(38329561389496713)
+,p_process_sequence=>10
+,p_process_point=>'AFTER_SUBMIT'
+,p_process_type=>'NATIVE_PLSQL'
+,p_process_name=>unistr('Actualizar Observaci\00F3n')
+,p_error_display_location=>'INLINE_IN_NOTIFICATION'
+,p_process_when_button_id=>wwv_flow_api.id(38329489411496712)
+);
+wwv_flow_api.create_page_process(
+ p_id=>wwv_flow_api.id(38330235998496720)
+,p_process_sequence=>20
+,p_process_point=>'BEFORE_HEADER'
+,p_region_id=>wwv_flow_api.id(38330139646496719)
+,p_process_type=>'NATIVE_FORM_INIT'
+,p_process_name=>unistr('Inicializar pantalla Recaudo Manual Editar Observaci\00F3n ')
+,p_error_display_location=>'INLINE_IN_NOTIFICATION'
+,p_process_when=>'P4_ID_RCDO'
+,p_process_when_type=>'ITEM_IS_NOT_NULL'
+);
+end;
+/

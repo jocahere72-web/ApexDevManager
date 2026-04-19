@@ -1,0 +1,63 @@
+
+  CREATE OR REPLACE FORCE EDITIONABLE VIEW "V_GI_G_DETERMINACIONES" ("ID_DTRMNCION", "CDGO_CLNTE", "ID_IMPSTO", "CDGO_IMPSTO", "NMBRE_IMPSTO", "ID_IMPSTO_SBMPSTO", "CDGO_IMPSTO_SBMPSTO", "NMBRE_IMPSTO_SBMPSTO", "ID_SJTO_IMPSTO", "IDNTFCCION_SJTO", "IDNTFCCION_SJTO_FRMTDA", "IDNTFCCION_ANTRIOR", "IDNTFCCION_ANTRIOR_FRMTDA", "DRCCION", "DRCCION_NTFCCION", "TPO_ORGEN", "ID_ORGEN", "FCHA_DTRMNCION", "ID_DTRMNCION_LTE", "ID_USRIO", "ID_TRCRO", "ID_FNCNRIO", "NMBRE_TRCRO", "IDNTFCCION", "FCHA_INCIO", "FCHA_FIN", "DRCION", "CDGO_DTRMNCION_TPO_SLCCION", "DSCRPCION_DTRMNCION_TPO_SLCCN", "VGNCIA_HSTA", "VGNCIA_DSDE", "ID_DCMNTO_LTE", "ID_ACTO", "INDCDOR_NTFCCION", "DSCRPCION_INDCDOR_NTFCCION", "INDCDOR_NTFCDO", "DSCRPCION_INDCDOR_NTFCDO", "NMRO_ACTO", "FCHA_NTFCCION", "ID_FNCNRIO_FRMA", "CDGO_IDNTFCCION_TPO", "DSCRPCION_IDNTFCCION_TPO", "IDNTFCCION_FNCNRIO_FRMA", "NMBRE_TRCRO_FNCNRIO_FRMA", "ID_CRGO", "NMBRE_CRGO", "ID_DCRTO_JSTFCCION_FRMA", "DSCRPCION_DCRTO_JSTFCCION_FRMA", "DCMNTO", "ID_PLNTLLA", "DSCRPCION_PLNTLLA", "ID_RPRTE", "ACTVO") AS
+  select a.id_dtrmncion,
+        a.cdgo_clnte,
+        a.id_impsto,
+        b.cdgo_impsto,
+        b.nmbre_impsto,
+        a.id_impsto_sbmpsto,
+        c.cdgo_impsto_sbmpsto,
+        c.nmbre_impsto_sbmpsto,
+        a.id_sjto_impsto,
+        d.idntfccion_sjto,
+        d.idntfccion_sjto_frmtda,
+        d.idntfccion_antrior,
+        d.idntfccion_antrior_frmtda,
+        d.drccion,
+        d.drccion_ntfccion,
+        a.tpo_orgen,
+        a.id_orgen,
+        a.fcha_dtrmncion,
+        a.id_dtrmncion_lte,
+        e.id_usrio,
+        e.id_trcro,
+        e.id_fncnrio,
+        e.nmbre_trcro,
+        e.idntfccion,
+        e.fcha_incio,
+        e.fcha_fin,
+        e.drcion,
+        e.cdgo_dtrmncion_tpo_slccion,
+        e.dscrpcion_dtrmncion_tpo_slccn,
+        e.vgncia_hsta,
+        e.vgncia_dsde,
+        e.id_dcmnto_lte,
+        a.id_acto,
+        f.indcdor_ntfccion,
+        decode(f.indcdor_ntfccion, 'S', 'Sí', 'N', 'No') 				dscrpcion_indcdor_ntfccion,
+        nvl(f.indcdor_ntfcdo, 'N')										indcdor_ntfcdo,
+        decode(nvl(f.indcdor_ntfcdo, 'N'), 'S', 'Sí', 'N', 'No') 		dscrpcion_indcdor_ntfcdo,
+        f.nmro_acto,
+        f.fcha_ntfccion,
+        f.id_fncnrio_frma,
+        f.cdgo_idntfccion_tpo,
+        f.dscrpcion_idntfccion_tpo,
+        f.idntfccion    									idntfccion_fncnrio_frma,
+        f.nmbre_trcro   									nmbre_trcro_fncnrio_frma,
+        f.id_crgo,
+        f.nmbre_crgo,
+        f.id_dcrto_jstfccion_frma,
+        f.dscrpcion_dcrto_jstfccion_frma,
+        a.dcmnto,
+        a.id_plntlla,
+        g.dscrpcion											dscrpcion_plntlla,
+        g.id_rprte,
+        a.actvo
+	 from gi_g_determinaciones          	a
+	 join df_c_impuestos                	b on a.id_impsto 			= b.id_impsto
+	 join df_i_impuestos_subimpuesto    	c on a.id_impsto_sbmpsto	= c.id_impsto_sbmpsto
+	 join v_si_i_sujetos_impuesto       	d on d.id_sjto_impsto 		= a.id_sjto_impsto
+	 left join v_gi_g_determinaciones_lote	e on a.id_dtrmncion_lte		= e.id_dtrmncion_lte
+	 left join v_gn_g_actos					f on a.id_acto 				= f.id_acto
+	 left join gn_d_plantillas				g on a.id_plntlla			= g.id_plntlla;
+

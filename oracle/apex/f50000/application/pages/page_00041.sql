@@ -1,0 +1,158 @@
+prompt --application/pages/page_00041
+begin
+wwv_flow_api.create_page(
+ p_id=>41
+,p_user_interface_id=>wwv_flow_api.id(95249231080808714)
+,p_name=>'Festivo'
+,p_page_mode=>'MODAL'
+,p_step_title=>'Festivo'
+,p_autocomplete_on_off=>'OFF'
+,p_step_template=>wwv_flow_api.id(29525011823068496)
+,p_page_template_options=>'#DEFAULT#'
+,p_dialog_height=>'400'
+,p_last_updated_by=>'ADMIN'
+,p_last_upd_yyyymmddhh24miss=>'20180918161353'
+);
+wwv_flow_api.create_page_plug(
+ p_id=>wwv_flow_api.id(139666511755107029)
+,p_plug_name=>'Wizard Progress'
+,p_region_template_options=>'#DEFAULT#'
+,p_component_template_options=>'#DEFAULT#:t-WizardSteps--displayLabels'
+,p_plug_template=>wwv_flow_api.id(29530253509068499)
+,p_plug_display_sequence=>10
+,p_plug_display_point=>'REGION_POSITION_01'
+,p_list_id=>wwv_flow_api.id(139660734488106995)
+,p_plug_source_type=>'NATIVE_LIST'
+,p_list_template_id=>wwv_flow_api.id(29602689997068536)
+);
+wwv_flow_api.create_page_plug(
+ p_id=>wwv_flow_api.id(139666617179107029)
+,p_plug_name=>'Festivo'
+,p_region_template_options=>'#DEFAULT#'
+,p_plug_template=>wwv_flow_api.id(29530253509068499)
+,p_plug_display_sequence=>10
+,p_plug_display_point=>'BODY'
+,p_attribute_01=>'N'
+,p_attribute_02=>'TEXT'
+,p_attribute_03=>'Y'
+);
+wwv_flow_api.create_page_plug(
+ p_id=>wwv_flow_api.id(139666748316107029)
+,p_plug_name=>'Buttons'
+,p_region_template_options=>'#DEFAULT#'
+,p_plug_template=>wwv_flow_api.id(29532093730068500)
+,p_plug_display_sequence=>10
+,p_plug_display_point=>'REGION_POSITION_03'
+,p_attribute_01=>'N'
+,p_attribute_02=>'TEXT'
+,p_attribute_03=>'Y'
+);
+wwv_flow_api.create_page_button(
+ p_id=>wwv_flow_api.id(139669011446107030)
+,p_button_sequence=>10
+,p_button_plug_id=>wwv_flow_api.id(139666748316107029)
+,p_button_name=>'CANCEL'
+,p_button_action=>'DEFINED_BY_DA'
+,p_button_template_options=>'#DEFAULT#'
+,p_button_template_id=>wwv_flow_api.id(29604648415068538)
+,p_button_image_alt=>'Cancel'
+,p_button_position=>'REGION_TEMPLATE_CLOSE'
+,p_grid_new_grid=>false
+);
+wwv_flow_api.create_page_button(
+ p_id=>wwv_flow_api.id(139669145135107030)
+,p_button_sequence=>40
+,p_button_plug_id=>wwv_flow_api.id(139666748316107029)
+,p_button_name=>'FINISH'
+,p_button_action=>'SUBMIT'
+,p_button_template_options=>'#DEFAULT#'
+,p_button_template_id=>wwv_flow_api.id(29604648415068538)
+,p_button_is_hot=>'Y'
+,p_button_image_alt=>'Finish'
+,p_button_position=>'REGION_TEMPLATE_NEXT'
+,p_grid_new_grid=>false
+);
+wwv_flow_api.create_page_button(
+ p_id=>wwv_flow_api.id(139669218498107030)
+,p_button_sequence=>20
+,p_button_plug_id=>wwv_flow_api.id(139666748316107029)
+,p_button_name=>'PREVIOUS'
+,p_button_action=>'SUBMIT'
+,p_button_template_options=>'#DEFAULT#'
+,p_button_template_id=>wwv_flow_api.id(29604517744068538)
+,p_button_image_alt=>'Previous'
+,p_button_position=>'REGION_TEMPLATE_PREVIOUS'
+,p_button_execute_validations=>'N'
+,p_icon_css_classes=>'fa-chevron-left'
+,p_grid_new_grid=>false
+);
+wwv_flow_api.create_page_branch(
+ p_id=>wwv_flow_api.id(139671078455107031)
+,p_branch_action=>'f?p=&APP_ID.:40:&SESSION.&success_msg=#SUCCESS_MSG#'
+,p_branch_point=>'BEFORE_VALIDATION'
+,p_branch_type=>'REDIRECT_URL'
+,p_branch_when_button_id=>wwv_flow_api.id(139669218498107030)
+,p_branch_sequence=>10
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(139668373884107030)
+,p_name=>'P41_ITEM1'
+,p_item_sequence=>10
+,p_item_plug_id=>wwv_flow_api.id(139666617179107029)
+,p_prompt=>'ITEM 1'
+,p_display_as=>'NATIVE_TEXT_FIELD'
+,p_cSize=>30
+,p_label_alignment=>'RIGHT'
+,p_field_template=>wwv_flow_api.id(29603993160068537)
+,p_item_template_options=>'#DEFAULT#'
+,p_attribute_01=>'N'
+,p_attribute_02=>'N'
+,p_attribute_03=>'N'
+,p_attribute_04=>'TEXT'
+,p_attribute_05=>'NONE'
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(139668749835107030)
+,p_name=>'P41_ITEM2'
+,p_item_sequence=>20
+,p_item_plug_id=>wwv_flow_api.id(139666617179107029)
+,p_prompt=>'ITEM 2'
+,p_display_as=>'NATIVE_TEXT_FIELD'
+,p_cSize=>30
+,p_label_alignment=>'RIGHT'
+,p_field_template=>wwv_flow_api.id(29603993160068537)
+,p_item_template_options=>'#DEFAULT#'
+,p_attribute_01=>'N'
+,p_attribute_02=>'N'
+,p_attribute_03=>'N'
+,p_attribute_04=>'TEXT'
+,p_attribute_05=>'NONE'
+);
+wwv_flow_api.create_page_da_event(
+ p_id=>wwv_flow_api.id(139669494446107030)
+,p_name=>'Cancel Dialog'
+,p_event_sequence=>10
+,p_triggering_element_type=>'BUTTON'
+,p_triggering_button_id=>wwv_flow_api.id(139669011446107030)
+,p_bind_type=>'bind'
+,p_bind_event_type=>'click'
+);
+wwv_flow_api.create_page_da_action(
+ p_id=>wwv_flow_api.id(139670234050107031)
+,p_event_id=>wwv_flow_api.id(139669494446107030)
+,p_event_result=>'TRUE'
+,p_action_sequence=>10
+,p_execute_on_page_init=>'N'
+,p_action=>'NATIVE_DIALOG_CANCEL'
+,p_stop_execution_on_error=>'Y'
+);
+wwv_flow_api.create_page_process(
+ p_id=>wwv_flow_api.id(139671722905107032)
+,p_process_sequence=>10
+,p_process_point=>'AFTER_SUBMIT'
+,p_process_type=>'NATIVE_CLOSE_WINDOW'
+,p_process_name=>'Close Dialog'
+,p_error_display_location=>'INLINE_IN_NOTIFICATION'
+);
+end;
+/

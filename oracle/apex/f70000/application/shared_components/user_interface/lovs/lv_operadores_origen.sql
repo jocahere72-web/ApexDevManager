@@ -1,0 +1,33 @@
+prompt --application/shared_components/user_interface/lovs/lv_operadores_origen
+begin
+wwv_flow_api.create_list_of_values(
+ p_id=>wwv_flow_api.id(12746972750444021)
+,p_lov_name=>'LV_OPERADORES_ORIGEN'
+,p_lov_query=>'.'||wwv_flow_api.id(12746972750444021)||'.'
+);
+wwv_flow_api.create_static_lov_data(
+ p_id=>wwv_flow_api.id(12747285056444022)
+,p_lov_disp_sequence=>1
+,p_lov_disp_value=>unistr('Est\00E1tico')
+,p_lov_return_value=>'E'
+);
+wwv_flow_api.create_static_lov_data(
+ p_id=>wwv_flow_api.id(12747655303444046)
+,p_lov_disp_sequence=>2
+,p_lov_disp_value=>'SQL'
+,p_lov_return_value=>'S'
+);
+wwv_flow_api.create_static_lov_data(
+ p_id=>wwv_flow_api.id(12747960222444046)
+,p_lov_disp_sequence=>3
+,p_lov_disp_value=>'Calculo'
+,p_lov_return_value=>'C'
+);
+wwv_flow_api.create_static_lov_data(
+ p_id=>wwv_flow_api.id(12748398900444047)
+,p_lov_disp_sequence=>4
+,p_lov_disp_value=>unistr('Funci\00F3n')
+,p_lov_return_value=>'F'
+);
+end;
+/

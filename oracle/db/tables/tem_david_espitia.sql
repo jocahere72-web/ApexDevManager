@@ -1,0 +1,5 @@
+
+  CREATE TABLE "TEM_DAVID_ESPITIA"
+   (	"NIT" VARCHAR2(25)
+   ) ;
+
