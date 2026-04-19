@@ -1,0 +1,39 @@
+prompt --application/pages/page_00003
+begin
+wwv_flow_api.create_page(
+ p_id=>3
+,p_user_interface_id=>wwv_flow_api.id(72999165452094574)
+,p_name=>'Plantilla'
+,p_page_mode=>'MODAL'
+,p_step_title=>'Plantilla'
+,p_autocomplete_on_off=>'OFF'
+,p_page_template_options=>'#DEFAULT#'
+,p_last_updated_by=>'JCUAO'
+,p_last_upd_yyyymmddhh24miss=>'20190131131436'
+);
+wwv_flow_api.create_page_plug(
+ p_id=>wwv_flow_api.id(76888421251108705)
+,p_plug_name=>'Plantilla'
+,p_region_template_options=>'#DEFAULT#:t-Region--scrollBody'
+,p_plug_template=>wwv_flow_api.id(72925202139094501)
+,p_plug_display_sequence=>10
+,p_include_in_reg_disp_sel_yn=>'Y'
+,p_plug_display_point=>'BODY'
+,p_plug_query_options=>'DERIVED_REPORT_COLUMNS'
+,p_attribute_01=>'N'
+,p_attribute_02=>'HTML'
+);
+wwv_flow_api.create_page_button(
+ p_id=>wwv_flow_api.id(76888680178108707)
+,p_button_sequence=>10
+,p_button_plug_id=>wwv_flow_api.id(76888421251108705)
+,p_button_name=>'BTN_CNFIRMAR'
+,p_button_action=>'SUBMIT'
+,p_button_template_options=>'#DEFAULT#'
+,p_button_template_id=>wwv_flow_api.id(72977356155094543)
+,p_button_image_alt=>'Confirmar'
+,p_button_position=>'REGION_TEMPLATE_CREATE'
+,p_grid_new_grid=>false
+);
+end;
+/

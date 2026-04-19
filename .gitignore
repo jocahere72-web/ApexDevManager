@@ -36,3 +36,8 @@ Thumbs.db
 
 # Claude Code local settings
 .claude/settings.local.json
+
+# Oracle exports - temp files
+oracle/**/*.log
+oracle/**/*.tmp
+oracle/apex/f*/f*.sql

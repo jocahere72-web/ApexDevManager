@@ -1,0 +1,442 @@
+prompt --application/pages/page_00061
+begin
+wwv_flow_api.create_page(
+ p_id=>61
+,p_user_interface_id=>wwv_flow_api.id(177366559650050652)
+,p_name=>unistr('Informe de Lotes de Facturaci\00F3n Masiva-M\00FAltiples Fechas')
+,p_step_title=>unistr('Informe de Lotes de Facturaci\00F3n Masiva-M\00FAltiples Fechas')
+,p_autocomplete_on_off=>'OFF'
+,p_step_template=>wwv_flow_api.id(177318575824050591)
+,p_page_template_options=>'#DEFAULT#'
+,p_last_upd_yyyymmddhh24miss=>'20190201024728'
+);
+wwv_flow_api.create_page_plug(
+ p_id=>wwv_flow_api.id(370854902999082540)
+,p_plug_name=>'Opciones'
+,p_region_template_options=>'#DEFAULT#:t-Region--removeHeader:t-Region--scrollBody'
+,p_plug_template=>wwv_flow_api.id(177332998617050607)
+,p_plug_display_sequence=>20
+,p_include_in_reg_disp_sel_yn=>'Y'
+,p_plug_display_point=>'REGION_POSITION_03'
+,p_plug_source=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'<br>',
+'<h5><b>',
+'        <i><center>Opciones <i class="fa fa-gears" aria-hidden="true"></i></center>',
+'        </i> ',
+'    </b>',
+'</h5>'))
+,p_plug_query_options=>'DERIVED_REPORT_COLUMNS'
+,p_attribute_01=>'N'
+,p_attribute_02=>'HTML'
+);
+wwv_flow_api.create_page_plug(
+ p_id=>wwv_flow_api.id(370952629094899461)
+,p_plug_name=>unistr('Informe de Lotes de Facturaci\00F3n Masiva-M\00FAtiples Fechas')
+,p_region_template_options=>'#DEFAULT#'
+,p_plug_template=>wwv_flow_api.id(177332491179050607)
+,p_plug_display_sequence=>10
+,p_plug_display_point=>'BODY'
+,p_plug_source=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'select a.id_dcmnto_lte,',
+'       a.nmbre_impsto,',
+'       a.nmbre_impsto_sbmpsto,',
+'       a.obsrvcion,',
+'       a.nmro_dcmnto_gnrdos,',
+'       a.fcha',
+'  from v_re_g_documentos_lote a',
+' where a.cdgo_clnte         = :F_CDGO_CLNTE',
+'   and a.id_usrio           = :F_ID_USRIO',
+'   and cdgo_dcmnto_lte_tpo  = ''MMF''',
+'  '))
+,p_plug_source_type=>'NATIVE_IG'
+,p_plug_query_options=>'DERIVED_REPORT_COLUMNS'
+);
+wwv_flow_api.create_region_column(
+ p_id=>wwv_flow_api.id(370855580149082547)
+,p_name=>'ID_DCMNTO_LTE'
+,p_source_type=>'DB_COLUMN'
+,p_source_expression=>'ID_DCMNTO_LTE'
+,p_data_type=>'NUMBER'
+,p_is_query_only=>false
+,p_item_type=>'NATIVE_NUMBER_FIELD'
+,p_heading=>'No. Lote'
+,p_heading_alignment=>'CENTER'
+,p_display_sequence=>20
+,p_value_alignment=>'CENTER'
+,p_attribute_03=>'right'
+,p_is_required=>true
+,p_enable_filter=>true
+,p_filter_is_required=>false
+,p_filter_lov_type=>'NONE'
+,p_use_as_row_header=>false
+,p_enable_sort_group=>true
+,p_enable_control_break=>true
+,p_enable_hide=>true
+,p_is_primary_key=>false
+,p_duplicate_value=>true
+,p_include_in_export=>true
+);
+wwv_flow_api.create_region_column(
+ p_id=>wwv_flow_api.id(370855730091082548)
+,p_name=>'NMBRE_IMPSTO'
+,p_source_type=>'DB_COLUMN'
+,p_source_expression=>'NMBRE_IMPSTO'
+,p_data_type=>'VARCHAR2'
+,p_is_query_only=>false
+,p_item_type=>'NATIVE_TEXTAREA'
+,p_heading=>'Tributo'
+,p_heading_alignment=>'CENTER'
+,p_display_sequence=>30
+,p_value_alignment=>'LEFT'
+,p_attribute_01=>'Y'
+,p_attribute_02=>'N'
+,p_attribute_03=>'N'
+,p_attribute_04=>'BOTH'
+,p_is_required=>true
+,p_max_length=>200
+,p_enable_filter=>true
+,p_filter_operators=>'C:S:CASE_INSENSITIVE:REGEXP'
+,p_filter_is_required=>false
+,p_filter_text_case=>'MIXED'
+,p_filter_lov_type=>'NONE'
+,p_use_as_row_header=>false
+,p_enable_sort_group=>false
+,p_enable_control_break=>false
+,p_enable_hide=>true
+,p_is_primary_key=>false
+,p_duplicate_value=>true
+,p_include_in_export=>true
+);
+wwv_flow_api.create_region_column(
+ p_id=>wwv_flow_api.id(370855829568082549)
+,p_name=>'NMBRE_IMPSTO_SBMPSTO'
+,p_source_type=>'DB_COLUMN'
+,p_source_expression=>'NMBRE_IMPSTO_SBMPSTO'
+,p_data_type=>'VARCHAR2'
+,p_is_query_only=>false
+,p_item_type=>'NATIVE_TEXT_FIELD'
+,p_heading=>'Sub-Tributo'
+,p_heading_alignment=>'CENTER'
+,p_display_sequence=>40
+,p_value_alignment=>'LEFT'
+,p_attribute_05=>'BOTH'
+,p_is_required=>true
+,p_max_length=>50
+,p_enable_filter=>true
+,p_filter_operators=>'C:S:CASE_INSENSITIVE:REGEXP'
+,p_filter_is_required=>false
+,p_filter_text_case=>'MIXED'
+,p_filter_exact_match=>true
+,p_filter_lov_type=>'DISTINCT'
+,p_use_as_row_header=>false
+,p_enable_sort_group=>true
+,p_enable_control_break=>true
+,p_enable_hide=>true
+,p_is_primary_key=>false
+,p_duplicate_value=>true
+,p_include_in_export=>true
+);
+wwv_flow_api.create_region_column(
+ p_id=>wwv_flow_api.id(370855868291082550)
+,p_name=>'OBSRVCION'
+,p_source_type=>'DB_COLUMN'
+,p_source_expression=>'OBSRVCION'
+,p_data_type=>'VARCHAR2'
+,p_is_query_only=>false
+,p_item_type=>'NATIVE_TEXTAREA'
+,p_heading=>unistr('Observaci\00F3n')
+,p_heading_alignment=>'CENTER'
+,p_display_sequence=>50
+,p_value_alignment=>'LEFT'
+,p_attribute_01=>'Y'
+,p_attribute_02=>'N'
+,p_attribute_03=>'N'
+,p_attribute_04=>'BOTH'
+,p_is_required=>false
+,p_max_length=>1000
+,p_enable_filter=>true
+,p_filter_operators=>'C:S:CASE_INSENSITIVE:REGEXP'
+,p_filter_is_required=>false
+,p_filter_text_case=>'MIXED'
+,p_filter_lov_type=>'NONE'
+,p_use_as_row_header=>false
+,p_enable_sort_group=>false
+,p_enable_control_break=>false
+,p_enable_hide=>true
+,p_is_primary_key=>false
+,p_duplicate_value=>true
+,p_include_in_export=>true
+);
+wwv_flow_api.create_region_column(
+ p_id=>wwv_flow_api.id(370856012356082551)
+,p_name=>'NMRO_DCMNTO_GNRDOS'
+,p_source_type=>'DB_COLUMN'
+,p_source_expression=>'NMRO_DCMNTO_GNRDOS'
+,p_data_type=>'NUMBER'
+,p_is_query_only=>false
+,p_item_type=>'NATIVE_NUMBER_FIELD'
+,p_heading=>'No. Documetos <br> Generados'
+,p_heading_alignment=>'CENTER'
+,p_display_sequence=>60
+,p_value_alignment=>'CENTER'
+,p_attribute_03=>'right'
+,p_is_required=>true
+,p_enable_filter=>true
+,p_filter_is_required=>false
+,p_filter_lov_type=>'NONE'
+,p_use_as_row_header=>false
+,p_enable_sort_group=>true
+,p_enable_control_break=>true
+,p_enable_hide=>true
+,p_is_primary_key=>false
+,p_duplicate_value=>true
+,p_include_in_export=>true
+);
+wwv_flow_api.create_region_column(
+ p_id=>wwv_flow_api.id(370856114157082552)
+,p_name=>'FCHA'
+,p_source_type=>'DB_COLUMN'
+,p_source_expression=>'FCHA'
+,p_data_type=>'TIMESTAMP'
+,p_is_query_only=>false
+,p_item_type=>'NATIVE_DATE_PICKER'
+,p_heading=>unistr('Fecha<br> Generaci\00F3n')
+,p_heading_alignment=>'CENTER'
+,p_display_sequence=>70
+,p_value_alignment=>'CENTER'
+,p_attribute_04=>'button'
+,p_attribute_05=>'N'
+,p_attribute_07=>'NONE'
+,p_format_mask=>'DD-MON-YYYY HH:MIPM'
+,p_is_required=>true
+,p_enable_filter=>true
+,p_filter_is_required=>false
+,p_filter_date_ranges=>'ALL'
+,p_filter_lov_type=>'DISTINCT'
+,p_use_as_row_header=>false
+,p_enable_sort_group=>true
+,p_enable_control_break=>true
+,p_enable_hide=>true
+,p_is_primary_key=>false
+,p_duplicate_value=>true
+,p_include_in_export=>true
+);
+wwv_flow_api.create_region_column(
+ p_id=>wwv_flow_api.id(370856449352082555)
+,p_name=>'Imprimir'
+,p_source_type=>'NONE'
+,p_item_type=>'NATIVE_HTML_EXPRESSION'
+,p_heading=>'Imprimir'
+,p_heading_alignment=>'CENTER'
+,p_display_sequence=>90
+,p_value_alignment=>'CENTER'
+,p_attribute_01=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'<button style="color:green" type="button" class="a-Button a-Button--noLabel a-Button--iconTextButton "  title="Imprimir Documentos del Lote" onclick="$(''#Con'').dialog(''open'');">Imprimir',
+'<span class="fa-10x fa fa-print "></span>',
+'</button>'))
+,p_use_as_row_header=>false
+,p_enable_hide=>true
+);
+wwv_flow_api.create_region_column(
+ p_id=>wwv_flow_api.id(370856519682082556)
+,p_name=>'Ver Lote'
+,p_source_type=>'NONE'
+,p_item_type=>'NATIVE_HTML_EXPRESSION'
+,p_heading_alignment=>'CENTER'
+,p_display_sequence=>10
+,p_value_alignment=>'CENTER'
+,p_attribute_01=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'<button style="color:blue" type="button" class="a-Button a-Button--noLabel a-Button--iconTextButton "  title="Ver Detalle Lote" onclick="$(''#Con'').dialog(''open'');">Ver',
+'<span class="fa fa-eye"></span>',
+'</button>'))
+,p_link_target=>'f?p=&APP_ID.:57:&SESSION.::&DEBUG.:RP,57:P57_ID_DCMNTO_LTE:&ID_DCMNTO_LTE.'
+,p_use_as_row_header=>false
+,p_enable_hide=>true
+);
+wwv_flow_api.create_interactive_grid(
+ p_id=>wwv_flow_api.id(370855531412082546)
+,p_internal_uid=>368677092001484087
+,p_is_editable=>false
+,p_lazy_loading=>false
+,p_requires_filter=>false
+,p_show_nulls_as=>'-'
+,p_select_first_row=>true
+,p_fixed_row_height=>true
+,p_pagination_type=>'SCROLL'
+,p_show_total_row_count=>true
+,p_show_toolbar=>true
+,p_toolbar_buttons=>'SEARCH_COLUMN:SEARCH_FIELD:ACTIONS_MENU:SEARCH_COLUMN:SEARCH_FIELD:ACTIONS_MENU:RESET:SAVE'
+,p_enable_save_public_report=>false
+,p_enable_subscriptions=>true
+,p_enable_flashback=>true
+,p_define_chart_view=>true
+,p_enable_download=>true
+,p_enable_mail_download=>true
+,p_fixed_header=>'PAGE'
+,p_show_icon_view=>false
+,p_show_detail_view=>false
+);
+wwv_flow_api.create_ig_report(
+ p_id=>wwv_flow_api.id(370988844104134610)
+,p_interactive_grid_id=>wwv_flow_api.id(370855531412082546)
+,p_type=>'PRIMARY'
+,p_default_view=>'GRID'
+,p_show_row_number=>false
+,p_settings_area_expanded=>true
+);
+wwv_flow_api.create_ig_report_view(
+ p_id=>wwv_flow_api.id(370988874682134615)
+,p_report_id=>wwv_flow_api.id(370988844104134610)
+,p_view_type=>'GRID'
+,p_stretch_columns=>true
+,p_srv_exclude_null_values=>false
+,p_srv_only_display_columns=>true
+,p_edit_mode=>false
+);
+wwv_flow_api.create_ig_report_column(
+ p_id=>wwv_flow_api.id(370989443816134632)
+,p_view_id=>wwv_flow_api.id(370988874682134615)
+,p_display_seq=>2
+,p_column_id=>wwv_flow_api.id(370855580149082547)
+,p_is_visible=>true
+,p_is_frozen=>false
+,p_width=>68
+,p_sort_order=>1
+,p_sort_direction=>'DESC'
+,p_sort_nulls=>'FIRST'
+);
+wwv_flow_api.create_ig_report_column(
+ p_id=>wwv_flow_api.id(370989951217134641)
+,p_view_id=>wwv_flow_api.id(370988874682134615)
+,p_display_seq=>2
+,p_column_id=>wwv_flow_api.id(370855730091082548)
+,p_is_visible=>true
+,p_is_frozen=>false
+,p_width=>142
+);
+wwv_flow_api.create_ig_report_column(
+ p_id=>wwv_flow_api.id(370990462197134643)
+,p_view_id=>wwv_flow_api.id(370988874682134615)
+,p_display_seq=>3
+,p_column_id=>wwv_flow_api.id(370855829568082549)
+,p_is_visible=>true
+,p_is_frozen=>false
+,p_width=>132
+);
+wwv_flow_api.create_ig_report_column(
+ p_id=>wwv_flow_api.id(370990960993134645)
+,p_view_id=>wwv_flow_api.id(370988874682134615)
+,p_display_seq=>4
+,p_column_id=>wwv_flow_api.id(370855868291082550)
+,p_is_visible=>true
+,p_is_frozen=>false
+,p_width=>231
+);
+wwv_flow_api.create_ig_report_column(
+ p_id=>wwv_flow_api.id(370991393755134646)
+,p_view_id=>wwv_flow_api.id(370988874682134615)
+,p_display_seq=>5
+,p_column_id=>wwv_flow_api.id(370856012356082551)
+,p_is_visible=>true
+,p_is_frozen=>false
+,p_width=>110
+);
+wwv_flow_api.create_ig_report_column(
+ p_id=>wwv_flow_api.id(370991873178134648)
+,p_view_id=>wwv_flow_api.id(370988874682134615)
+,p_display_seq=>6
+,p_column_id=>wwv_flow_api.id(370856114157082552)
+,p_is_visible=>true
+,p_is_frozen=>false
+,p_width=>134
+);
+wwv_flow_api.create_ig_report_column(
+ p_id=>wwv_flow_api.id(370993440943134653)
+,p_view_id=>wwv_flow_api.id(370988874682134615)
+,p_display_seq=>7
+,p_column_id=>wwv_flow_api.id(370856449352082555)
+,p_is_visible=>true
+,p_is_frozen=>false
+,p_width=>69
+);
+wwv_flow_api.create_ig_report_column(
+ p_id=>wwv_flow_api.id(371014447745286942)
+,p_view_id=>wwv_flow_api.id(370988874682134615)
+,p_display_seq=>0
+,p_column_id=>wwv_flow_api.id(370856519682082556)
+,p_is_visible=>true
+,p_is_frozen=>false
+,p_width=>65
+);
+wwv_flow_api.create_ig_report_filter(
+ p_id=>wwv_flow_api.id(187708109872756464)
+,p_report_id=>wwv_flow_api.id(370988844104134610)
+,p_type=>'COLUMN'
+,p_column_id=>wwv_flow_api.id(370856114157082552)
+,p_operator=>'LAST'
+,p_is_case_sensitive=>false
+,p_expression=>'12~H'
+,p_is_enabled=>true
+);
+wwv_flow_api.create_page_plug(
+ p_id=>wwv_flow_api.id(371644231610412642)
+,p_plug_name=>'Ayuda'
+,p_region_template_options=>'#DEFAULT#:t-Region--removeHeader:t-Region--scrollBody'
+,p_plug_template=>wwv_flow_api.id(177332998617050607)
+,p_plug_display_sequence=>30
+,p_include_in_reg_disp_sel_yn=>'Y'
+,p_plug_display_point=>'REGION_POSITION_03'
+,p_plug_source=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'<br>',
+'<h5>',
+'    <b>',
+'        <i>',
+'            <center>Ayuda <i class="fa fa-question-circle" aria-hidden="true"></i></center>',
+'        </i> ',
+'    </b>',
+'</h5>',
+'<i>Funcionalidad que permite: </i>  <br><br>',
+'',
+unistr('<p align="justify"><b><i>1.</b> Visualizar la informaci\00F3n de creaci\00F3n del lote de facturaci\00F3n masiva con m\00FAtiples fechas de vencimientos.</i> <br></p>'),
+unistr('<p align="justify"><b><i>2.</b> Informaci\00F3n de los documentos que pertenece a cada lote.</i><br></p>'),
+unistr('<p align="justify"><b><i>3.</b> Crear un nuevo lote de facturaci\00F3n masiva con m\00FAtiples fechas de vencimientos. </i><br></p>')))
+,p_plug_query_options=>'DERIVED_REPORT_COLUMNS'
+,p_attribute_01=>'N'
+,p_attribute_02=>'HTML'
+);
+wwv_flow_api.create_page_button(
+ p_id=>wwv_flow_api.id(187708618386750100)
+,p_button_sequence=>10
+,p_button_plug_id=>wwv_flow_api.id(370854902999082540)
+,p_button_name=>'BTN_NUEVO_LOTE'
+,p_button_action=>'REDIRECT_PAGE'
+,p_button_template_options=>'#DEFAULT#:t-Button--iconRight:t-Button--stretch'
+,p_button_template_id=>wwv_flow_api.id(177355914201050632)
+,p_button_is_hot=>'Y'
+,p_button_image_alt=>'Nuevo Lote'
+,p_button_position=>'BELOW_BOX'
+,p_button_redirect_url=>'f?p=&APP_ID.:60:&SESSION.::&DEBUG.:RP,60::'
+,p_icon_css_classes=>'fa-folder-plus'
+,p_grid_new_grid=>false
+);
+wwv_flow_api.create_page_branch(
+ p_id=>wwv_flow_api.id(187883808986471193)
+,p_branch_name=>unistr('Ir a la P\00E1gina 60')
+,p_branch_action=>'f?p=&APP_ID.:60:&SESSION.::&DEBUG.:RP,60::&success_msg=#SUCCESS_MSG#'
+,p_branch_point=>'AFTER_PROCESSING'
+,p_branch_type=>'REDIRECT_URL'
+,p_branch_when_button_id=>wwv_flow_api.id(187708618386750100)
+,p_branch_sequence=>10
+);
+wwv_flow_api.create_page_process(
+ p_id=>wwv_flow_api.id(188037488445795079)
+,p_process_sequence=>10
+,p_process_point=>'AFTER_SUBMIT'
+,p_process_type=>'NATIVE_PLSQL'
+,p_process_name=>'CREAR COLECCION'
+,p_process_sql_clob=>'APEX_COLLECTION.DELETE_COLLECTION(p_collection_name => ''FCHAS_VNCMNTO'');'
+,p_error_display_location=>'INLINE_IN_NOTIFICATION'
+,p_process_when_button_id=>wwv_flow_api.id(187708618386750100)
+);
+end;
+/

@@ -1,0 +1,58 @@
+prompt --application/shared_components/logic/application_computations
+begin
+wwv_flow_api.create_flow_computation(
+ p_id=>wwv_flow_api.id(9779259479039692)
+,p_computation_sequence=>10
+,p_computation_item=>'F_DRCCION_SRVDOR_PRVDO'
+,p_computation_point=>'ON_NEW_INSTANCE'
+,p_computation_type=>'STATIC_ASSIGNMENT'
+,p_computation_processed=>'REPLACE_EXISTING'
+,p_computation=>'http://99.0.4.235:8031/ords/api/'
+);
+wwv_flow_api.create_flow_computation(
+ p_id=>wwv_flow_api.id(9779497123040584)
+,p_computation_sequence=>10
+,p_computation_item=>'F_DRCCION_SRVDOR_PBLCO'
+,p_computation_point=>'ON_NEW_INSTANCE'
+,p_computation_type=>'STATIC_ASSIGNMENT'
+,p_computation_processed=>'REPLACE_EXISTING'
+,p_computation=>'https://monteria-test.taxationsmart.co/ords/api/'
+);
+wwv_flow_api.create_flow_computation(
+ p_id=>wwv_flow_api.id(13181248407270293)
+,p_computation_sequence=>10
+,p_computation_item=>'F_CDGO_CLNTE'
+,p_computation_point=>'ON_NEW_INSTANCE'
+,p_computation_type=>'STATIC_ASSIGNMENT'
+,p_computation_processed=>'REPLACE_EXISTING'
+,p_computation=>'23001'
+);
+wwv_flow_api.create_flow_computation(
+ p_id=>wwv_flow_api.id(26794413895350327)
+,p_computation_sequence=>10
+,p_computation_item=>'F_IP_PBLCA'
+,p_computation_point=>'ON_NEW_INSTANCE'
+,p_computation_type=>'QUERY'
+,p_computation_processed=>'REPLACE_EXISTING'
+,p_computation=>'select pkg_ws_pagos_placetopay.fnc_co_ip_publica(p_url => ''https://api.myip.com'') from dual;'
+);
+wwv_flow_api.create_flow_computation(
+ p_id=>wwv_flow_api.id(41914454339738639)
+,p_computation_sequence=>10
+,p_computation_item=>'F_FRMTO_MNDA'
+,p_computation_point=>'ON_NEW_INSTANCE'
+,p_computation_type=>'STATIC_ASSIGNMENT'
+,p_computation_processed=>'REPLACE_EXISTING'
+,p_computation=>'FM$999G999G999G999G999G999G990'
+);
+wwv_flow_api.create_flow_computation(
+ p_id=>wwv_flow_api.id(55291602137666419)
+,p_computation_sequence=>10
+,p_computation_item=>'F_DRCCION_SRVDOR'
+,p_computation_point=>'ON_NEW_INSTANCE'
+,p_computation_type=>'STATIC_ASSIGNMENT'
+,p_computation_processed=>'REPLACE_EXISTING'
+,p_computation=>'https://monteria-test.taxationsmart.co/ords/api/'
+);
+end;
+/

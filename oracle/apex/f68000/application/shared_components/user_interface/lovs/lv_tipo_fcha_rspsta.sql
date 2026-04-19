@@ -1,0 +1,21 @@
+prompt --application/shared_components/user_interface/lovs/lv_tipo_fcha_rspsta
+begin
+wwv_flow_api.create_list_of_values(
+ p_id=>wwv_flow_api.id(82656812259763623)
+,p_lov_name=>'LV_TIPO_FCHA_RSPSTA'
+,p_lov_query=>'.'||wwv_flow_api.id(82656812259763623)||'.'
+);
+wwv_flow_api.create_static_lov_data(
+ p_id=>wwv_flow_api.id(82657193280763638)
+,p_lov_disp_sequence=>1
+,p_lov_disp_value=>'Ley'
+,p_lov_return_value=>'L'
+);
+wwv_flow_api.create_static_lov_data(
+ p_id=>wwv_flow_api.id(82657569432763650)
+,p_lov_disp_sequence=>2
+,p_lov_disp_value=>'Proyectada'
+,p_lov_return_value=>'P'
+);
+end;
+/

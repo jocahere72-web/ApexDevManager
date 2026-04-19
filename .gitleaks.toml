@@ -1,0 +1,10 @@
+[extend]
+# Use default gitleaks rules
+
+[allowlist]
+# APEX shared_components/files/ contain binary files (PNG, PDF, XLSX)
+# encoded as hex in SQL INSERT statements. The hex data triggers
+# false positives for aws-access-token rules due to entropy patterns.
+paths = [
+  '''oracle/apex/.*/shared_components/files/.*\.sql$''',
+]

@@ -1,0 +1,106 @@
+
+  CREATE OR REPLACE FORCE EDITIONABLE VIEW "V_GI_G_DECLARACIONES_PRESENTADAS_RETENCIONES" ("NMRO_CNSCTVO", "ID_SJTO_IMPSTO", "VGNCIA", "PRDO", "FCHA_PRSNTCION", "'FECHA LIMITE DE PAGO'", "'OPCIONES DE USO'", "'NUMERO DE DECLARACIÓN ANTERIOR'", "'3.TIPO DE IDENTIFICACIÓN'", "'IDENTIFICACIÓN'", "'DÍGITO DE VERIFICACIÓN'", "'PLACA'", "'4. ESTABLECIMIENTO'", "'5.DIRECCIÓN DEL RETENEDOR'", "'6.TELÉFONO'", "'RAZON SOCIAL O PROPIETARIO'", "'7.BASE DE RETENCIÓN'", "'8.RETENCION DE INDUSTRIA Y COMERCIO'", "'TIPO DE SANCIÓN'", "'TIPO DE CALCULO DE LA SANCIÓN'", "'9.SANCIONES. Concepto Sanciones'", "'CALCULO SANCIÓN SISTEMA 9. SANCIONES SUGERIDA'", "'10.TOTAL A PAGAR'", "'11.VALOR PAGOS SANCIONES'", "'12.VALOR PAGO INTERESES DE MORA'", "'13.VALOR PAGO DE RETENCIONES'", "'VALOR A PAGAR EN BANCOS'", "'PAGO TOTAL'", "'NOMBRES Y APELLIDOS DEL DECLARANTE'", "'TIPO DE IDENTIFICACIÓN DEL DECLARANTE'", "'N° IDENTIFICACIÓN DEL DECLARANTE'", "'NOMBRES Y APELLIDOS CONTADOR O REVISOR FISCAL'", "'TIPO DE IDENTIFICACIÓN'", "'N° IDENTIFICACIÓN DEL CONTADOR O REVISOR FISCAL'", "'TARJETA PROFESIONAL'", "'REVISADO'") AS
+  SELECT
+    NMRO_CNSCTVO,
+    id_sjto_impsto,
+    VGNCIA,
+    prdo,
+    fcha_prsntcion,
+    "'FECHA LIMITE DE PAGO'",
+    "'OPCIONES DE USO'",
+    "'NUMERO DE DECLARACIÓN ANTERIOR'",
+    "'3.TIPO DE IDENTIFICACIÓN'",
+    "'IDENTIFICACIÓN'",
+    "'DÍGITO DE VERIFICACIÓN'",
+    "'PLACA'",
+    "'4. ESTABLECIMIENTO'",
+    "'5.DIRECCIÓN DEL RETENEDOR'",
+    "'6.TELÉFONO'",
+    "'RAZON SOCIAL O PROPIETARIO'",
+    "'7.BASE DE RETENCIÓN'",
+    "'8.RETENCION DE INDUSTRIA Y COMERCIO'",
+    "'TIPO DE SANCIÓN'",
+    "'TIPO DE CALCULO DE LA SANCIÓN'",
+    "'9.SANCIONES. Concepto Sanciones'",
+    "'CALCULO SANCIÓN SISTEMA 9. SANCIONES SUGERIDA'",
+    "'10.TOTAL A PAGAR'",
+    "'11.VALOR PAGOS SANCIONES'",
+    "'12.VALOR PAGO INTERESES DE MORA'",
+    "'13.VALOR PAGO DE RETENCIONES'",
+    "'VALOR A PAGAR EN BANCOS'",
+    "'PAGO TOTAL'",
+    "'NOMBRES Y APELLIDOS DEL DECLARANTE'",
+    "'TIPO DE IDENTIFICACIÓN DEL DECLARANTE'",
+    "'N° IDENTIFICACIÓN DEL DECLARANTE'",
+    "'NOMBRES Y APELLIDOS CONTADOR O REVISOR FISCAL'",
+    "'TIPO DE IDENTIFICACIÓN'",
+    "'N° IDENTIFICACIÓN DEL CONTADOR O REVISOR FISCAL'",
+    "'TARJETA PROFESIONAL'",
+    "'REVISADO'"
+FROM
+    (
+        SELECT
+            e.nmro_cnsctvo,
+            e.id_sjto_impsto,
+            e.vgncia,
+            --e.id_prdo,
+            f.dscrpcion prdo,
+            trunc(e.fcha_prsntcion) fcha_prsntcion,
+            --'''' || b.dscrpcion || '''' dscrpcion,
+            b.dscrpcion,
+            dbms_lob.substr(a.vlor_dsplay,
+                            dbms_lob.getlength(a.vlor_dsplay),
+                            1) AS vlor_dsplay
+        FROM
+                 gi_g_declaraciones_detalle a
+            INNER JOIN gi_d_frmlrios_rgion_atrbto b ON b.id_frmlrio_rgion_atrbto = a.id_frmlrio_rgion_atrbto
+            INNER JOIN gi_d_formularios_region    c ON c.id_frmlrio_rgion = b.id_frmlrio_rgion
+            INNER JOIN gi_d_formularios           d ON d.id_frmlrio = c.id_frmlrio
+            JOIN gi_g_declaraciones         e ON a.id_dclrcion = e.id_dclrcion
+            JOIN df_i_periodos                    f ON f.id_prdo = e.id_prdo
+        WHERE
+                --e.nmro_cnsctvo = 120240071615 AND
+                d.id_frmlrio = 684 -- Formulario de Retenciones
+            AND b.cdgo_atrbto_tpo NOT IN ( 'OCL' )
+            AND e.cdgo_dclrcion_estdo = 'APL'
+            --AND e.vgncia in (2020, 2021, 2022, 2023)
+        ORDER BY
+            a.id_dclrcion DESC,
+            c.orden,
+            b.orden
+    ) PIVOT (
+        MAX(vlor_dsplay)
+        FOR ( dscrpcion )
+        IN ( 'FECHA LIMITE DE PAGO',
+            'OPCIONES DE USO',
+            'NUMERO DE DECLARACIÓN ANTERIOR',
+            '3.TIPO DE IDENTIFICACIÓN',
+            'IDENTIFICACIÓN',
+            'DÍGITO DE VERIFICACIÓN',
+            'PLACA',
+            '4. ESTABLECIMIENTO',
+            '5.DIRECCIÓN DEL RETENEDOR',
+            '6.TELÉFONO',
+            'RAZON SOCIAL O PROPIETARIO',
+            '7.BASE DE RETENCIÓN',
+            '8.RETENCION DE INDUSTRIA Y COMERCIO',
+            'TIPO DE SANCIÓN',
+            'TIPO DE CALCULO DE LA SANCIÓN',
+            '9.SANCIONES. Concepto Sanciones',
+            'CALCULO SANCIÓN SISTEMA 9. SANCIONES SUGERIDA',
+            '10.TOTAL A PAGAR',
+            '11.VALOR PAGOS SANCIONES',
+            '12.VALOR PAGO INTERESES DE MORA',
+            '13.VALOR PAGO DE RETENCIONES',
+            'VALOR A PAGAR EN BANCOS',
+            'PAGO TOTAL',
+            'NOMBRES Y APELLIDOS DEL DECLARANTE',
+            'TIPO DE IDENTIFICACIÓN DEL DECLARANTE',
+            'N° IDENTIFICACIÓN DEL DECLARANTE',
+            'NOMBRES Y APELLIDOS CONTADOR O REVISOR FISCAL',
+            'TIPO DE IDENTIFICACIÓN',
+            'N° IDENTIFICACIÓN DEL CONTADOR O REVISOR FISCAL',
+            'TARJETA PROFESIONAL',
+            'REVISADO' )
+    );
+

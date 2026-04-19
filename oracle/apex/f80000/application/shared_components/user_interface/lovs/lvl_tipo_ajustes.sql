@@ -1,0 +1,21 @@
+prompt --application/shared_components/user_interface/lovs/lvl_tipo_ajustes
+begin
+wwv_flow_api.create_list_of_values(
+ p_id=>wwv_flow_api.id(30502192367463313)
+,p_lov_name=>'LVL_TIPO_AJUSTES'
+,p_lov_query=>'.'||wwv_flow_api.id(30502192367463313)||'.'
+);
+wwv_flow_api.create_static_lov_data(
+ p_id=>wwv_flow_api.id(30502545337463313)
+,p_lov_disp_sequence=>1
+,p_lov_disp_value=>'Debito'
+,p_lov_return_value=>'DB'
+);
+wwv_flow_api.create_static_lov_data(
+ p_id=>wwv_flow_api.id(30502964915463314)
+,p_lov_disp_sequence=>2
+,p_lov_disp_value=>'Credito'
+,p_lov_return_value=>'CR'
+);
+end;
+/

@@ -1,0 +1,600 @@
+prompt --application/pages/page_00041
+begin
+wwv_flow_api.create_page(
+ p_id=>41
+,p_user_interface_id=>wwv_flow_api.id(17431055073919422)
+,p_name=>'Recepcion de Bienes'
+,p_page_mode=>'MODAL'
+,p_step_title=>unistr('Recepci\00F3n de Bienes')
+,p_autocomplete_on_off=>'OFF'
+,p_page_template_options=>'#DEFAULT#'
+,p_dialog_height=>'510'
+,p_dialog_width=>'1000'
+,p_dialog_chained=>'N'
+,p_last_updated_by=>'ABRACHE'
+,p_last_upd_yyyymmddhh24miss=>'20190617144730'
+);
+wwv_flow_api.create_page_plug(
+ p_id=>wwv_flow_api.id(75116143587204741)
+,p_plug_name=>'Propiedades de Bienes'
+,p_region_template_options=>'#DEFAULT#'
+,p_component_template_options=>'#DEFAULT#'
+,p_plug_template=>wwv_flow_api.id(17355873415919374)
+,p_plug_display_sequence=>40
+,p_include_in_reg_disp_sel_yn=>'Y'
+,p_plug_new_grid_row=>false
+,p_plug_display_point=>'BODY'
+,p_plug_source=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'SELECT ID_EMBRGOS_BNES,',
+'       ID_EMBRGOS_BNES_DTLLE,',
+'       ID_PRPDDES_BIEN,VLOR_PRPDAD',
+'FROM MC_G_EMBARGOS_BIENES_DETALLE;'))
+,p_plug_source_type=>'NATIVE_IG'
+,p_master_region_id=>wwv_flow_api.id(75463580983221203)
+,p_plug_query_options=>'DERIVED_REPORT_COLUMNS'
+,p_plug_header=>'<h4>Propiedades de Bienes</h4>'
+);
+wwv_flow_api.create_region_column(
+ p_id=>wwv_flow_api.id(75116331424204743)
+,p_name=>'ID_EMBRGOS_BNES'
+,p_source_type=>'DB_COLUMN'
+,p_source_expression=>'ID_EMBRGOS_BNES'
+,p_data_type=>'NUMBER'
+,p_is_query_only=>false
+,p_item_type=>'NATIVE_HIDDEN'
+,p_display_sequence=>30
+,p_attribute_01=>'Y'
+,p_use_as_row_header=>false
+,p_enable_sort_group=>true
+,p_enable_control_break=>true
+,p_enable_hide=>true
+,p_is_primary_key=>false
+,p_parent_column_id=>wwv_flow_api.id(75463765642221205)
+,p_include_in_export=>false
+);
+wwv_flow_api.create_region_column(
+ p_id=>wwv_flow_api.id(75116434381204744)
+,p_name=>'ID_EMBRGOS_BNES_DTLLE'
+,p_source_type=>'DB_COLUMN'
+,p_source_expression=>'ID_EMBRGOS_BNES_DTLLE'
+,p_data_type=>'NUMBER'
+,p_is_query_only=>false
+,p_item_type=>'NATIVE_HIDDEN'
+,p_display_sequence=>40
+,p_attribute_01=>'Y'
+,p_use_as_row_header=>false
+,p_enable_sort_group=>true
+,p_enable_control_break=>true
+,p_enable_hide=>true
+,p_is_primary_key=>true
+,p_duplicate_value=>true
+,p_include_in_export=>false
+);
+wwv_flow_api.create_region_column(
+ p_id=>wwv_flow_api.id(75116565315204745)
+,p_name=>'ID_PRPDDES_BIEN'
+,p_source_type=>'DB_COLUMN'
+,p_source_expression=>'ID_PRPDDES_BIEN'
+,p_data_type=>'NUMBER'
+,p_is_query_only=>false
+,p_item_type=>'NATIVE_SELECT_LIST'
+,p_heading=>'Propiedad'
+,p_heading_alignment=>'CENTER'
+,p_display_sequence=>50
+,p_value_alignment=>'CENTER'
+,p_is_required=>true
+,p_lov_type=>'SQL_QUERY'
+,p_lov_source=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'SELECT A.DSCRPCION,A.ID_PRPDDES_BIEN',
+'FROM MC_D_PROPIEDADES_BIEN A, MC_D_PROPIEDADES_BIEN_ENTIDAD B',
+'WHERE A.ID_PRPDDES_BIEN = B.ID_PRPDDES_BIEN',
+'AND B.ID_ENTDDES = :P41_ID_ENTDDES;'))
+,p_lov_display_extra=>true
+,p_lov_display_null=>true
+,p_enable_filter=>true
+,p_filter_operators=>'C:S:CASE_INSENSITIVE:REGEXP'
+,p_filter_is_required=>false
+,p_filter_text_case=>'MIXED'
+,p_filter_exact_match=>true
+,p_filter_lov_type=>'LOV'
+,p_use_as_row_header=>false
+,p_enable_sort_group=>true
+,p_enable_control_break=>true
+,p_enable_hide=>true
+,p_is_primary_key=>false
+,p_duplicate_value=>true
+,p_include_in_export=>true
+,p_readonly_condition_type=>'ALWAYS'
+,p_readonly_for_each_row=>false
+);
+wwv_flow_api.create_region_column(
+ p_id=>wwv_flow_api.id(75116672484204746)
+,p_name=>'VLOR_PRPDAD'
+,p_source_type=>'DB_COLUMN'
+,p_source_expression=>'VLOR_PRPDAD'
+,p_data_type=>'VARCHAR2'
+,p_is_query_only=>false
+,p_item_type=>'NATIVE_TEXT_FIELD'
+,p_heading=>'Valor Propiedad'
+,p_heading_alignment=>'CENTER'
+,p_display_sequence=>60
+,p_value_alignment=>'CENTER'
+,p_attribute_05=>'BOTH'
+,p_is_required=>true
+,p_max_length=>50
+,p_enable_filter=>true
+,p_filter_operators=>'C:S:CASE_INSENSITIVE:REGEXP'
+,p_filter_is_required=>false
+,p_filter_text_case=>'MIXED'
+,p_filter_exact_match=>true
+,p_filter_lov_type=>'DISTINCT'
+,p_use_as_row_header=>false
+,p_enable_sort_group=>true
+,p_enable_control_break=>true
+,p_enable_hide=>true
+,p_is_primary_key=>false
+,p_duplicate_value=>true
+,p_include_in_export=>true
+);
+wwv_flow_api.create_region_column(
+ p_id=>wwv_flow_api.id(75116761595204747)
+,p_name=>'APEX$ROW_ACTION'
+,p_item_type=>'NATIVE_ROW_ACTION'
+,p_display_sequence=>20
+,p_enable_hide=>true
+);
+wwv_flow_api.create_region_column(
+ p_id=>wwv_flow_api.id(75116877666204748)
+,p_name=>'APEX$ROW_SELECTOR'
+,p_item_type=>'NATIVE_ROW_SELECTOR'
+,p_display_sequence=>10
+,p_attribute_01=>'Y'
+,p_attribute_02=>'Y'
+,p_attribute_03=>'N'
+,p_enable_hide=>true
+);
+wwv_flow_api.create_interactive_grid(
+ p_id=>wwv_flow_api.id(75116263268204742)
+,p_internal_uid=>75116263268204742
+,p_is_editable=>true
+,p_edit_operations=>'u'
+,p_lost_update_check_type=>'VALUES'
+,p_submit_checked_rows=>false
+,p_lazy_loading=>false
+,p_requires_filter=>false
+,p_show_nulls_as=>'-'
+,p_select_first_row=>true
+,p_fixed_row_height=>true
+,p_pagination_type=>'SET'
+,p_show_total_row_count=>true
+,p_show_toolbar=>false
+,p_toolbar_buttons=>null
+,p_enable_save_public_report=>false
+,p_enable_subscriptions=>true
+,p_enable_flashback=>true
+,p_define_chart_view=>true
+,p_enable_download=>true
+,p_enable_mail_download=>true
+,p_fixed_header=>'PAGE'
+,p_show_icon_view=>false
+,p_show_detail_view=>false
+);
+wwv_flow_api.create_ig_report(
+ p_id=>wwv_flow_api.id(75423297906164233)
+,p_interactive_grid_id=>wwv_flow_api.id(75116263268204742)
+,p_type=>'PRIMARY'
+,p_default_view=>'GRID'
+,p_show_row_number=>false
+,p_settings_area_expanded=>true
+);
+wwv_flow_api.create_ig_report_view(
+ p_id=>wwv_flow_api.id(75423350272164233)
+,p_report_id=>wwv_flow_api.id(75423297906164233)
+,p_view_type=>'GRID'
+,p_stretch_columns=>true
+,p_srv_exclude_null_values=>false
+,p_srv_only_display_columns=>true
+,p_edit_mode=>false
+);
+wwv_flow_api.create_ig_report_column(
+ p_id=>wwv_flow_api.id(75423826722164236)
+,p_view_id=>wwv_flow_api.id(75423350272164233)
+,p_display_seq=>1
+,p_column_id=>wwv_flow_api.id(75116331424204743)
+,p_is_visible=>true
+,p_is_frozen=>false
+);
+wwv_flow_api.create_ig_report_column(
+ p_id=>wwv_flow_api.id(75424353464164240)
+,p_view_id=>wwv_flow_api.id(75423350272164233)
+,p_display_seq=>2
+,p_column_id=>wwv_flow_api.id(75116434381204744)
+,p_is_visible=>true
+,p_is_frozen=>false
+);
+wwv_flow_api.create_ig_report_column(
+ p_id=>wwv_flow_api.id(75424846708164243)
+,p_view_id=>wwv_flow_api.id(75423350272164233)
+,p_display_seq=>4
+,p_column_id=>wwv_flow_api.id(75116565315204745)
+,p_is_visible=>true
+,p_is_frozen=>false
+,p_width=>205
+);
+wwv_flow_api.create_ig_report_column(
+ p_id=>wwv_flow_api.id(75425303962164245)
+,p_view_id=>wwv_flow_api.id(75423350272164233)
+,p_display_seq=>5
+,p_column_id=>wwv_flow_api.id(75116672484204746)
+,p_is_visible=>true
+,p_is_frozen=>false
+,p_width=>146
+);
+wwv_flow_api.create_ig_report_column(
+ p_id=>wwv_flow_api.id(75425855429164246)
+,p_view_id=>wwv_flow_api.id(75423350272164233)
+,p_display_seq=>0
+,p_column_id=>wwv_flow_api.id(75116761595204747)
+,p_is_visible=>true
+,p_is_frozen=>false
+);
+wwv_flow_api.create_page_plug(
+ p_id=>wwv_flow_api.id(75463497695221202)
+,p_plug_name=>'Botones'
+,p_region_template_options=>'#DEFAULT#:t-Region--removeHeader:t-Region--scrollBody:margin-bottom-sm:margin-left-sm:margin-right-sm'
+,p_plug_template=>wwv_flow_api.id(17356902947919375)
+,p_plug_display_sequence=>50
+,p_include_in_reg_disp_sel_yn=>'Y'
+,p_plug_display_point=>'REGION_POSITION_03'
+,p_plug_query_options=>'DERIVED_REPORT_COLUMNS'
+,p_attribute_01=>'N'
+,p_attribute_02=>'HTML'
+);
+wwv_flow_api.create_page_plug(
+ p_id=>wwv_flow_api.id(75463580983221203)
+,p_plug_name=>'Tipos de Bienes'
+,p_region_template_options=>'#DEFAULT#'
+,p_component_template_options=>'#DEFAULT#'
+,p_plug_template=>wwv_flow_api.id(17355873415919374)
+,p_plug_display_sequence=>30
+,p_include_in_reg_disp_sel_yn=>'Y'
+,p_plug_display_point=>'BODY'
+,p_plug_source=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'SELECT ID_EMBRGOS_BNES,',
+'       ID_SLCTD_OFCIO,',
+'       ID_TPOS_DSTNO,',
+'       VLOR_ESTMDO',
+'FROM MC_G_EMBARGOS_BIENES',
+'  where ID_SLCTD_OFCIO = :p41_ID_SLCTD_OFCIO;'))
+,p_plug_source_type=>'NATIVE_IG'
+,p_plug_query_options=>'DERIVED_REPORT_COLUMNS'
+,p_plug_header=>'<h4>Tipos de Bienes</h4>'
+);
+wwv_flow_api.create_region_column(
+ p_id=>wwv_flow_api.id(75463765642221205)
+,p_name=>'ID_EMBRGOS_BNES'
+,p_source_type=>'DB_COLUMN'
+,p_source_expression=>'ID_EMBRGOS_BNES'
+,p_data_type=>'NUMBER'
+,p_is_query_only=>false
+,p_item_type=>'NATIVE_HIDDEN'
+,p_display_sequence=>30
+,p_attribute_01=>'Y'
+,p_use_as_row_header=>false
+,p_enable_sort_group=>true
+,p_enable_control_break=>true
+,p_enable_hide=>true
+,p_is_primary_key=>true
+,p_duplicate_value=>true
+,p_include_in_export=>false
+);
+wwv_flow_api.create_region_column(
+ p_id=>wwv_flow_api.id(75463852839221206)
+,p_name=>'ID_SLCTD_OFCIO'
+,p_source_type=>'DB_COLUMN'
+,p_source_expression=>'ID_SLCTD_OFCIO'
+,p_data_type=>'NUMBER'
+,p_is_query_only=>false
+,p_item_type=>'NATIVE_HIDDEN'
+,p_display_sequence=>40
+,p_attribute_01=>'Y'
+,p_use_as_row_header=>false
+,p_enable_sort_group=>true
+,p_enable_control_break=>true
+,p_enable_hide=>true
+,p_is_primary_key=>false
+,p_default_type=>'ITEM'
+,p_default_expression=>'P41_ID_SLCTD_OFCIO'
+,p_duplicate_value=>true
+,p_include_in_export=>false
+);
+wwv_flow_api.create_region_column(
+ p_id=>wwv_flow_api.id(75463910655221207)
+,p_name=>'ID_TPOS_DSTNO'
+,p_source_type=>'DB_COLUMN'
+,p_source_expression=>'ID_TPOS_DSTNO'
+,p_data_type=>'NUMBER'
+,p_is_query_only=>false
+,p_item_type=>'NATIVE_SELECT_LIST'
+,p_heading=>'Destino'
+,p_heading_alignment=>'CENTER'
+,p_display_sequence=>50
+,p_value_alignment=>'CENTER'
+,p_is_required=>true
+,p_lov_type=>'SQL_QUERY'
+,p_lov_source=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'SELECT A.DSCRPCION,A.ID_TPOS_DSTNO',
+'FROM MC_D_TIPOS_DESTINO A,MC_D_TIPOS_DESTINO_ENTIDAD B',
+'WHERE A.ID_TPOS_DSTNO = B.ID_TPOS_DSTNO',
+'AND B.ID_ENTDDES = :P41_ID_ENTDDES;'))
+,p_lov_display_extra=>true
+,p_lov_display_null=>true
+,p_enable_filter=>true
+,p_filter_operators=>'C:S:CASE_INSENSITIVE:REGEXP'
+,p_filter_is_required=>false
+,p_filter_text_case=>'MIXED'
+,p_filter_exact_match=>true
+,p_filter_lov_type=>'LOV'
+,p_use_as_row_header=>false
+,p_enable_sort_group=>true
+,p_enable_control_break=>true
+,p_enable_hide=>true
+,p_is_primary_key=>false
+,p_duplicate_value=>true
+,p_include_in_export=>true
+);
+wwv_flow_api.create_region_column(
+ p_id=>wwv_flow_api.id(75464017769221208)
+,p_name=>'VLOR_ESTMDO'
+,p_source_type=>'DB_COLUMN'
+,p_source_expression=>'VLOR_ESTMDO'
+,p_data_type=>'NUMBER'
+,p_is_query_only=>false
+,p_item_type=>'NATIVE_NUMBER_FIELD'
+,p_heading=>'Valor Estimado'
+,p_heading_alignment=>'CENTER'
+,p_display_sequence=>60
+,p_value_alignment=>'CENTER'
+,p_attribute_03=>'right'
+,p_format_mask=>'999G999G999G999G999G999G990'
+,p_is_required=>false
+,p_enable_filter=>true
+,p_filter_is_required=>false
+,p_filter_lov_type=>'NONE'
+,p_use_as_row_header=>false
+,p_enable_sort_group=>true
+,p_enable_control_break=>true
+,p_enable_hide=>true
+,p_is_primary_key=>false
+,p_duplicate_value=>true
+,p_include_in_export=>true
+);
+wwv_flow_api.create_region_column(
+ p_id=>wwv_flow_api.id(75464197748221209)
+,p_name=>'APEX$ROW_ACTION'
+,p_item_type=>'NATIVE_ROW_ACTION'
+,p_display_sequence=>20
+,p_enable_hide=>true
+);
+wwv_flow_api.create_region_column(
+ p_id=>wwv_flow_api.id(75464236534221210)
+,p_name=>'APEX$ROW_SELECTOR'
+,p_item_type=>'NATIVE_ROW_SELECTOR'
+,p_display_sequence=>10
+,p_attribute_01=>'Y'
+,p_attribute_02=>'Y'
+,p_attribute_03=>'N'
+,p_enable_hide=>true
+);
+wwv_flow_api.create_interactive_grid(
+ p_id=>wwv_flow_api.id(75463632314221204)
+,p_internal_uid=>75463632314221204
+,p_is_editable=>true
+,p_edit_operations=>'u'
+,p_lost_update_check_type=>'VALUES'
+,p_submit_checked_rows=>false
+,p_lazy_loading=>false
+,p_requires_filter=>false
+,p_show_nulls_as=>'-'
+,p_select_first_row=>true
+,p_fixed_row_height=>true
+,p_pagination_type=>'SET'
+,p_show_total_row_count=>true
+,p_show_toolbar=>false
+,p_toolbar_buttons=>null
+,p_enable_save_public_report=>false
+,p_enable_subscriptions=>true
+,p_enable_flashback=>true
+,p_define_chart_view=>true
+,p_enable_download=>true
+,p_enable_mail_download=>true
+,p_fixed_header=>'PAGE'
+,p_show_icon_view=>false
+,p_show_detail_view=>false
+);
+wwv_flow_api.create_ig_report(
+ p_id=>wwv_flow_api.id(75568979907368318)
+,p_interactive_grid_id=>wwv_flow_api.id(75463632314221204)
+,p_type=>'PRIMARY'
+,p_default_view=>'GRID'
+,p_rows_per_page=>5
+,p_show_row_number=>false
+,p_settings_area_expanded=>true
+);
+wwv_flow_api.create_ig_report_view(
+ p_id=>wwv_flow_api.id(75569006056368318)
+,p_report_id=>wwv_flow_api.id(75568979907368318)
+,p_view_type=>'GRID'
+,p_stretch_columns=>true
+,p_srv_exclude_null_values=>false
+,p_srv_only_display_columns=>true
+,p_edit_mode=>false
+);
+wwv_flow_api.create_ig_report_column(
+ p_id=>wwv_flow_api.id(75569596347368321)
+,p_view_id=>wwv_flow_api.id(75569006056368318)
+,p_display_seq=>1
+,p_column_id=>wwv_flow_api.id(75463765642221205)
+,p_is_visible=>true
+,p_is_frozen=>false
+);
+wwv_flow_api.create_ig_report_column(
+ p_id=>wwv_flow_api.id(75570063123368325)
+,p_view_id=>wwv_flow_api.id(75569006056368318)
+,p_display_seq=>2
+,p_column_id=>wwv_flow_api.id(75463852839221206)
+,p_is_visible=>true
+,p_is_frozen=>false
+);
+wwv_flow_api.create_ig_report_column(
+ p_id=>wwv_flow_api.id(75570587720368328)
+,p_view_id=>wwv_flow_api.id(75569006056368318)
+,p_display_seq=>4
+,p_column_id=>wwv_flow_api.id(75463910655221207)
+,p_is_visible=>true
+,p_is_frozen=>false
+,p_width=>167
+);
+wwv_flow_api.create_ig_report_column(
+ p_id=>wwv_flow_api.id(75571053505368331)
+,p_view_id=>wwv_flow_api.id(75569006056368318)
+,p_display_seq=>5
+,p_column_id=>wwv_flow_api.id(75464017769221208)
+,p_is_visible=>true
+,p_is_frozen=>false
+,p_width=>204
+);
+wwv_flow_api.create_ig_report_column(
+ p_id=>wwv_flow_api.id(75571580848368333)
+,p_view_id=>wwv_flow_api.id(75569006056368318)
+,p_display_seq=>0
+,p_column_id=>wwv_flow_api.id(75464197748221209)
+,p_is_visible=>true
+,p_is_frozen=>false
+);
+wwv_flow_api.create_page_plug(
+ p_id=>wwv_flow_api.id(93975558248433421)
+,p_plug_name=>'datos'
+,p_region_template_options=>'#DEFAULT#'
+,p_plug_template=>wwv_flow_api.id(17355873415919374)
+,p_plug_display_sequence=>20
+,p_include_in_reg_disp_sel_yn=>'Y'
+,p_plug_display_point=>'BODY'
+,p_plug_query_options=>'DERIVED_REPORT_COLUMNS'
+,p_attribute_01=>'N'
+,p_attribute_02=>'HTML'
+);
+wwv_flow_api.create_page_plug(
+ p_id=>wwv_flow_api.id(284874279313847472)
+,p_plug_name=>'Ayuda'
+,p_region_template_options=>'#DEFAULT#:t-Region--removeHeader:t-Region--scrollBody'
+,p_plug_template=>wwv_flow_api.id(17356902947919375)
+,p_plug_display_sequence=>10
+,p_include_in_reg_disp_sel_yn=>'Y'
+,p_plug_display_point=>'BODY'
+,p_plug_source=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'<b><i>Ayuda <i class="fa fa-question-circle" aria-hidden="true"></i>:</i></b> ',
+unistr('Funcionalidad que permite realizar la actualizaci\00F3n de los datos del bien recepcionado. Cuando es hecha de forma automatica, el destino del bien por defecto es habitacional en caso de tratarse de bien inmueble, pero puede ser cambiado.')))
+,p_plug_query_options=>'DERIVED_REPORT_COLUMNS'
+,p_attribute_01=>'N'
+,p_attribute_02=>'HTML'
+);
+wwv_flow_api.create_page_button(
+ p_id=>wwv_flow_api.id(75117031680204750)
+,p_button_sequence=>10
+,p_button_plug_id=>wwv_flow_api.id(75463497695221202)
+,p_button_name=>'Guardar_Bienes'
+,p_button_action=>'SUBMIT'
+,p_button_template_options=>'#DEFAULT#:t-Button--iconRight'
+,p_button_template_id=>wwv_flow_api.id(17409110614919398)
+,p_button_is_hot=>'Y'
+,p_button_image_alt=>'Aplicar Cambios'
+,p_button_position=>'BELOW_BOX'
+,p_button_condition=>'P41_OCULTAR_APLICAR'
+,p_button_condition_type=>'ITEM_IS_NULL'
+,p_icon_css_classes=>'fa-floppy-as'
+,p_grid_new_grid=>false
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(75113583776204715)
+,p_name=>'P41_ID_SLCTD_OFCIO'
+,p_item_sequence=>10
+,p_item_plug_id=>wwv_flow_api.id(75463580983221203)
+,p_display_as=>'NATIVE_HIDDEN'
+,p_attribute_01=>'Y'
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(75116092509204740)
+,p_name=>'P41_ID_ENTDDES'
+,p_item_sequence=>20
+,p_item_plug_id=>wwv_flow_api.id(75463580983221203)
+,p_display_as=>'NATIVE_HIDDEN'
+,p_attribute_01=>'Y'
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(93975231561433418)
+,p_name=>'P41_CARTERA'
+,p_item_sequence=>10
+,p_item_plug_id=>wwv_flow_api.id(93975558248433421)
+,p_display_as=>'NATIVE_TEXT_FIELD'
+,p_cSize=>30
+,p_cattributes_element=>'style="left:-155px;"'
+,p_grid_column=>1
+,p_read_only_when_type=>'ALWAYS'
+,p_field_template=>wwv_flow_api.id(17408286777919397)
+,p_item_template_options=>'#DEFAULT#:t-Form-fieldContainer--stretchInputs'
+,p_attribute_01=>'N'
+,p_attribute_02=>'N'
+,p_attribute_04=>'TEXT'
+,p_attribute_05=>'BOTH'
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(116929516119382702)
+,p_name=>'P41_OCULTAR_APLICAR'
+,p_item_sequence=>20
+,p_item_plug_id=>wwv_flow_api.id(93975558248433421)
+,p_display_as=>'NATIVE_HIDDEN'
+,p_attribute_01=>'N'
+);
+wwv_flow_api.create_page_computation(
+ p_id=>wwv_flow_api.id(93975370383433419)
+,p_computation_sequence=>10
+,p_computation_item=>'P41_CARTERA'
+,p_computation_point=>'BEFORE_BOX_BODY'
+,p_computation_type=>'QUERY'
+,p_computation=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'select ''*cartera: ''||a.cdgo_crtra||'' *Entidad: ''||b.DSCRPCION AS DSCRIPCION',
+'  from mc_g_embargos_cartera a, v_mc_g_solicitudes_y_oficios b',
+' where a.id_embrgos_crtra = b.id_embrgos_crtra',
+'   and b.id_slctd_ofcio = :P41_ID_SLCTD_OFCIO;'))
+);
+wwv_flow_api.create_page_process(
+ p_id=>wwv_flow_api.id(75464326863221211)
+,p_process_sequence=>30
+,p_process_point=>'AFTER_SUBMIT'
+,p_region_id=>wwv_flow_api.id(75463580983221203)
+,p_process_type=>'NATIVE_IG_DML'
+,p_process_name=>unistr('Tipos Bienes: Guardar Datos de Cuadr\00EDcula Interactiva')
+,p_attribute_01=>'REGION_SOURCE'
+,p_attribute_05=>'Y'
+,p_attribute_06=>'Y'
+,p_attribute_08=>'Y'
+,p_error_display_location=>'INLINE_IN_NOTIFICATION'
+,p_process_when_button_id=>wwv_flow_api.id(75117031680204750)
+);
+wwv_flow_api.create_page_process(
+ p_id=>wwv_flow_api.id(75116909609204749)
+,p_process_sequence=>40
+,p_process_point=>'AFTER_SUBMIT'
+,p_region_id=>wwv_flow_api.id(75116143587204741)
+,p_process_type=>'NATIVE_IG_DML'
+,p_process_name=>unistr('Propiedades de Bienes: Guardar Datos de Cuadr\00EDcula Interactiva')
+,p_attribute_01=>'REGION_SOURCE'
+,p_attribute_05=>'Y'
+,p_attribute_06=>'Y'
+,p_attribute_08=>'Y'
+,p_error_display_location=>'INLINE_IN_NOTIFICATION'
+,p_process_when_button_id=>wwv_flow_api.id(75117031680204750)
+);
+end;
+/

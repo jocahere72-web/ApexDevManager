@@ -1,0 +1,39 @@
+prompt --application/shared_components/user_interface/lovs/undad_drcion
+begin
+wwv_flow_api.create_list_of_values(
+ p_id=>wwv_flow_api.id(74332630862639649)
+,p_lov_name=>'UNDAD_DRCION'
+,p_lov_query=>'.'||wwv_flow_api.id(74332630862639649)||'.'
+);
+wwv_flow_api.create_static_lov_data(
+ p_id=>wwv_flow_api.id(74332981553639657)
+,p_lov_disp_sequence=>1
+,p_lov_disp_value=>'Minutos'
+,p_lov_return_value=>'MN'
+);
+wwv_flow_api.create_static_lov_data(
+ p_id=>wwv_flow_api.id(76739967587771648)
+,p_lov_disp_sequence=>2
+,p_lov_disp_value=>'Horas'
+,p_lov_return_value=>'HR'
+);
+wwv_flow_api.create_static_lov_data(
+ p_id=>wwv_flow_api.id(76740358631771651)
+,p_lov_disp_sequence=>3
+,p_lov_disp_value=>unistr('D\00EDas')
+,p_lov_return_value=>'DI'
+);
+wwv_flow_api.create_static_lov_data(
+ p_id=>wwv_flow_api.id(76740770627771651)
+,p_lov_disp_sequence=>4
+,p_lov_disp_value=>'Semanas'
+,p_lov_return_value=>'SM'
+);
+wwv_flow_api.create_static_lov_data(
+ p_id=>wwv_flow_api.id(76741132807771651)
+,p_lov_disp_sequence=>5
+,p_lov_disp_value=>'Meses'
+,p_lov_return_value=>'MS'
+);
+end;
+/

@@ -1,0 +1,449 @@
+prompt --application/pages/page_00010
+begin
+wwv_flow_api.create_page(
+ p_id=>10
+,p_user_interface_id=>wwv_flow_api.id(95249231080808714)
+,p_name=>unistr('Gesti\00F3n Sub  Impuestos')
+,p_page_mode=>'MODAL'
+,p_step_title=>unistr('Gesti\00F3n Sub Tributos')
+,p_autocomplete_on_off=>'OFF'
+,p_javascript_file_urls=>'#IMAGE_PREFIX#javascript/infortributos/js/utilidades.js'
+,p_javascript_code=>wwv_flow_string.join(wwv_flow_t_varchar2(
+unistr('var htmldb_delete_message=''"\00BFEst\00E1 seguro de Eliminar el Sub Tributo?"'';'),
+'',
+''))
+,p_page_template_options=>'#DEFAULT#'
+,p_protection_level=>'C'
+,p_last_updated_by=>'JPRADA'
+,p_last_upd_yyyymmddhh24miss=>'20250610173522'
+);
+wwv_flow_api.create_page_plug(
+ p_id=>wwv_flow_api.id(110081814808088709)
+,p_plug_name=>unistr('Gesti\00F3n Sub Tributos')
+,p_region_template_options=>'#DEFAULT#:t-Region--removeHeader:t-Region--scrollBody'
+,p_plug_template=>wwv_flow_api.id(29552524947068508)
+,p_plug_display_sequence=>10
+,p_plug_display_point=>'BODY'
+,p_plug_query_options=>'DERIVED_REPORT_COLUMNS'
+,p_attribute_01=>'N'
+,p_attribute_02=>'TEXT'
+,p_attribute_03=>'Y'
+);
+wwv_flow_api.create_page_plug(
+ p_id=>wwv_flow_api.id(110082512984088711)
+,p_plug_name=>'Buttons'
+,p_region_template_options=>'#DEFAULT#'
+,p_plug_template=>wwv_flow_api.id(29532093730068500)
+,p_plug_display_sequence=>10
+,p_plug_display_point=>'REGION_POSITION_03'
+,p_attribute_01=>'N'
+,p_attribute_02=>'TEXT'
+,p_attribute_03=>'Y'
+);
+wwv_flow_api.create_page_button(
+ p_id=>wwv_flow_api.id(110082910950088712)
+,p_button_sequence=>10
+,p_button_plug_id=>wwv_flow_api.id(110082512984088711)
+,p_button_name=>'CANCEL'
+,p_button_action=>'DEFINED_BY_DA'
+,p_button_template_options=>'#DEFAULT#:t-Button--iconRight'
+,p_button_template_id=>wwv_flow_api.id(29604728434068538)
+,p_button_image_alt=>'Cancelar'
+,p_button_position=>'REGION_TEMPLATE_CLOSE'
+,p_warn_on_unsaved_changes=>null
+,p_icon_css_classes=>'fa-window-x'
+,p_grid_new_grid=>false
+);
+wwv_flow_api.create_page_button(
+ p_id=>wwv_flow_api.id(110082426067088711)
+,p_button_sequence=>20
+,p_button_plug_id=>wwv_flow_api.id(110082512984088711)
+,p_button_name=>'DELETE'
+,p_button_action=>'REDIRECT_URL'
+,p_button_template_options=>'#DEFAULT#:t-Button--iconRight'
+,p_button_template_id=>wwv_flow_api.id(29604728434068538)
+,p_button_image_alt=>'Eliminar'
+,p_button_position=>'REGION_TEMPLATE_DELETE'
+,p_button_redirect_url=>'javascript:apex.confirm(htmldb_delete_message,''DELETE'');'
+,p_button_execute_validations=>'N'
+,p_button_condition=>'P10_ID_IMPSTO_SBMPSTO'
+,p_button_condition_type=>'ITEM_IS_NOT_NULL'
+,p_icon_css_classes=>'fa-trash-o'
+,p_grid_new_grid=>false
+,p_database_action=>'DELETE'
+);
+wwv_flow_api.create_page_button(
+ p_id=>wwv_flow_api.id(110082395228088711)
+,p_button_sequence=>30
+,p_button_plug_id=>wwv_flow_api.id(110082512984088711)
+,p_button_name=>'SAVE'
+,p_button_action=>'SUBMIT'
+,p_button_template_options=>'#DEFAULT#:t-Button--iconRight'
+,p_button_template_id=>wwv_flow_api.id(29604728434068538)
+,p_button_is_hot=>'Y'
+,p_button_image_alt=>'Aplicar Cambios'
+,p_button_position=>'REGION_TEMPLATE_NEXT'
+,p_button_condition=>'P10_ID_IMPSTO_SBMPSTO'
+,p_button_condition_type=>'ITEM_IS_NOT_NULL'
+,p_icon_css_classes=>'fa-save-as'
+,p_grid_new_grid=>false
+,p_database_action=>'UPDATE'
+);
+wwv_flow_api.create_page_button(
+ p_id=>wwv_flow_api.id(110082289840088711)
+,p_button_sequence=>40
+,p_button_plug_id=>wwv_flow_api.id(110082512984088711)
+,p_button_name=>'CREATE'
+,p_button_action=>'SUBMIT'
+,p_button_template_options=>'#DEFAULT#:t-Button--iconRight'
+,p_button_template_id=>wwv_flow_api.id(29604728434068538)
+,p_button_is_hot=>'Y'
+,p_button_image_alt=>'Insertar'
+,p_button_position=>'REGION_TEMPLATE_NEXT'
+,p_button_condition=>'P10_ID_IMPSTO_SBMPSTO'
+,p_button_condition_type=>'ITEM_IS_NULL'
+,p_icon_css_classes=>'fa-floppy-o'
+,p_grid_new_grid=>false
+,p_database_action=>'INSERT'
+);
+wwv_flow_api.create_page_branch(
+ p_id=>wwv_flow_api.id(38734509444719508)
+,p_branch_name=>'Go To Page 10'
+,p_branch_action=>'f?p=&APP_ID.:10:&SESSION.::&DEBUG.:RP,10:P10_ID_IMPSTO:&P10_ID_IMPSTO.&success_msg=#SUCCESS_MSG#'
+,p_branch_point=>'AFTER_PROCESSING'
+,p_branch_type=>'REDIRECT_URL'
+,p_branch_sequence=>10
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(5069546506697143)
+,p_name=>'P10_INDCDOR_LQDA_MLTPLES_ACTOS'
+,p_is_required=>true
+,p_item_sequence=>130
+,p_item_plug_id=>wwv_flow_api.id(110081814808088709)
+,p_use_cache_before_default=>'NO'
+,p_prompt=>unistr('\00BFLiquida Multiples Actos?')
+,p_source=>'INDCDOR_LQDA_MLTPLES_ACTOS'
+,p_source_type=>'DB_COLUMN'
+,p_display_as=>'NATIVE_YES_NO'
+,p_begin_on_new_line=>'N'
+,p_grid_column=>6
+,p_field_template=>wwv_flow_api.id(29604290684068537)
+,p_item_template_options=>'#DEFAULT#'
+,p_help_text=>unistr('Seleccione "S\00ED" si el Sub Tributo permite liquidar m\00E1s de un acto en la misma liquidaci\00F3n para el caso de Rentas.')
+,p_attribute_01=>'CUSTOM'
+,p_attribute_02=>'S'
+,p_attribute_03=>unistr('S\00ED')
+,p_attribute_04=>'N'
+,p_attribute_05=>'No'
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(39660736390056217)
+,p_name=>'P10_INDCDOR_USA_FCHA_VNC_CLCLD'
+,p_is_required=>true
+,p_item_sequence=>120
+,p_item_plug_id=>wwv_flow_api.id(110081814808088709)
+,p_use_cache_before_default=>'NO'
+,p_prompt=>unistr('\00BFUsa Fecha Vencimiento Calculada?')
+,p_source=>'INDCDOR_USA_FCHA_VNCMNTO_CLCLD'
+,p_source_type=>'DB_COLUMN'
+,p_display_as=>'NATIVE_YES_NO'
+,p_field_template=>wwv_flow_api.id(29604290684068537)
+,p_item_template_options=>'#DEFAULT#'
+,p_attribute_01=>'CUSTOM'
+,p_attribute_02=>'S'
+,p_attribute_03=>unistr('S\00ED')
+,p_attribute_04=>'N'
+,p_attribute_05=>'No'
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(73024400043370801)
+,p_name=>'P10_INDCDOR_RQRE_AUTRZCION'
+,p_is_required=>true
+,p_item_sequence=>100
+,p_item_plug_id=>wwv_flow_api.id(110081814808088709)
+,p_use_cache_before_default=>'NO'
+,p_item_default=>'N'
+,p_prompt=>unistr('\00BFRequiere Autorizaci\00F3n?')
+,p_source=>'INDCDOR_RQRE_AUTRZCION'
+,p_source_type=>'DB_COLUMN'
+,p_display_as=>'NATIVE_YES_NO'
+,p_colspan=>5
+,p_grid_label_column_span=>2
+,p_field_template=>wwv_flow_api.id(29603993160068537)
+,p_item_template_options=>'#DEFAULT#'
+,p_attribute_01=>'CUSTOM'
+,p_attribute_02=>'S'
+,p_attribute_03=>unistr('S\00ED')
+,p_attribute_04=>'N'
+,p_attribute_05=>'No'
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(75138069730158001)
+,p_name=>'P10_INDCDOR_RQRE_ADJNTO'
+,p_is_required=>true
+,p_item_sequence=>110
+,p_item_plug_id=>wwv_flow_api.id(110081814808088709)
+,p_use_cache_before_default=>'NO'
+,p_item_default=>'N'
+,p_prompt=>unistr('\00BFRequiere Adjuntos?')
+,p_source=>'INDCDOR_RQRE_ADJNTO'
+,p_source_type=>'DB_COLUMN'
+,p_display_as=>'NATIVE_YES_NO'
+,p_begin_on_new_line=>'N'
+,p_field_template=>wwv_flow_api.id(29603993160068537)
+,p_item_template_options=>'#DEFAULT#'
+,p_attribute_01=>'CUSTOM'
+,p_attribute_02=>'S'
+,p_attribute_03=>unistr('S\00ED')
+,p_attribute_04=>'N'
+,p_attribute_05=>'No'
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(110085370693088716)
+,p_name=>'P10_ID_IMPSTO_SBMPSTO'
+,p_item_sequence=>10
+,p_item_plug_id=>wwv_flow_api.id(110081814808088709)
+,p_use_cache_before_default=>'NO'
+,p_source=>'ID_IMPSTO_SBMPSTO'
+,p_source_type=>'DB_COLUMN'
+,p_display_as=>'NATIVE_HIDDEN'
+,p_protection_level=>'S'
+,p_attribute_01=>'Y'
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(110085705268088742)
+,p_name=>'P10_CDGO_CLNTE'
+,p_item_sequence=>20
+,p_item_plug_id=>wwv_flow_api.id(110081814808088709)
+,p_use_cache_before_default=>'NO'
+,p_item_default=>'&F_CDGO_CLNTE.'
+,p_source=>'CDGO_CLNTE'
+,p_source_type=>'DB_COLUMN'
+,p_display_as=>'NATIVE_HIDDEN'
+,p_attribute_01=>'Y'
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(110086111688088747)
+,p_name=>'P10_ID_IMPSTO'
+,p_item_sequence=>30
+,p_item_plug_id=>wwv_flow_api.id(110081814808088709)
+,p_use_cache_before_default=>'NO'
+,p_item_default=>'&F_ID_IMPSTO.'
+,p_source=>'ID_IMPSTO'
+,p_source_type=>'DB_COLUMN'
+,p_display_as=>'NATIVE_HIDDEN'
+,p_attribute_01=>'Y'
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(110086570786088748)
+,p_name=>'P10_CDGO_IMPSTO_SBMPSTO'
+,p_is_required=>true
+,p_item_sequence=>40
+,p_item_plug_id=>wwv_flow_api.id(110081814808088709)
+,p_use_cache_before_default=>'NO'
+,p_prompt=>unistr('C\00F3digo')
+,p_source=>'CDGO_IMPSTO_SBMPSTO'
+,p_source_type=>'DB_COLUMN'
+,p_display_as=>'NATIVE_TEXT_FIELD'
+,p_cSize=>5
+,p_cMaxlength=>3
+,p_tag_attributes=>'onkeyup="campoMayuscula(this)" onkeypress="return validarExpresion(event, ''letraNumero'');"'
+,p_colspan=>5
+,p_grid_column=>1
+,p_grid_label_column_span=>2
+,p_read_only_when=>'P10_ID_IMPSTO_SBMPSTO'
+,p_read_only_when_type=>'ITEM_IS_NOT_NULL'
+,p_field_template=>wwv_flow_api.id(29604290684068537)
+,p_item_template_options=>'#DEFAULT#'
+,p_help_text=>unistr('Ingrese el c\00F3digo del sub tributo. M\00E1ximo 3 Caracteres.')
+,p_attribute_01=>'N'
+,p_attribute_02=>'N'
+,p_attribute_04=>'TEXT'
+,p_attribute_05=>'NONE'
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(110086952693088748)
+,p_name=>'P10_NMBRE_IMPSTO_SBMPSTO'
+,p_is_required=>true
+,p_item_sequence=>50
+,p_item_plug_id=>wwv_flow_api.id(110081814808088709)
+,p_use_cache_before_default=>'NO'
+,p_prompt=>'Nombre '
+,p_source=>'NMBRE_IMPSTO_SBMPSTO'
+,p_source_type=>'DB_COLUMN'
+,p_display_as=>'NATIVE_TEXT_FIELD'
+,p_cSize=>35
+,p_cMaxlength=>50
+,p_begin_on_new_line=>'N'
+,p_colspan=>7
+,p_grid_column=>6
+,p_grid_label_column_span=>2
+,p_field_template=>wwv_flow_api.id(29604290684068537)
+,p_item_template_options=>'#DEFAULT#'
+,p_help_text=>unistr('Ingrese el nombre del subtributo. M\00E1ximo 50 caracteres')
+,p_attribute_01=>'N'
+,p_attribute_02=>'N'
+,p_attribute_04=>'TEXT'
+,p_attribute_05=>'BOTH'
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(110087314870088748)
+,p_name=>'P10_CDGO_EAN'
+,p_is_required=>true
+,p_item_sequence=>60
+,p_item_plug_id=>wwv_flow_api.id(110081814808088709)
+,p_use_cache_before_default=>'NO'
+,p_prompt=>unistr('C\00F3digo EAN')
+,p_source=>'CDGO_EAN'
+,p_source_type=>'DB_COLUMN'
+,p_display_as=>'NATIVE_TEXT_FIELD'
+,p_cSize=>14
+,p_cMaxlength=>13
+,p_tag_attributes=>'onkeypress="return validarExpresion(event, ''numeroEntero'');"'
+,p_colspan=>5
+,p_grid_column=>1
+,p_grid_label_column_span=>2
+,p_field_template=>wwv_flow_api.id(29604290684068537)
+,p_item_template_options=>'#DEFAULT#'
+,p_help_text=>unistr('Ingrese el c\00F3digo EAN. Obligatorio 13 caracteres.')
+,p_attribute_01=>'N'
+,p_attribute_02=>'N'
+,p_attribute_04=>'TEXT'
+,p_attribute_05=>'NONE'
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(110087737029088749)
+,p_name=>'P10_ACTVO'
+,p_is_required=>true
+,p_item_sequence=>70
+,p_item_plug_id=>wwv_flow_api.id(110081814808088709)
+,p_use_cache_before_default=>'NO'
+,p_prompt=>unistr('\00BFActivo?')
+,p_source=>'ACTVO'
+,p_source_type=>'DB_COLUMN'
+,p_display_as=>'NATIVE_YES_NO'
+,p_begin_on_new_line=>'N'
+,p_grid_column=>6
+,p_field_template=>wwv_flow_api.id(29604290684068537)
+,p_item_template_options=>'#DEFAULT#'
+,p_help_text=>unistr('Seleccione "S\00ED" para activar el sub tributo y "No" para desactivarlo.')
+,p_attribute_01=>'CUSTOM'
+,p_attribute_02=>'S'
+,p_attribute_03=>unistr('S\00ED')
+,p_attribute_04=>'N'
+,p_attribute_05=>'No'
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(110088192439088750)
+,p_name=>'P10_LQDCION_MLTPLE'
+,p_is_required=>true
+,p_item_sequence=>80
+,p_item_plug_id=>wwv_flow_api.id(110081814808088709)
+,p_use_cache_before_default=>'NO'
+,p_prompt=>unistr('\00BFLiquidaci\00F3n M\00FAltiple?')
+,p_source=>'LQDCION_MLTPLE'
+,p_source_type=>'DB_COLUMN'
+,p_display_as=>'NATIVE_YES_NO'
+,p_colspan=>5
+,p_grid_label_column_span=>2
+,p_field_template=>wwv_flow_api.id(29604290684068537)
+,p_item_template_options=>'#DEFAULT#'
+,p_help_text=>unistr('Seleccione "S\00ED" si el sub tributo permite liquidaci\00F3n m\00FAltiple y "No" si solo permite 1 sola liquidaci\00F3n.')
+,p_attribute_01=>'CUSTOM'
+,p_attribute_02=>'S'
+,p_attribute_03=>unistr('S\00ED')
+,p_attribute_04=>'N'
+,p_attribute_05=>'No'
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(110088530732088750)
+,p_name=>'P10_INDCDOR_LQDCION_PBLCO'
+,p_is_required=>true
+,p_item_sequence=>90
+,p_item_plug_id=>wwv_flow_api.id(110081814808088709)
+,p_use_cache_before_default=>'NO'
+,p_prompt=>unistr('\00BFLiquidaci\00F3n P\00FAblica?')
+,p_source=>'INDCDOR_LQDCION_PBLCO'
+,p_source_type=>'DB_COLUMN'
+,p_display_as=>'NATIVE_YES_NO'
+,p_begin_on_new_line=>'N'
+,p_grid_column=>6
+,p_field_template=>wwv_flow_api.id(29604290684068537)
+,p_item_template_options=>'#DEFAULT#'
+,p_help_text=>unistr('Seleccione "S\00ED" si la liquidaci\00F3n del sub tributo es p\00FAblica y "No" para entorno privado.')
+,p_attribute_01=>'CUSTOM'
+,p_attribute_02=>'S'
+,p_attribute_03=>unistr('S\00ED')
+,p_attribute_04=>'N'
+,p_attribute_05=>'No'
+);
+wwv_flow_api.create_page_validation(
+ p_id=>wwv_flow_api.id(60758801169993801)
+,p_validation_name=>'Validar EAN x Cliente'
+,p_validation_sequence=>10
+,p_validation=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'select 1',
+' from df_i_impuestos_subimpuesto',
+'where cdgo_clnte <> :F_CDGO_CLNTE',
+'  and cdgo_ean   = :P10_CDGO_EAN;'))
+,p_validation_type=>'NOT_EXISTS'
+,p_error_message=>unistr('El c\00F3digo EAN que est\00E1 ingresando se encuentra registrado en otro cliente, favor valide e intente nuevamente.')
+,p_associated_item=>wwv_flow_api.id(110087314870088748)
+,p_error_display_location=>'INLINE_WITH_FIELD_AND_NOTIFICATION'
+);
+wwv_flow_api.create_page_da_event(
+ p_id=>wwv_flow_api.id(110083088494088712)
+,p_name=>'Cancel Dialog'
+,p_event_sequence=>10
+,p_triggering_element_type=>'BUTTON'
+,p_triggering_button_id=>wwv_flow_api.id(110082910950088712)
+,p_bind_type=>'bind'
+,p_bind_event_type=>'click'
+);
+wwv_flow_api.create_page_da_action(
+ p_id=>wwv_flow_api.id(110083869467088714)
+,p_event_id=>wwv_flow_api.id(110083088494088712)
+,p_event_result=>'TRUE'
+,p_action_sequence=>10
+,p_execute_on_page_init=>'N'
+,p_action=>'NATIVE_DIALOG_CLOSE'
+,p_stop_execution_on_error=>'Y'
+);
+wwv_flow_api.create_page_process(
+ p_id=>wwv_flow_api.id(110089369840088756)
+,p_process_sequence=>10
+,p_process_point=>'AFTER_HEADER'
+,p_process_type=>'NATIVE_FORM_FETCH'
+,p_process_name=>'Fetch Row from DF_I_IMPUESTOS_SUBIMPUESTO'
+,p_attribute_02=>'DF_I_IMPUESTOS_SUBIMPUESTO'
+,p_attribute_03=>'P10_ID_IMPSTO_SBMPSTO'
+,p_attribute_04=>'ID_IMPSTO_SBMPSTO'
+,p_error_display_location=>'INLINE_IN_NOTIFICATION'
+);
+wwv_flow_api.create_page_process(
+ p_id=>wwv_flow_api.id(110089704909088756)
+,p_process_sequence=>30
+,p_process_point=>'AFTER_SUBMIT'
+,p_process_type=>'NATIVE_FORM_PROCESS'
+,p_process_name=>'Process Row of DF_I_IMPUESTOS_SUBIMPUESTO'
+,p_attribute_02=>'DF_I_IMPUESTOS_SUBIMPUESTO'
+,p_attribute_03=>'P10_ID_IMPSTO_SBMPSTO'
+,p_attribute_04=>'ID_IMPSTO_SBMPSTO'
+,p_attribute_09=>'P10_ID_IMPSTO_SBMPSTO'
+,p_attribute_11=>'I:U:D'
+,p_attribute_12=>'Y'
+,p_error_display_location=>'INLINE_IN_NOTIFICATION'
+,p_process_success_message=>'Se han guardado los cambios'
+);
+wwv_flow_api.create_page_process(
+ p_id=>wwv_flow_api.id(38734671995719509)
+,p_process_sequence=>40
+,p_process_point=>'AFTER_SUBMIT'
+,p_process_type=>'NATIVE_CLOSE_WINDOW'
+,p_process_name=>'Cerrar modal'
+,p_error_display_location=>'INLINE_IN_NOTIFICATION'
+,p_process_when=>'DELETE,CANCEL'
+,p_process_when_type=>'REQUEST_IN_CONDITION'
+);
+end;
+/

@@ -1,0 +1,4 @@
+# APEX shared_components/files/ contain binary files (PNG, PDF, XLSX)
+# encoded as hex/base64 in SQL. These trigger false positives for
+# aws-access-token rules due to hex patterns matching token entropy.
+oracle/apex/*/application/shared_components/files/*

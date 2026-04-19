@@ -1,0 +1,166 @@
+prompt --application/pages/page_00338
+begin
+wwv_flow_api.create_page(
+ p_id=>338
+,p_user_interface_id=>wwv_flow_api.id(164114460002707812)
+,p_name=>unistr('Cargue Archivo Gu\00EDa Impuesto Telefon\00EDa')
+,p_page_mode=>'MODAL'
+,p_step_title=>unistr('Cargue Archivo Gu\00EDa Impuesto Telefon\00EDa')
+,p_autocomplete_on_off=>'OFF'
+,p_step_template=>wwv_flow_api.id(164065555011707626)
+,p_page_template_options=>'#DEFAULT#'
+,p_last_updated_by=>'VROMERO'
+,p_last_upd_yyyymmddhh24miss=>'20240805105102'
+);
+wwv_flow_api.create_page_plug(
+ p_id=>wwv_flow_api.id(163255395243803503)
+,p_plug_name=>'Cargue Archivo'
+,p_region_template_options=>'#DEFAULT#:t-Region--removeHeader:t-Region--scrollBody'
+,p_plug_template=>wwv_flow_api.id(164080910676707690)
+,p_plug_display_sequence=>10
+,p_include_in_reg_disp_sel_yn=>'Y'
+,p_plug_display_point=>'BODY'
+,p_query_type=>'TABLE'
+,p_query_table=>'DF_I_TELEFONO_ARCHIVO_TIPO'
+,p_include_rowid_column=>false
+,p_is_editable=>false
+,p_plug_source_type=>'NATIVE_FORM'
+,p_plug_query_options=>'DERIVED_REPORT_COLUMNS'
+);
+wwv_flow_api.create_page_button(
+ p_id=>wwv_flow_api.id(163256872624803518)
+,p_button_sequence=>10
+,p_button_plug_id=>wwv_flow_api.id(163255395243803503)
+,p_button_name=>'BTN_CANCELAR'
+,p_button_action=>'REDIRECT_PAGE'
+,p_button_template_options=>'#DEFAULT#:t-Button--warning:t-Button--iconLeft'
+,p_button_template_id=>wwv_flow_api.id(164103809474707765)
+,p_button_image_alt=>'Cancelar'
+,p_button_position=>'REGION_TEMPLATE_CLOSE'
+,p_button_redirect_url=>'f?p=&APP_ID.:334:&SESSION.::&DEBUG.:RP::'
+,p_icon_css_classes=>'fa-arrow-left'
+,p_grid_new_grid=>false
+);
+wwv_flow_api.create_page_button(
+ p_id=>wwv_flow_api.id(163256710701803517)
+,p_button_sequence=>20
+,p_button_plug_id=>wwv_flow_api.id(163255395243803503)
+,p_button_name=>'BTN_INSERTAR'
+,p_button_action=>'SUBMIT'
+,p_button_template_options=>'#DEFAULT#:t-Button--primary:t-Button--iconRight'
+,p_button_template_id=>wwv_flow_api.id(164103809474707765)
+,p_button_is_hot=>'Y'
+,p_button_image_alt=>'Cargar Archivo'
+,p_button_position=>'REGION_TEMPLATE_CREATE'
+,p_icon_css_classes=>'fa-file-plus'
+,p_grid_new_grid=>false
+,p_database_action=>'UPDATE'
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(163258288820803532)
+,p_name=>'P338_ID_TELEFONO_ARCHVO_TPO'
+,p_source_data_type=>'NUMBER'
+,p_is_primary_key=>true
+,p_item_sequence=>10
+,p_item_plug_id=>wwv_flow_api.id(163255395243803503)
+,p_item_source_plug_id=>wwv_flow_api.id(163255395243803503)
+,p_prompt=>'Nombre Archivo'
+,p_source=>'ID_TELEFONO_ARCHVO_TPO'
+,p_source_type=>'REGION_SOURCE_COLUMN'
+,p_display_as=>'NATIVE_SELECT_LIST'
+,p_lov=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'select nmbre, id_telefono_archvo_tpo',
+'from df_i_telefono_archivo_tipo ',
+'order by 1;'))
+,p_lov_display_null=>'YES'
+,p_cHeight=>1
+,p_field_template=>wwv_flow_api.id(164103203154707753)
+,p_item_template_options=>'#DEFAULT#'
+,p_is_persistent=>'N'
+,p_lov_display_extra=>'YES'
+,p_attribute_01=>'NONE'
+,p_attribute_02=>'N'
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(163258792750803537)
+,p_name=>'P338_FILE_BLOB'
+,p_source_data_type=>'BLOB'
+,p_item_sequence=>60
+,p_item_plug_id=>wwv_flow_api.id(163255395243803503)
+,p_item_source_plug_id=>wwv_flow_api.id(163255395243803503)
+,p_prompt=>'Archivo'
+,p_source=>'FILE_BLOB'
+,p_source_type=>'REGION_SOURCE_COLUMN'
+,p_display_as=>'NATIVE_FILE'
+,p_cSize=>30
+,p_field_template=>wwv_flow_api.id(164103203154707753)
+,p_item_template_options=>'#DEFAULT#'
+,p_is_persistent=>'N'
+,p_attribute_01=>'DB_COLUMN'
+,p_attribute_02=>'FILE_MIMETYPE'
+,p_attribute_03=>'FILE_NAME'
+,p_attribute_06=>'Y'
+,p_attribute_08=>'attachment'
+,p_attribute_11=>'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(163259519766803545)
+,p_name=>'P338_FILE_NAME'
+,p_source_data_type=>'VARCHAR2'
+,p_item_sequence=>70
+,p_item_plug_id=>wwv_flow_api.id(163255395243803503)
+,p_item_source_plug_id=>wwv_flow_api.id(163255395243803503)
+,p_source=>'FILE_NAME'
+,p_source_type=>'REGION_SOURCE_COLUMN'
+,p_display_as=>'NATIVE_HIDDEN'
+,p_is_persistent=>'N'
+,p_attribute_01=>'Y'
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(163259610504803546)
+,p_name=>'P338_FILE_MIMETYPE'
+,p_source_data_type=>'VARCHAR2'
+,p_item_sequence=>80
+,p_item_plug_id=>wwv_flow_api.id(163255395243803503)
+,p_item_source_plug_id=>wwv_flow_api.id(163255395243803503)
+,p_source=>'FILE_MIMETYPE'
+,p_source_type=>'REGION_SOURCE_COLUMN'
+,p_display_as=>'NATIVE_HIDDEN'
+,p_is_persistent=>'N'
+,p_attribute_01=>'Y'
+);
+wwv_flow_api.create_page_process(
+ p_id=>wwv_flow_api.id(163259364189803543)
+,p_process_sequence=>10
+,p_process_point=>'AFTER_SUBMIT'
+,p_region_id=>wwv_flow_api.id(163255395243803503)
+,p_process_type=>'NATIVE_FORM_DML'
+,p_process_name=>'Guardar Archivo'
+,p_attribute_01=>'REGION_SOURCE'
+,p_attribute_05=>'Y'
+,p_attribute_06=>'Y'
+,p_attribute_08=>'Y'
+,p_process_error_message=>'Error al cargar Archivo'
+,p_error_display_location=>'INLINE_IN_NOTIFICATION'
+,p_process_success_message=>'Cargado Exitosamente'
+);
+wwv_flow_api.create_page_process(
+ p_id=>wwv_flow_api.id(163259496298803544)
+,p_process_sequence=>20
+,p_process_point=>'AFTER_SUBMIT'
+,p_process_type=>'NATIVE_CLOSE_WINDOW'
+,p_process_name=>'Cancelar'
+,p_error_display_location=>'INLINE_IN_NOTIFICATION'
+,p_process_when_button_id=>wwv_flow_api.id(163256872624803518)
+);
+wwv_flow_api.create_page_process(
+ p_id=>wwv_flow_api.id(163258134255803531)
+,p_process_sequence=>10
+,p_process_point=>'BEFORE_HEADER'
+,p_region_id=>wwv_flow_api.id(163255395243803503)
+,p_process_type=>'NATIVE_FORM_INIT'
+,p_process_name=>unistr('Initialize form Cargue Archivo Gu\00EDa Impuesto Telefon\00EDa')
+,p_error_display_location=>'INLINE_IN_NOTIFICATION'
+);
+end;
+/

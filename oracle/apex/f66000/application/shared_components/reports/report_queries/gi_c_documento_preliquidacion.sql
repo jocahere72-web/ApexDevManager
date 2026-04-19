@@ -1,0 +1,1356 @@
+prompt --application/shared_components/reports/report_queries/gi_c_documento_preliquidacion
+begin
+wwv_flow_api.create_shared_query(
+ p_id=>wwv_flow_api.id(52830385468016467)
+,p_name=>'gi_c_documento_preliquidacion'
+,p_query_text=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'select    upper(h.nmbre_clnte)nmbre_clnte,',
+'       upper(h.slgan)slgan,',
+'       h.id_ofcna, ',
+'       h.nmbre_ofcna, ',
+'       pkg_gn_generalidades.fnc_cl_convertir_blob_a_base64( p_blob => i.file_blob ) as lgo_slgan,',
+'       i.file_mimetype',
+'from v_gi_g_cinta_igac a       ',
+'join v_df_s_clientes                                                    h on a.cdgo_clnte = h.cdgo_clnte',
+'join df_c_imagenes_cliente                                              i on a.cdgo_clnte = i.cdgo_clnte and i.cdgo_imgen_clnte = ''L_E''',
+'',
+'where id_prcso_crga = :P40_ARCHIVO;'))
+,p_report_layout_id=>wwv_flow_api.id(70558945223208358)
+,p_format=>'PDF'
+,p_output_file_name=>'gi_c_documento_preliquidacion'
+,p_content_disposition=>'ATTACHMENT'
+);
+wwv_flow_api.create_shared_query_stmnt(
+ p_id=>wwv_flow_api.id(6105853813294573)
+,p_shared_query_id=>wwv_flow_api.id(52830385468016467)
+,p_sql_statement=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'/* Q#1 Registros y predios cargados*/',
+'',
+'select count(*) as value',
+'		  , ''Registros Cargados'' as color',
+'          , ''Registros recibidos y Predios recibidos'' as etiqueta',
+'	   from gi_g_cinta_igac',
+'	  where id_prcso_crga = JSON_VALUE(:F_APP_XML, ''$.P2_ARCHIVO'')',
+'	  union ',
+'	 select count(*) as value',
+'		  , ''Predios Cargados'' as color',
+'          , ''Registros recibidos y Predios recibidos'' as etiqueta',
+'	   from gi_g_cinta_igac',
+'	  where id_prcso_crga = JSON_VALUE(:F_APP_XML, ''$.P2_ARCHIVO'')',
+'	    and nmro_orden_igac = ''001'';'))
+);
+wwv_flow_api.create_shared_query_stmnt(
+ p_id=>wwv_flow_api.id(6106040374294573)
+,p_shared_query_id=>wwv_flow_api.id(52830385468016467)
+,p_sql_statement=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'/*  Q#2 Encabezado de Pagina  */',
+'select upper(b.nmbre_clnte)nmbre_clnte,',
+'        upper(b.slgan)slgan,',
+'         pkg_gn_generalidades.fnc_cl_convertir_blob_a_base64( p_blob => a.file_blob ) as lgo_slgan,',
+'          to_char(systimestamp, ''Day, DD "de" Month "de" YYYY'') HOY,',
+'         :F_IP as ipaddr,',
+'         :F_NMBRE_USRIO as Usuario,',
+'       ',
+'        a.file_mimetype',
+'   from df_c_imagenes_cliente a',
+'   join df_s_clientes b on (a.cdgo_clnte = b.cdgo_clnte) ',
+'  where a.cdgo_clnte =:F_CDGO_CLNTE',
+'    and a.cdgo_imgen_clnte = ''L_E'''))
+);
+wwv_flow_api.create_shared_query_stmnt(
+ p_id=>wwv_flow_api.id(6106280189294573)
+,p_shared_query_id=>wwv_flow_api.id(52830385468016467)
+,p_sql_statement=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'/* Q#3 incremento de predios reportados por la cinta CATASTRAL de vgncia vs cinta I.G.A.C de vgncia_anterior */',
+'select to_char( ( b.cntdad_actual-a.cntdad_anterior) ,''FM999G999G999G999G999G999G990'') as incrmnto_prdios_reprtdos',
+'	  from (',
+'			   select count(*) as cntdad_anterior',
+'				 from gi_g_cinta_igac a',
+'				 join et_g_procesos_carga b',
+'				   on a.id_prcso_crga = b.id_prcso_crga',
+'				where b.cdgo_clnte 		= :F_CDGO_CLNTE ',
+'				  and b.vgncia 			= JSON_VALUE(:F_APP_XML, ''$.P2_VGNCIA'') -1 ',
+'				  and a.nmro_orden_igac = ''001'' ',
+'		   ) a',
+'	  join (',
+'				select count(*) as cntdad_actual',
+'				  from gi_g_cinta_igac a',
+'				  join et_g_procesos_carga b',
+'				    on a.id_prcso_crga = b.id_prcso_crga',
+'			 	 where b.cdgo_clnte 		= :F_CDGO_CLNTE ',
+'		 		   and b.vgncia 			= JSON_VALUE(:F_APP_XML, ''$.P2_VGNCIA'')',
+'				   and a.nmro_orden_igac = ''001'' ',
+'		   ) b',
+'		  on 1 = 1;             ',
+'',
+'',
+''))
+);
+wwv_flow_api.create_shared_query_stmnt(
+ p_id=>wwv_flow_api.id(6106486215294573)
+,p_shared_query_id=>wwv_flow_api.id(52830385468016467)
+,p_sql_statement=>wwv_flow_string.join(wwv_flow_t_varchar2(
+' /*  Q#4  Predios Nuevos */',
+'',
+'			select to_char(count(*),''999G999G999G999G999G999G990'') as predios_nuevos ',
+'			  from gi_g_cinta_igac',
+'			 where id_prcso_crga = JSON_VALUE(:F_APP_XML, ''$.P2_ARCHIVO'')',
+'			   and    prdio_nvo = ''S''; '))
+);
+wwv_flow_api.create_shared_query_stmnt(
+ p_id=>wwv_flow_api.id(6106682426294573)
+,p_shared_query_id=>wwv_flow_api.id(52830385468016467)
+,p_sql_statement=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'/* Q#5 seleccionar vigencia , nombre del archivo y vigencia anterior   */',
+'select a.vgncia,',
+'       a.file_name,',
+'       (a.vgncia-1) vigncia_antrior,',
+unistr('       round((DBMS_LOB.GETLENGTH (b.file_blob) /1024),3) || ''KB''  tm\00F1o_blob'),
+'from v_gi_g_cinta_igac a',
+' join et_g_procesos_carga b on a.id_prcso_crga = b.id_prcso_crga',
+'where a.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'') ',
+'  and a.nmro_orden_igac = ''001'' ',
+'    and a.cdgo_clnte      = :F_CDGO_CLNTE',
+'group by a.vgncia,',
+'         a.file_name,',
+'         round((DBMS_LOB.GETLENGTH (b.file_blob) /1024),3);    ',
+'',
+''))
+);
+wwv_flow_api.create_shared_query_stmnt(
+ p_id=>wwv_flow_api.id(6106882741294573)
+,p_shared_query_id=>wwv_flow_api.id(52830385468016467)
+,p_sql_statement=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'/*Q#6  incremento en predios sacar vigencia de la pagina */',
+'select count(*) value, ',
+'       ''Predios ''||(pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_VGNCIA'')) as color,',
+'       ''Incremento en predios entre ''||(pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_VGNCIA''))||'' - '' ||(pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_VGNCIA'')-1)  as etiqueta',
+'       from v_gi_g_cinta_igac where nmro_orden_igac=''001'' ',
+'           and vgncia=pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_VGNCIA'') ',
+'           and id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')',
+'           and cdgo_clnte      = :F_CDGO_CLNTE',
+'union all ',
+'select count(*) value, ',
+'       ''Predios ''||(pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_VGNCIA'')-1)  as color,',
+'       ''Incremento en predios entre ''||(pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_VGNCIA''))||'' - '' ||(pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_VGNCIA'')-1)  as etiqueta',
+'       from v_gi_g_cinta_igac where nmro_orden_igac=''001''',
+'           and vgncia=(pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_VGNCIA'')-1)',
+'           and id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')',
+'           and cdgo_clnte      = :F_CDGO_CLNTE;'))
+);
+wwv_flow_api.create_shared_query_stmnt(
+ p_id=>wwv_flow_api.id(6107054714294573)
+,p_shared_query_id=>wwv_flow_api.id(52830385468016467)
+,p_sql_statement=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'/*Q#7 Cantidad predios nuevos cinta  ',
+'select count(*) prdios_nvos_cnta',
+'  from v_gi_g_cinta_igac c',
+' where nmro_orden_igac = ''001'' ',
+' and not exists ( select ''x'' ',
+'                  from  v_gi_g_cinta_igac p ',
+'                  where p.rfrncia_igac = c.rfrncia_igac and vgncia=(pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_VGNCIA'')-1) ',
+'                       and id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO''))  ',
+'and',
+'not exists (select ''x'' from v_si_i_sujetos_impuesto pp where pp.idntfccion_sjto = c.rfrncia_igac )',
+'and vgncia=pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_VGNCIA'') and id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')  */',
+'',
+'select ',
+'      trim(to_char(count(*),''999G999G999G999G999G999G990'')) prdios_nvos_cnta',
+' ',
+'  from v_gi_g_cinta_igac c',
+' where nmro_orden_igac = ''001'' ',
+' and not exists ( select ''x'' ',
+'                  from  v_gi_g_cinta_igac p ',
+'                  where p.rfrncia_igac = c.rfrncia_igac and p.vgncia=(pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_VGNCIA'')-1) ',
+'              --    and p.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'') ',
+'                   and p.cdgo_clnte      = :F_CDGO_CLNTE',
+'                      )  ',
+'and',
+'not exists (select ''x'' from v_si_i_sujetos_impuesto pp where pp.idntfccion_sjto = c.rfrncia_igac )',
+'and c.vgncia = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_VGNCIA'') ',
+'and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'') ',
+'and c.cdgo_clnte      = :F_CDGO_CLNTE;',
+''))
+);
+wwv_flow_api.create_shared_query_stmnt(
+ p_id=>wwv_flow_api.id(6107260901294574)
+,p_shared_query_id=>wwv_flow_api.id(52830385468016467)
+,p_sql_statement=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'/*Q#8 Predios nuevos Existenetes en la cinta */ ',
+'',
+'  ',
+'   select ',
+'   trim(to_char(count(*),''999G999G999G999G999G999G990'')) prdios_nvos_exsten_cnta',
+'   from v_gi_g_cinta_igac c ',
+'   where c.nmro_orden_igac=''001''',
+'   and not exists (select ''x'' from  v_gi_g_cinta_igac p where p.rfrncia_igac = c.rfrncia_igac ',
+'                                                      and p.vgncia = (pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_VGNCIA'')-1)',
+'                                                    --  and p.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')',
+'                                                    ) ',
+'   and exists (select ''x'' from v_si_i_sujetos_impuesto pp where pp.idntfccion_sjto = c.rfrncia_igac)',
+'   and c.vgncia = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_VGNCIA'')',
+'   and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'');   ',
+'   ',
+'',
+'   ',
+'   '))
+);
+wwv_flow_api.create_shared_query_stmnt(
+ p_id=>wwv_flow_api.id(6107489069294574)
+,p_shared_query_id=>wwv_flow_api.id(52830385468016467)
+,p_sql_statement=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'/*Q#9 query_7: total de predios con avaluos mayores a cero y --query_8: total de predios con avaluos iguales a cero  */',
+'select count(*) value, ',
+'       ''Predios con avaluos mayores a cero'' as color_avaluos_cro,',
+unistr('       ''Aval\00FAos Totales Recibidos'' as etiqueta_avaluos_cro'),
+'       from v_gi_g_cinta_igac c where nmro_orden_igac=''001'' and c.avluo_igac > 0  and id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'') and c.cdgo_clnte = :F_CDGO_CLNTE',
+'union all ',
+'select count(*) as value,',
+unistr('''Predios con aval\00FAos igual a cero'' as color_avaluos_cro,'),
+unistr('''Aval\00FAos Totales Recibidos''  as etiqueta_avaluos_cro'),
+'from v_gi_g_cinta_igac c where nmro_orden_igac=''001'' and c.avluo_igac = 0 and id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'') and c.cdgo_clnte  = :F_CDGO_CLNTE'))
+);
+wwv_flow_api.create_shared_query_stmnt(
+ p_id=>wwv_flow_api.id(6107610336294574)
+,p_shared_query_id=>wwv_flow_api.id(52830385468016467)
+,p_sql_statement=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'/*Q#10  --query_8: total de predios con avaluos iguales a cero  */',
+'select ',
+' trim(to_char(count(*),''999G999G999G999G999G999G990'')) cntdad_igual_cro ',
+'',
+'from v_gi_g_cinta_igac c ',
+'where nmro_orden_igac=''001'' ',
+'        and c.avluo_igac = 0 ',
+'        and id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')',
+'        and c.cdgo_clnte      = :F_CDGO_CLNTE'))
+);
+wwv_flow_api.create_shared_query_stmnt(
+ p_id=>wwv_flow_api.id(6107849647294574)
+,p_shared_query_id=>wwv_flow_api.id(52830385468016467)
+,p_sql_statement=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'/*Q#11 Total avaluos  */',
+'select  ''$'' || trim(to_char(sum(c.avluo_igac) ,''999G999G999G999G999G999G990'')) ttal_avaluos ',
+'from v_gi_g_cinta_igac c ',
+'where nmro_orden_igac=''001'' ',
+'        and c.avluo_igac > 0 ',
+'        and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'') ',
+'        and c.cdgo_clnte      = :F_CDGO_CLNTE'))
+);
+wwv_flow_api.create_shared_query_stmnt(
+ p_id=>wwv_flow_api.id(6108069897294574)
+,p_shared_query_id=>wwv_flow_api.id(52830385468016467)
+,p_sql_statement=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'/*Q#12 query_10: estadistica de predios pro novedad y avaluos comparando actual vs anterior */',
+'select ''Predios Nuevos'' Novedad,',
+'trim(to_char(count(*),''999G999G999G999G999G999G990'')) "No. Predios",',
+'''$'' || trim(to_char(sum(c.avluo_igac) ,''999G999G999G999G999G999G990'')) "Total Avaluos"',
+'from v_gi_g_cinta_igac c ',
+'where c.nmro_orden_igac=''001'' ',
+'        and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')     ',
+'        and not exists (select ''x'' from v_si_i_sujetos_impuesto p where p.idntfccion_sjto = c.rfrncia_igac)',
+'        and c.cdgo_clnte      = :F_CDGO_CLNTE',
+'union',
+'',
+'',
+'select ''Predios Conservan '' Novedad,',
+'trim(to_char(count(*),''999G999G999G999G999G999G990'')) "No. Predios",',
+'''$'' || trim(to_char(sum(c.avluo_igac) ,''999G999G999G999G999G999G990'')) "Total Avaluos"',
+'from v_gi_g_cinta_igac c ',
+'where c.nmro_orden_igac=''001''',
+'        and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')',
+'        and c.cdgo_clnte      = :F_CDGO_CLNTE',
+'union',
+'',
+'',
+'select ''Predios Retirados '' Novedad ,',
+'trim(to_char(count(*),''999G999G999G999G999G999G990'')) "No. Predios",',
+'''$'' || trim(to_char(0 ,''999G999G999G999G999G999G990'')) "Total Avaluos"',
+'from v_si_i_sujetos_impuesto p ',
+'where not exists (Select ''x'' from v_gi_g_cinta_igac c where p.idntfccion_sjto = c.rfrncia_igac and p.id_sjto_estdo = 4',
+'        and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO''))',
+'        and p.cdgo_clnte      = :F_CDGO_CLNTE'))
+);
+wwv_flow_api.create_shared_query_stmnt(
+ p_id=>wwv_flow_api.id(6108210211294574)
+,p_shared_query_id=>wwv_flow_api.id(52830385468016467)
+,p_sql_statement=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'/* Q#13--query_11: eatadisticas de predios que se conservan segun su estado actual */',
+'select ''conservan inactivos'' novedad,',
+'trim(to_char(count(*),''999G999G999G999G999G999G990'')) cntdad',
+'',
+'from v_gi_g_cinta_igac c',
+'where c.nmro_orden_igac = ''001''',
+'    and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'') ',
+'    and exists (select ''x'' from v_si_i_sujetos_impuesto p where p.idntfccion_sjto = c.rfrncia_igac and p.id_sjto_estdo = 4)',
+'    and c.cdgo_clnte      = :F_CDGO_CLNTE',
+'union',
+'select ''conservan activos'' novedad,',
+'trim(to_char(count(*),''999G999G999G999G999G999G990'')) cntdad',
+'',
+'from v_gi_g_cinta_igac c',
+'where c.nmro_orden_igac = ''001'' ',
+'    and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')',
+'    and exists (select ''x'' from v_si_i_sujetos_impuesto p where p.idntfccion_sjto = c.rfrncia_igac and p.id_sjto_estdo = 9)',
+'    and c.cdgo_clnte      = :F_CDGO_CLNTE',
+''))
+);
+wwv_flow_api.create_shared_query_stmnt(
+ p_id=>wwv_flow_api.id(6108438081294574)
+,p_shared_query_id=>wwv_flow_api.id(52830385468016467)
+,p_sql_statement=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'/* Q#14--query_11: eatadisticas de predios que se conservan segun su estado actual */',
+'select ',
+'trim(to_char(count(*),''999G999G999G999G999G999G990''))  cntdad_prdios_actvos',
+'from v_gi_g_cinta_igac c',
+'where c.nmro_orden_igac = ''001''',
+'        and id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')',
+'        and exists (select ''x'' from v_si_i_sujetos_impuesto p where p.idntfccion_sjto = c.rfrncia_igac and p.id_sjto_estdo = 9)',
+'        and c.cdgo_clnte      = :F_CDGO_CLNTE'))
+);
+wwv_flow_api.create_shared_query_stmnt(
+ p_id=>wwv_flow_api.id(6108682960294574)
+,p_shared_query_id=>wwv_flow_api.id(52830385468016467)
+,p_sql_statement=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'/* Q#15--query_11: eatadisticas de predios que se conservan segun su estado actual */',
+'select ',
+'trim(to_char(count(*),''999G999G999G999G999G999G990'')) cntdad_prdios_inctvos',
+'from v_gi_g_cinta_igac c',
+'where c.nmro_orden_igac = ''001''',
+'        and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')',
+'        and exists (select ''x'' from v_si_i_sujetos_impuesto p where p.idntfccion_sjto = c.rfrncia_igac and p.id_sjto_estdo = 4)',
+'        and c.cdgo_clnte      = :F_CDGO_CLNTE'))
+);
+wwv_flow_api.create_shared_query_stmnt(
+ p_id=>wwv_flow_api.id(6108883043294574)
+,p_shared_query_id=>wwv_flow_api.id(52830385468016467)
+,p_sql_statement=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'/* Q#16 */',
+'select a.dstno_ecnmco_igac "Destino IGAC" ,',
+unistr('               a.dscrpcion         "Descripci\00F3n Destino" ,'),
+'               trim(to_char(a.cntdad ,''999G999G999G999G999G999G990'')) "No. Predios" ,',
+unistr('              ''$'' || trim(to_char(a.ttal_avluos,''999G999G999G999G999G999G990'')) "Total Aval\00FAos"'),
+'           from (',
+'                select c.dstno_ecnmco_igac , ',
+'               (select d.nmbre_dstno_igac from df_s_destinos_igac d where d.cdgo_dstno_igac = c.dstno_ecnmco_igac) dscrpcion ,',
+'                       count(*) cntdad, sum(c.avluo_igac) ttal_avluos ,',
+'                       max(1) orden       ',
+'                  from v_gi_g_cinta_igac c',
+'                  join et_g_procesos_carga b ',
+'                    on c.id_prcso_crga = b.id_prcso_crga ',
+'                  join et_g_carga d ',
+'                    on b.id_crga = d.id_crga',
+'                 where c.nmro_orden_igac           = ''001''',
+'                   and substr(c.rfrncia_igac,1,2) <> ''00'' ',
+'                   and c.dstno_ecnmco_igac in (''R'',''S'',''T'')',
+'                   and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')',
+'                   and c.cdgo_clnte      = :F_CDGO_CLNTE               ',
+'                 group by c.dstno_ecnmco_igac',
+'             union',
+'               select '' '' dstno_ecnmco_igac, ',
+'                      ''Totales'' dscrpcion,',
+'                      count(*) cntdad, sum(c.avluo_igac) ttal_avluos,',
+'                      99 orden',
+'                 from v_gi_g_cinta_igac c',
+'                 join et_g_procesos_carga b ',
+'                   on c.id_prcso_crga = b.id_prcso_crga ',
+'                 join et_g_carga d ',
+'                   on b.id_crga = d.id_crga',
+'                where c.nmro_orden_igac          =  ''001'' ',
+'                  and substr(c.rfrncia_igac,1,2) <> ''00''',
+'                  and c.dstno_ecnmco_igac in (''R'',''S'',''T'')',
+'                  and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')',
+'                  and c.cdgo_clnte      = :F_CDGO_CLNTE',
+'                order by orden) a',
+'                order by a.orden, a.dstno_ecnmco_igac;',
+'                '))
+);
+wwv_flow_api.create_shared_query_stmnt(
+ p_id=>wwv_flow_api.id(6109092767294574)
+,p_shared_query_id=>wwv_flow_api.id(52830385468016467)
+,p_sql_statement=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'/* Q#17  */',
+'select count(*)  value ,',
+'               (select d.nmbre_dstno_igac from df_s_destinos_igac d where d.cdgo_dstno_igac = c.dstno_ecnmco_igac) as color_avaluos_cro ,',
+'                     ''Predios Urbanos x No Predios''  as etiqueta_avaluos_cro ',
+'                 ',
+'                  from v_gi_g_cinta_igac c',
+'                  join et_g_procesos_carga b ',
+'                    on c.id_prcso_crga = b.id_prcso_crga ',
+'                  join et_g_carga d ',
+'                    on b.id_crga = d.id_crga',
+'                 where c.nmro_orden_igac           = ''001''',
+'                   and substr(c.rfrncia_igac,1,2) <> ''00'' ',
+'                   and c.dstno_ecnmco_igac = ''R''',
+'                   and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')',
+'                   and c.cdgo_clnte      = :F_CDGO_CLNTE',
+'                 group by c.dstno_ecnmco_igac',
+'                 ',
+'union all             ',
+'',
+' select count(*)  value, ',
+'               (select d.nmbre_dstno_igac from df_s_destinos_igac d where d.cdgo_dstno_igac = c.dstno_ecnmco_igac)  as color_avaluos_cro ,',
+'                     ''Predios Urbanos x No Predios''  as etiqueta_avaluos_cro',
+'              ',
+'                  from v_gi_g_cinta_igac c',
+'                  join et_g_procesos_carga b ',
+'                    on c.id_prcso_crga = b.id_prcso_crga ',
+'                  join et_g_carga d ',
+'                    on b.id_crga = d.id_crga',
+'                 where c.nmro_orden_igac           = ''001''',
+'                   and substr(c.rfrncia_igac,1,2) <> ''00'' ',
+'                   and c.dstno_ecnmco_igac = ''S''',
+'                 and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')',
+'                 and c.cdgo_clnte      = :F_CDGO_CLNTE',
+'                 group by c.dstno_ecnmco_igac',
+'',
+'union all ',
+' select count(*)  value, ',
+'               (select d.nmbre_dstno_igac from df_s_destinos_igac d where d.cdgo_dstno_igac = c.dstno_ecnmco_igac)  as color_avaluos_cro ,',
+'                     ''Predios Urbanos x No Predios''  as etiqueta_avaluos_cro',
+'                  ',
+'                  from v_gi_g_cinta_igac c',
+'                  join et_g_procesos_carga b ',
+'                    on c.id_prcso_crga = b.id_prcso_crga ',
+'                  join et_g_carga d ',
+'                    on b.id_crga = d.id_crga',
+'                 where c.nmro_orden_igac           = ''001''',
+'                   and substr(c.rfrncia_igac,1,2) <> ''00'' ',
+'                   and c.dstno_ecnmco_igac = ''T''',
+'                  and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')',
+'                  and c.cdgo_clnte      = :F_CDGO_CLNTE',
+'                 group by c.dstno_ecnmco_igac',
+'',
+'',
+''))
+);
+wwv_flow_api.create_shared_query_stmnt(
+ p_id=>wwv_flow_api.id(6109219851294575)
+,p_shared_query_id=>wwv_flow_api.id(52830385468016467)
+,p_sql_statement=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'/* Q#18 */',
+'select   sum(c.avluo_igac)  value ,',
+'         (select d.nmbre_dstno_igac from df_s_destinos_igac d where d.cdgo_dstno_igac = c.dstno_ecnmco_igac) as color_avaluos_tot ,',
+'         ''Predios Urbanos x Total Avaluos''  as etiqueta_avaluos_tot,',
+'         round((sum(c.avluo_igac)/1000000),0) ttal_avluos_porce_round',
+'                  from v_gi_g_cinta_igac c',
+'                  join et_g_procesos_carga b ',
+'                    on c.id_prcso_crga = b.id_prcso_crga ',
+'                  join et_g_carga d ',
+'                    on b.id_crga = d.id_crga',
+'                 where c.nmro_orden_igac           = ''001''',
+'                   and substr(c.rfrncia_igac,1,2) <> ''00'' ',
+'                   and c.dstno_ecnmco_igac = ''R''',
+'                   and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')',
+'                   and c.cdgo_clnte      = :F_CDGO_CLNTE',
+'                 group by c.dstno_ecnmco_igac',
+'                 ',
+'union all             ',
+'',
+' select   sum(c.avluo_igac)  value, ',
+'               (select d.nmbre_dstno_igac from df_s_destinos_igac d where d.cdgo_dstno_igac = c.dstno_ecnmco_igac)  as color_avaluos_tot ,',
+'                     ''Predios Urbanos x Total Avaluos''  as etiqueta_avaluos_tot,',
+'                     ROUND((sum(c.avluo_igac)/1000000),0) ttal_avluos_porce_round',
+'                  from v_gi_g_cinta_igac c',
+'                  join et_g_procesos_carga b ',
+'                    on c.id_prcso_crga = b.id_prcso_crga ',
+'                  join et_g_carga d ',
+'                    on b.id_crga = d.id_crga',
+'                 where c.nmro_orden_igac           = ''001''',
+'                   and substr(c.rfrncia_igac,1,2) <> ''00'' ',
+'                   and c.dstno_ecnmco_igac = ''S''',
+'                   and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')',
+'                   and c.cdgo_clnte      = :F_CDGO_CLNTE',
+'                 group by c.dstno_ecnmco_igac',
+'',
+'union all ',
+'   select     sum(c.avluo_igac)  value, ',
+'               (select d.nmbre_dstno_igac from df_s_destinos_igac d where d.cdgo_dstno_igac = c.dstno_ecnmco_igac)  as color_avaluos_tot ,',
+'                     ''Predios Urbanos x Total Avaluos''  as etiqueta_avaluos_tot,',
+'                     ROUND((sum(c.avluo_igac)/1000000),0) ttal_avluos_porce_round',
+'                  from v_gi_g_cinta_igac c',
+'                  join et_g_procesos_carga b ',
+'                    on c.id_prcso_crga = b.id_prcso_crga ',
+'                  join et_g_carga d ',
+'                    on b.id_crga = d.id_crga',
+'                 where c.nmro_orden_igac           = ''001''',
+'                   and substr(c.rfrncia_igac,1,2) <> ''00'' ',
+'                   and c.dstno_ecnmco_igac = ''T''',
+'                   and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')',
+'                   and c.cdgo_clnte      = :F_CDGO_CLNTE',
+'                 group by c.dstno_ecnmco_igac;                 ',
+'',
+'',
+'',
+''))
+);
+wwv_flow_api.create_shared_query_stmnt(
+ p_id=>wwv_flow_api.id(6109441618294575)
+,p_shared_query_id=>wwv_flow_api.id(52830385468016467)
+,p_sql_statement=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'/* Q#19 numero de predios en los archivos recibidos */',
+'select count(*) value, ',
+'       ''Predios Cargados'' as predios_cargados_color,',
+'       ''Predios Cargados de los Registros recibidos'' as predios_cargados_etiqueta ',
+'   from v_gi_g_cinta_igac ',
+'  where nmro_orden_igac = ''001'' ',
+'    and id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')',
+'    and cdgo_clnte      = :F_CDGO_CLNTE',
+'union all ',
+'select count(*) as value,',
+'      ''Archivos Predios no Cargados'' as predios_cargados_color,',
+'      ''Predios Cargados de los Registros recibidos'' as predios_cargados_etiqueta',
+'  from v_gi_g_cinta_igac  ',
+' where nmro_orden_igac <> ''001'' ',
+'   and id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')',
+'   and cdgo_clnte      = :F_CDGO_CLNTE'))
+);
+wwv_flow_api.create_shared_query_stmnt(
+ p_id=>wwv_flow_api.id(6109689961294575)
+,p_shared_query_id=>wwv_flow_api.id(52830385468016467)
+,p_sql_statement=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'/*Q#20 calcular el porcentaje incremento de predios de una vigencia a otra  :P2_VGNCIA */',
+'select trunc((((select count(*) predios_2017 ',
+'                from v_gi_g_cinta_igac  where nmro_orden_igac=''001''  and id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'') and cdgo_clnte      = :F_CDGO_CLNTE',
+'                and vgncia = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_VGNCIA''))*100)/',
+'               (select count(*) predios_2016 from v_gi_g_cinta_igac  where nmro_orden_igac=''001''  and id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'') and cdgo_clnte      = :F_CDGO_CLNTE',
+'               and vgncia = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_VGNCIA'')-1))-100,2)||''%'' Incremento',
+'',
+'from dual;'))
+);
+wwv_flow_api.create_shared_query_stmnt(
+ p_id=>wwv_flow_api.id(6109806108294575)
+,p_shared_query_id=>wwv_flow_api.id(52830385468016467)
+,p_sql_statement=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'/*Q#21 estadisticas por predios destinos LOTES (R,S) con diferencial de avaluo segun 454 UVT*/',
+' select a.dstno_ecnmco_igac "Destino IGAC",',
+unistr('           (select d.nmbre_dstno_igac from df_s_destinos_igac d where d.cdgo_dstno_igac = a.dstno_ecnmco_igac)  "Descripci\00F3n Destino",'),
+'          --- a.cntdad             "No. Predios Inf a 454 UVT",',
+'              trim(to_char(a.cntdad ,''999G999G999G999G999G999G990''))  "No. Predios Inf a 454 UVT",',
+unistr('        --   a.ttal_avluos        "Total Aval\00FAos Inf a 454 UVT",'),
+unistr('              ''$'' || trim(to_char( a.ttal_avluos  ,''999G999G999G999G999G999G990''))  "Total Aval\00FAos Inf a 454 UVT",'),
+'        --   b.cntdad             "No. Predios Sup a 454 UVT",',
+'           trim(to_char(b.cntdad ,''999G999G999G999G999G999G990''))  "No. Predios Sup a 454 UVT",',
+unistr('        --   b.ttal_avluos        "Total Aval\00FAos Sup a 454 UVT",'),
+unistr('             ''$'' || trim(to_char( b.ttal_avluos  ,''999G999G999G999G999G999G990''))  "Total Aval\00FAos Sup a 454 UVT",'),
+'        --   c.cntdad             "No. Predios Totales",',
+'             trim(to_char(c.cntdad ,''999G999G999G999G999G999G990''))   "No. Predios Totales",',
+unistr('      --    c.ttal_avluos        "Total Aval\00FAos"       '),
+unistr('             ''$'' || trim(to_char( c.ttal_avluos  ,''999G999G999G999G999G999G990''))     "Total Aval\00FAos"'),
+'       from ',
+'              (',
+'               select c.dstno_ecnmco_igac , ',
+'                      count(*) cntdad ,',
+'                      sum(c.avluo_igac) ttal_avluos',
+'                  from v_gi_g_cinta_igac c',
+'                 join et_g_procesos_carga b ',
+'                   on c.id_prcso_crga = b.id_prcso_crga ',
+'                 join et_g_carga d ',
+'                   on b.id_crga = d.id_crga',
+'                where c.nmro_orden_igac          =  ''001''',
+'                  and substr(c.rfrncia_igac,1,2) <> ''00'' ',
+'                  and c.dstno_ecnmco_igac in (''R'',''S'')',
+'                  and c.avluo_igac <= (454*( select    vlor as valor_uvt  from df_s_indicadores_economico where cdgo_indcdor_tpo = ''UVT'' and pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_VGNCIA'') between extract(year fro'
+||'m fcha_dsde) and extract(year from fcha_hsta)))',
+'                 and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')',
+'                  and c.cdgo_clnte      = :F_CDGO_CLNTE',
+'                group by c.dstno_ecnmco_igac ) a ,',
+'             (',
+'               select c.dstno_ecnmco_igac , ',
+'                      count(*) cntdad ,',
+'                      sum(c.avluo_igac) ttal_avluos',
+'                  from v_gi_g_cinta_igac c',
+'                 join et_g_procesos_carga b ',
+'                   on c.id_prcso_crga = b.id_prcso_crga ',
+'                 join et_g_carga d ',
+'                   on b.id_crga = d.id_crga ',
+'                where c.nmro_orden_igac          =  ''001'' ',
+'                  and substr(c.rfrncia_igac,1,2) <> ''00'' ',
+'                  and c.dstno_ecnmco_igac in (''R'',''S'')',
+'                  and c.avluo_igac > (454*( select    vlor as valor_uvt  from df_s_indicadores_economico where cdgo_indcdor_tpo = ''UVT'' and pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_VGNCIA'') between extract(year from'
+||' fcha_dsde) and extract(year from fcha_hsta)))',
+'                  and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')',
+'                 and c.cdgo_clnte      = :F_CDGO_CLNTE',
+'                group by c.dstno_ecnmco_igac ) b ,',
+'             (',
+'               select c.dstno_ecnmco_igac , ',
+'                      count(*) cntdad , ',
+'                      sum(c.avluo_igac) ttal_avluos',
+'                 from v_gi_g_cinta_igac c',
+'                 join et_g_procesos_carga b ',
+'                   on c.id_prcso_crga = b.id_prcso_crga ',
+'                 join et_g_carga d ',
+'                   on b.id_crga = d.id_crga',
+'                where c.nmro_orden_igac          =  ''001''',
+'                  and substr(c.rfrncia_igac,1,2) <> ''00'' ',
+'                  and c.dstno_ecnmco_igac in (''R'',''S'') ',
+'                  and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')',
+'                 and c.cdgo_clnte      = :F_CDGO_CLNTE',
+'                group by c.dstno_ecnmco_igac ) c',
+'    where a.dstno_ecnmco_igac = b.dstno_ecnmco_igac',
+'      and b.dstno_ecnmco_igac = c.dstno_ecnmco_igac',
+'    order by a.dstno_ecnmco_igac; ',
+'',
+'',
+'',
+'',
+'',
+'',
+'',
+'                '))
+);
+end;
+/
+begin
+wwv_flow_api.create_shared_query_stmnt(
+ p_id=>wwv_flow_api.id(6110002242294578)
+,p_shared_query_id=>wwv_flow_api.id(52830385468016467)
+,p_sql_statement=>wwv_flow_string.join(wwv_flow_t_varchar2(
+unistr('/*Q#22    -- falta   ''Liquidaci\00F3n de Predios Urbanos - Total Avaluos''  as etiqueta_dstno_hmlo,*/'),
+'select  count(*) value ,',
+'           ''''  as etiqueta_dstno_hmlo,',
+'',
+'    ',
+'               (select d.nmbre_dstno_igac from df_s_destinos_igac d where d.cdgo_dstno_igac = c.dstno_ecnmco_igac)  as color_dstno_hmlo',
+'                ',
+'             ',
+'                  from v_gi_g_cinta_igac c',
+'                 join et_g_procesos_carga b ',
+'                   on c.id_prcso_crga = b.id_prcso_crga ',
+'                 join et_g_carga d ',
+'                   on b.id_crga = d.id_crga',
+'                 where c.nmro_orden_igac          =  ''001''',
+'                   and substr(c.rfrncia_igac,1,2) <> ''00'' ',
+'                   and c.dstno_ecnmco_igac in (''B'',''C'',''F'',''G'',''H'',''I'')',
+'                   and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')',
+'                   and c.cdgo_clnte      = :F_CDGO_CLNTE',
+'                 group by c.dstno_ecnmco_igac;  '))
+);
+wwv_flow_api.create_shared_query_stmnt(
+ p_id=>wwv_flow_api.id(6110225218294578)
+,p_shared_query_id=>wwv_flow_api.id(52830385468016467)
+,p_sql_statement=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'/*Q#23 */',
+'select a.dstno_ecnmco_igac "Destino IGAC",',
+unistr('               a.dscrpcion         "Descripci\00F3n Destino",'),
+'               a.cntdad             "No. Predios",',
+unistr('                ''$'' || trim(to_char( a.ttal_avluos  ,''999G999G999G999G999G999G990'')) "Total Aval\00FAos"'),
+unistr('            --   a.ttal_avluos        "Total Aval\00FAos"'),
+'          from (',
+'                select c.dstno_ecnmco_igac , ',
+'                       (select d.nmbre_dstno_igac from df_s_destinos_igac d where d.cdgo_dstno_igac = c.dstno_ecnmco_igac) dscrpcion,',
+'                               count(*) cntdad ,',
+'                               sum(c.avluo_igac) ttal_avluos       ',
+'                          from v_gi_g_cinta_igac c',
+'                          join et_g_procesos_carga b ',
+'                            on c.id_prcso_crga = b.id_prcso_crga ',
+'                          join et_g_carga d ',
+'                            on b.id_crga = d.id_crga ',
+'                         where c.nmro_orden_igac          =  ''001''',
+'                           and substr(c.rfrncia_igac,1,2) <> ''00'' ',
+'                           and c.dstno_ecnmco_igac in (''P'')',
+'                          and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')',
+'                          and c.cdgo_clnte      = :F_CDGO_CLNTE',
+'                         group by c.dstno_ecnmco_igac ) a   '))
+);
+wwv_flow_api.create_shared_query_stmnt(
+ p_id=>wwv_flow_api.id(6110451913294578)
+,p_shared_query_id=>wwv_flow_api.id(52830385468016467)
+,p_sql_statement=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'/* #Q24 Predios Destinos No Homologados */ ',
+'select  count(*) value,',
+'',
+'                   (select d.nmbre_dstno_igac from df_s_destinos_igac d where d.cdgo_dstno_igac = c.dstno_ecnmco_igac) dscrpcion_color,',
+'                  ''$'' || trim(to_char(sum(c.avluo_igac) ,''999G999G999G999G999G999G990'')) ttal_avluos,  ',
+'               --    sum(c.avluo_igac) ttal_avluos,',
+'                   (sum(c.avluo_igac)/1000) ttal_avluos_porce,',
+'              ',
+'                   ''Predios Destinos No Homologados'' as etiqueta',
+'              from v_gi_g_cinta_igac c',
+'              join et_g_procesos_carga b ',
+'                on c.id_prcso_crga = b.id_prcso_crga ',
+'              join et_g_carga d ',
+'                   on b.id_crga = d.id_crga',
+'             where c.nmro_orden_igac = ''001''',
+'             and substr(c.rfrncia_igac,1,2)<>''00''',
+'             and c.dstno_ecnmco_igac in (''J'',''K'')',
+'             and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')',
+'             and c.cdgo_clnte      = :F_CDGO_CLNTE',
+'             group by c.dstno_ecnmco_igac;'))
+);
+wwv_flow_api.create_shared_query_stmnt(
+ p_id=>wwv_flow_api.id(6110654307294578)
+,p_shared_query_id=>wwv_flow_api.id(52830385468016467)
+,p_sql_statement=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'/* Q#25*/',
+'select  count(*) value,',
+'  c.dstno_ecnmco_igac, ',
+'                   (select d.nmbre_dstno_igac from df_s_destinos_igac d where d.cdgo_dstno_igac = c.dstno_ecnmco_igac) dscrpcion_color,',
+'                  ',
+'                  ''$'' || trim(to_char(sum(c.avluo_igac) ,''999G999G999G999G999G999G990'')) ttal_avluos,',
+'                ',
+'              --     sum(c.avluo_igac) ttal_avluos,',
+'                   (sum(c.avluo_igac)/100000) ttal_avluos_porce,',
+'                    ROUND((sum(c.avluo_igac)/10000000),0) ttal_avluos_porce_round,',
+'                 ',
+'                   ''Predios Destinos no Homologados '' as etiqueta',
+'              from v_gi_g_cinta_igac c',
+'              join et_g_procesos_carga b ',
+'                on c.id_prcso_crga = b.id_prcso_crga ',
+'              join et_g_carga d ',
+'                   on b.id_crga = d.id_crga',
+'             where c.nmro_orden_igac = ''001''',
+'             and substr(c.rfrncia_igac,1,2)<>''00''',
+'             and c.dstno_ecnmco_igac in (''J'',''K'')',
+'             and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')',
+'             and c.cdgo_clnte      = :F_CDGO_CLNTE',
+'             group by c.dstno_ecnmco_igac;'))
+);
+wwv_flow_api.create_shared_query_stmnt(
+ p_id=>wwv_flow_api.id(6110872355294578)
+,p_shared_query_id=>wwv_flow_api.id(52830385468016467)
+,p_sql_statement=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'/* Q#26*/ ',
+'select  a.clse "Clase Predio",',
+'    --    trim(to_char(a.cntdad ,''999G999G999G999G999G999G990'')) "No. Predios",',
+'      a.cntdad "No. Predios",',
+'       ''$'' || trim(to_char(a.ttal_avluos ,''999G999G999G999G999G999G990'')) "Total Avaluos",',
+'        round((( a.ttal_avluos)/100000000),0) ttal_avluos_porce_round,',
+'    --     trim(to_char(b.cntdad ,''999G999G999G999G999G999G990'')) "Nuevos",',
+'      b.cntdad "Nuevos",',
+'        ''$'' || trim(to_char(b.ttal_avluos ,''999G999G999G999G999G999G990'')) "Total Avaluos Nuevos",',
+'        round((( a.ttal_avluos)/100000000),0) ttal_avluos_nvos_porce_round,',
+'        ''Porcentaje No Predios x Clase'' as etqta_no_predios,',
+'        ''Porcentaje  Total Avaluos x Clase'' as etqta_ttal_avls',
+'from (',
+'  select 1 tipo, ''Urbano'' clse, count(*) cntdad, sum(c.avluo_igac) ttal_avluos       ',
+'from v_gi_g_cinta_igac c',
+'where c.nmro_orden_igac = ''001'' ',
+'    and substr(c.rfrncia_igac,1,2)<>''00'' ',
+'    and  c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'') ',
+'    and c.cdgo_clnte = :F_CDGO_CLNTE',
+'union',
+'select 2 tipo, ''Rural'' clse, count(*) cntdad, sum(c.avluo_igac) ttal_avluos',
+'from v_gi_g_cinta_igac c',
+'where c.nmro_orden_igac = ''001'' ',
+'    and substr(c.rfrncia_igac,1,2)=''00''  ',
+'    and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')',
+'    and c.cdgo_clnte      = :F_CDGO_CLNTE',
+'/*union',
+'select 3 tipo, ''Total'' clse, count(*) cntdad, sum(c.avluo_igac) ttal_avluos',
+'from v_gi_g_cinta_igac c',
+'where c.nmro_orden_igac = ''001''  and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')*/',
+'  )a,',
+'  (',
+'  select 1 tipo,''Urbano'' clse, count(*) cntdad, sum(c.avluo_igac) ttal_avluos       ',
+'from v_gi_g_cinta_igac c',
+'where c.nmro_orden_igac = ''001'' ',
+'      and substr(c.rfrncia_igac,1,2)<>''00'' ',
+'      and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')',
+'      and c.cdgo_clnte      = :F_CDGO_CLNTE',
+'      and not exists (select ''x'' from si_c_sujetos p join si_i_predios b on p.id_sjto = b.id_prdio where p.idntfccion = c.rfrncia_igac)',
+'                                              --b.id_sjto  where p.idntfccion = c.rfrncia_igac)',
+'union',
+'select 2 tipo, ''Rural'' clse, count(*) cntdad, sum(c.avluo_igac) ttal_avluos',
+'from v_gi_g_cinta_igac c',
+'where c.nmro_orden_igac = ''001'' ',
+'      and substr(c.rfrncia_igac,1,2)=''00''  ',
+'      and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')',
+'      and c.cdgo_clnte      = :F_CDGO_CLNTE',
+'      and not exists (select ''x'' from si_c_sujetos p join si_i_predios b on p.id_sjto = b.id_prdio where p.idntfccion = c.rfrncia_igac)',
+'                      --b.id_sjto  where p.idntfccion = c.rfrncia_igac)',
+'/*union',
+'select 3 tipo, ''Total'' clse, count(*) cntdad, sum(c.avluo_igac) ttal_avluos',
+'from v_gi_g_cinta_igac c',
+'where c.nmro_orden_igac = ''001''  and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')',
+'and not exists (select ''x'' from si_c_sujetos p join si_i_predios b on p.id_sjto = b.id_sjto  where p.idntfccion = c.rfrncia_igac)*/',
+'  )b',
+'  where a.clse = b.clse',
+'  order by a.tipo;  ',
+'                 '))
+);
+wwv_flow_api.create_shared_query_stmnt(
+ p_id=>wwv_flow_api.id(6111046666294579)
+,p_shared_query_id=>wwv_flow_api.id(52830385468016467)
+,p_sql_statement=>wwv_flow_string.join(wwv_flow_t_varchar2(
+unistr('/* Q#27 query_33: cantidad de predios que actualmente estan con destino 22 - MUNICIPAL \2013 BANCO INMOBILIARIO METRO */'),
+'',
+'select trim(to_char(COUNT(*) ,''999G999G999G999G999G999G990'')) cntdad_pred_dest22_vgncia  ',
+'from v_si_i_sujetos_impuesto a',
+'join v_si_i_predios b on a.id_sjto = b.id_prdio--b.id_sjto',
+'join v_gi_g_cinta_igac c on a.idntfccion_sjto= c.rfrncia_igac and c.cdgo_clnte = :F_CDGO_CLNTE',
+'where b.nmtcnco=''22'' ',
+'      and a.cdgo_sjto_estdo=''A''',
+'      and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'');     ',
+''))
+);
+wwv_flow_api.create_shared_query_stmnt(
+ p_id=>wwv_flow_api.id(6111211894294579)
+,p_shared_query_id=>wwv_flow_api.id(52830385468016467)
+,p_sql_statement=>wwv_flow_string.join(wwv_flow_t_varchar2(
+unistr('/*  Q#28 query_34: cantidad de predios que en IGAC en 2017 envia y haran parte de la liquidacion atipica 22 - MUNICIPAL \2013 BANCO INMOBILIARIO METRO*/'),
+'SELECT ',
+'trim(to_char(COUNT(*) ,''999G999G999G999G999G999G990'')) ctd_ped_dst22_vcia_are0',
+'',
+'from v_gi_g_cinta_igac c',
+'where c.nmro_orden_igac = ''001'' ',
+'    and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')',
+'    and c.rfrncia_igac in (select a.idntfccion_sjto from v_si_i_sujetos_impuesto a join v_si_i_predios b on a.id_sjto = b.id_prdio where b.nmtcnco=''22'' and a.cdgo_sjto_estdo=''A'') ',
+'    --b.id_sjto',
+'    and c.area_cnstrda_igac=0 ',
+'    and c.cdgo_clnte= :F_CDGO_CLNTE'))
+);
+wwv_flow_api.create_shared_query_stmnt(
+ p_id=>wwv_flow_api.id(6111409389294579)
+,p_shared_query_id=>wwv_flow_api.id(52830385468016467)
+,p_sql_statement=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'/* Q#29 query_35: cantidad de predios que actualmente estan con destino 33-ENTIDADES ORDEN NACIONAL y DEPARTAMENTAL */',
+'',
+'select trim(to_char(COUNT(*) ,''999G999G999G999G999G999G990'')) cntdad_pred_dest33_vgncia ',
+'from v_si_i_sujetos_impuesto a',
+'join v_si_i_predios b on a.id_sjto = b.id_prdio-- b.id_sjto',
+'join v_gi_g_cinta_igac c on a.idntfccion_sjto= c.rfrncia_igac and c.cdgo_clnte = :F_CDGO_CLNTE',
+'where b.nmtcnco=''33''',
+'     and a.cdgo_sjto_estdo=''A''',
+'     and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'');',
+''))
+);
+wwv_flow_api.create_shared_query_stmnt(
+ p_id=>wwv_flow_api.id(6111685682294579)
+,p_shared_query_id=>wwv_flow_api.id(52830385468016467)
+,p_sql_statement=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'/* Q#30 query_36: cantidad de predios que en IGAC  envia y haran parte de la liquidacion atipica 33-ENTIDADES ORDEN NACIONAL y DEPARTAMENTAL */',
+'',
+'select trim(to_char( count(*) ,''999G999G999G999G999G999G990''))  ctdad_prd_dst33_vgn_liq_atip',
+'from  v_gi_g_cinta_igac c',
+'where c.nmro_orden_igac = ''001'' ',
+'        and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')',
+'        and exists (select ''x'' from v_si_i_sujetos_impuesto a join v_si_i_predios b on a.id_sjto = b.id_prdio where a.idntfccion_sjto = c.rfrncia_igac and b.nmtcnco=''33'' and a.cdgo_sjto_estdo=''A'')',
+'        --b.id_sjto ',
+'        and c.cdgo_clnte      = :F_CDGO_CLNTE',
+''))
+);
+wwv_flow_api.create_shared_query_stmnt(
+ p_id=>wwv_flow_api.id(6111808639294579)
+,p_shared_query_id=>wwv_flow_api.id(52830385468016467)
+,p_sql_statement=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'/*Q#31 query_37: cantidad de predios que en IGAC en 2017 envia y haran parte de la liquidacion atipica CAYENAS */',
+'select ',
+'trim(to_char(count(*),''999G999G999G999G999G999G990'')) cntdad_cynas',
+'from v_gi_g_cinta_igac c',
+'where c.nmro_orden_igac = ''001'' ',
+'        and substr(c.rfrncia_igac,1,8)=''00020000''',
+'        and c.dstno_ecnmco_igac in (''B'',''C'')',
+'        and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')',
+'        and c.cdgo_clnte      = :F_CDGO_CLNTE'))
+);
+wwv_flow_api.create_shared_query_stmnt(
+ p_id=>wwv_flow_api.id(6112016998294579)
+,p_shared_query_id=>wwv_flow_api.id(52830385468016467)
+,p_sql_statement=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'/*Q#32 query_38: cantidad de predios que actualmente estan liquidados como PLAN PARCIAL, rurales con destino habitacional estrato 1 */',
+'',
+'SELECT trim(to_char(COUNT(*)  ,''999G999G999G999G999G999G990''))  cntdad_plan_prcial  ',
+'FROM v_si_i_sujetos_impuesto a ',
+'join v_si_i_predios b on a.id_sjto = b.id_prdio --b.id_sjto',
+'join v_gi_g_cinta_igac c on a.idntfccion_sjto= c.rfrncia_igac ',
+'WHERE SUBSTR(a.idntfccion_sjto,1,2)=''00''',
+'        and b.cdgo_prdio_clsfccion=''01''',
+'        and b.nmtcnco = ''01'' ',
+'        and a.cdgo_sjto_estdo=''A'' ',
+'        and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')',
+'        and c.cdgo_clnte      = :F_CDGO_CLNTE'))
+);
+wwv_flow_api.create_shared_query_stmnt(
+ p_id=>wwv_flow_api.id(6112294203294579)
+,p_shared_query_id=>wwv_flow_api.id(52830385468016467)
+,p_sql_statement=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'/* Q#33 query_39: cantidad de predios que en IGAC  envia y haran parte de la liquidacion atipica 33-ENTIDADES ORDEN NACIONAL y DEPARTAMENTAL */',
+'',
+'select ',
+'trim(to_char(count(*) ,''999G999G999G999G999G999G990'')) cntdad_plan_prcial_atip',
+'from v_gi_g_cinta_igac c',
+'where c.nmro_orden_igac = ''001''  ',
+'    and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')',
+'    and rfrncia_igac in (select idntfccion_sjto from v_si_i_sujetos_impuesto a join v_si_i_predios b on a.id_sjto = b.id_prdio where SUBSTR(a.idntfccion_sjto,1,2)=''00'' and b.cdgo_prdio_clsfccion=''01'' and b.nmtcnco = ''01'' AND a.cdgo_sjto_estdo=''A'')',
+'                      --   b.id_sjto ',
+'    and c.cdgo_clnte      = :F_CDGO_CLNTE',
+'order by c.rfrncia_igac;',
+''))
+);
+wwv_flow_api.create_shared_query_stmnt(
+ p_id=>wwv_flow_api.id(6112494693294579)
+,p_shared_query_id=>wwv_flow_api.id(52830385468016467)
+,p_sql_statement=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'/* Q#34- Q#47--query_47: estadisticas por predios destinos urbanos residencial (A) para estrato 1 con diferencial de avaluo grafica */',
+'select a.dstno_ecnmco_igac "Destino IGAC",',
+unistr('       a.dscrpcion         "Descripci\00F3n Destino",'),
+'       a.estrto            "Estrato",',
+unistr('       a.tpo               "Avalu\00F3 Catastral",'),
+'       a.cntdad            "No. Predios",',
+unistr('       ''$'' || trim(to_char(a.ttal_avluos ,''999G999G999G999G999G999G990''))  "Total Aval\00FAos",'),
+'       round(((a.ttal_avluos )/10000000),0) ttal_avluos_porce_round',
+'from (',
+'',
+'select c.dstno_ecnmco_igac, ',
+'      (select d.nmbre_dstno_igac from df_s_destinos_igac d where d.cdgo_dstno_igac = c.dstno_ecnmco_igac) dscrpcion,',
+'       max(''1'') Estrto,',
+'       max(''<=135 SMMLV ($''||trim(to_char((135 * (  select  vlor as valor_SMLDV  from df_s_indicadores_economico where cdgo_indcdor_tpo = ''2'' and pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_VGNCIA'') between extract(yea'
+||'r from fcha_dsde) and extract(year from fcha_hsta) )) ,''999G999G999G990''))|| '')'') tpo,',
+'       count(*) cntdad, sum(c.avluo_igac) ttal_avluos,',
+'       max(1) orden       ',
+'from v_gi_g_cinta_igac c',
+'where c.nmro_orden_igac = ''001'' and substr(c.rfrncia_igac,1,2)<>''00'' and c.dstno_ecnmco_igac in (''A'') and',
+'      c.avluo_igac <= (135 *(  select  vlor as valor_SMLDV  from df_s_indicadores_economico where cdgo_indcdor_tpo = ''2'' and pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_VGNCIA'') between extract(year from fcha_dsde) and'
+||' extract(year from fcha_hsta) ))',
+'      and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')',
+'      and EXISTS (select ''x'' from si_c_sujetos s join si_i_predios p on s.id_sjto = p.id_prdio  where s.idntfccion = c.rfrncia_igac and p.cdgo_estrto =''1'')',
+'      and c.cdgo_clnte      = :F_CDGO_CLNTE',
+'group by c.dstno_ecnmco_igac',
+'UNION',
+'select c.dstno_ecnmco_igac, ',
+'      (select d.nmbre_dstno_igac from df_s_destinos_igac d where d.cdgo_dstno_igac = c.dstno_ecnmco_igac) dscrpcion,',
+'      max(''1'') Estrto,',
+'      max(''> 135 SMMLV ($''||trim(to_char((135 * (  select  vlor as valor_SMLDV  from df_s_indicadores_economico  where cdgo_indcdor_tpo = ''2''     and pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_VGNCIA'') between extract'
+||'(year from fcha_dsde) and extract(year from fcha_hsta) )) ,''999G999G999G990''))|| '')'') tpo,',
+'       count(*) cntdad, sum(c.avluo_igac) ttal_avluos,',
+'       max(1) orden       ',
+'from v_gi_g_cinta_igac c',
+'where c.nmro_orden_igac = ''001'' and substr(c.rfrncia_igac,1,2)<>''00'' and c.dstno_ecnmco_igac in (''A'') and',
+'      c.avluo_igac > (135 * (  select  vlor as valor_SMLDV  from df_s_indicadores_economico where cdgo_indcdor_tpo = ''2'' and pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_VGNCIA'') between extract(year from fcha_dsde) and'
+||' extract(year from fcha_hsta) )) ',
+'      and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')',
+'      and exists (select ''x'' from si_c_sujetos s join si_i_predios p on s.id_sjto = p.ID_PRDIO   where s.idntfccion = c.rfrncia_igac and p.cdgo_estrto =''1'')',
+'    --p.id_sjto  ',
+'    and c.cdgo_clnte      = :F_CDGO_CLNTE',
+'group by c.dstno_ecnmco_igac ) a',
+'order by a.orden, a.dstno_ecnmco_igac; ',
+'',
+'',
+''))
+);
+wwv_flow_api.create_shared_query_stmnt(
+ p_id=>wwv_flow_api.id(6112648382294579)
+,p_shared_query_id=>wwv_flow_api.id(52830385468016467)
+,p_sql_statement=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'/*Q#35 Q#47_totales--query_47: estadisticas por predios destinos urbanos residencial (A) para estrato 1 con diferencial de avaluo*/',
+'select a.dstno_ecnmco_igac "Destino IGAC",',
+unistr('       a.dscrpcion         "Descripci\00F3n Destino",'),
+'       a.estrto            "Estrato",',
+unistr('       a.tpo               "Avalu\00F3 Catastral",'),
+'   --    a.cntdad            "No. Predios",',
+'       trim(to_char(a.cntdad  ,''999G999G999G999G999G999G990''))  "No. Predios",',
+unistr('      ''$'' || trim(to_char(a.ttal_avluos ,''999G999G999G999G999G999G990''))  "Total Aval\00FAos"'),
+'from (',
+'',
+'select c.dstno_ecnmco_igac, ',
+'      (select d.nmbre_dstno_igac from df_s_destinos_igac d where d.cdgo_dstno_igac = c.dstno_ecnmco_igac) dscrpcion,',
+'      max(''1'') Estrto,',
+'      max(''<=135 SMMLV ($''||trim(to_char((135 * (  select  vlor as valor_SMLDV  from df_s_indicadores_economico where cdgo_indcdor_tpo = ''2'' and pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_VGNCIA'') between extract(year'
+||' from fcha_dsde) and extract(year from fcha_hsta) )) ,''999G999G999G990''))|| '')'') tpo,',
+'      count(*) cntdad, sum(c.avluo_igac) ttal_avluos,',
+'       max(1) orden       ',
+'from v_gi_g_cinta_igac c',
+'where c.nmro_orden_igac = ''001'' and substr(c.rfrncia_igac,1,2)<>''00'' and c.dstno_ecnmco_igac in (''A'') and',
+'      c.avluo_igac <= (135 *(  select  vlor as valor_SMLDV  from df_s_indicadores_economico where cdgo_indcdor_tpo = ''2'' and pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_VGNCIA'') between extract(year from fcha_dsde) and'
+||' extract(year from fcha_hsta) ))',
+'      and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')',
+'      and exists (select ''x'' from si_c_sujetos s join si_i_predios p on s.id_sjto =  p.id_prdio   where s.idntfccion = c.rfrncia_igac and p.cdgo_estrto =''1'')',
+'    --p.id_sjto  ',
+'    and c.cdgo_clnte      = :F_CDGO_CLNTE',
+'group by c.dstno_ecnmco_igac',
+'UNION',
+'select c.dstno_ecnmco_igac, ',
+'      (select d.nmbre_dstno_igac from df_s_destinos_igac d where d.cdgo_dstno_igac = c.dstno_ecnmco_igac) dscrpcion,',
+'      max(''1'') Estrto,',
+'      max(''> 135 SMMLV ($''||trim(to_char((135 * (  select  vlor as valor_SMLDV  from df_s_indicadores_economico where cdgo_indcdor_tpo = ''2'' and pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_VGNCIA'') between extract(year'
+||' from fcha_dsde) and extract(year from fcha_hsta) )) ,''999G999G999G990''))|| '')'') tpo,',
+'       count(*) cntdad, sum(c.avluo_igac) ttal_avluos,',
+'       max(1) orden       ',
+'from v_gi_g_cinta_igac c',
+'where c.nmro_orden_igac = ''001'' ',
+'      and substr(c.rfrncia_igac,1,2)<>''00'' ',
+'      and c.dstno_ecnmco_igac in (''A'')  ',
+'      and c.avluo_igac > (135 * (  select  vlor as valor_SMLDV  from df_s_indicadores_economico where cdgo_indcdor_tpo = ''2'' and pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_VGNCIA'') between extract(year from fcha_dsde)'
+||' and extract(year from fcha_hsta) )) ',
+'      and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')',
+'      and exists (select ''x'' from si_c_sujetos s join si_i_predios p on s.id_sjto =   p.ID_PRDIO  where s.idntfccion = c.rfrncia_igac and p.cdgo_estrto =''1'')',
+'      -- p.id_sjto',
+'    and c.cdgo_clnte      = :F_CDGO_CLNTE',
+'group by c.dstno_ecnmco_igac',
+'union',
+'select '' '' dstno_ecnmco_igac, ',
+'       '' '' dscrpcion, ',
+'       '' '' Estrto,',
+'       ''Totales'' tpo,',
+'       count(*) cntdad, sum(c.avluo_igac) ttal_avluos,',
+'       99 orden',
+'from v_gi_g_cinta_igac c',
+'where c.nmro_orden_igac = ''001'' and substr(c.rfrncia_igac,1,2)<>''00''',
+'     and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')',
+'     and c.dstno_ecnmco_igac in (''A'') ',
+'     and exists (select ''x'' from si_c_sujetos s join si_i_predios p on s.id_sjto = p.id_prdio   where s.idntfccion = c.rfrncia_igac and p.cdgo_estrto =''1'')',
+'    --p.id_sjto ',
+'    and c.cdgo_clnte      = :F_CDGO_CLNTE',
+' order by orden) a',
+'order by a.orden, a.dstno_ecnmco_igac;'))
+);
+wwv_flow_api.create_shared_query_stmnt(
+ p_id=>wwv_flow_api.id(6112873466294579)
+,p_shared_query_id=>wwv_flow_api.id(52830385468016467)
+,p_sql_statement=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'/*Q#36  Q#41_b --query_22: estadisticas por predios destinos urbanos  falta la columna de Homologacion */',
+'',
+'select a.dstno_ecnmco_igac                                                              "Destino",',
+unistr('                  a.dscrpcion                                                          "Descripci\00F3n Destino",'),
+'             ',
+'                  trim(to_char(a.cntdad ,''999G999G999G999G999G999G990''))                     "No. Predios",',
+'                  a.Porcentaje_cantidad,',
+unistr('                  trim( to_char(a.ttal_trrno  ,''999G999G999G999G999G999G990''))               "Total \00C1rea Terreno",'),
+'                  a.Porcentaje_ttal_trrno,',
+unistr('                  trim(to_char(  a.ttal_cnstrda   ,''999G999G999G999G999G999G990''))          "Total \00C1rea Construida",'),
+'                  a.Porcentaje_ttal_cnstrda ,',
+unistr('                  ''$'' ||trim( to_char(  a.ttal_avluos   ,''999G999G999G999G999G999G990''))     "Total Aval\00FAos",'),
+unistr('                 -- round((a.ttal_avluos/1000000),0) "Total Aval\00FAos_porce_round"'),
+'                  Porcentaje_ttal_avluos',
+'            from ',
+'',
+'',
+' (select c.dstno_ecnmco_igac, ',
+'                          nvl((select d.nmbre_dstno_igac from df_s_destinos_igac d where d.cdgo_dstno_igac = c.dstno_ecnmco_igac),''NO CLASIFICADO'') dscrpcion,',
+'                      ',
+'                          nvl((select 1 from df_s_destinos_igac d where d.cdgo_dstno_igac = c.dstno_ecnmco_igac), 2) tpo,',
+'                          count(*) cntdad  ,',
+'                          round( count(*)*100/( select count(*) ttal_cntdad  from v_gi_g_cinta_igac c ',
+'                                                                           join et_g_procesos_carga b on c.id_prcso_crga = b.id_prcso_crga ',
+'                                                                           join et_g_carga d on b.id_crga = d.id_crga ',
+'                                                                      where c.nmro_orden_igac               = ''001'' ',
+'                                                                            and substr(c.rfrncia_igac,1,2 ) = ''00''',
+'                                                                      and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')',
+'                                                                      and c.cdgo_clnte      = :F_CDGO_CLNTE ),2)|| ''%''  Porcentaje_cantidad,',
+'                         sum(c.area_trrno_igac) ttal_trrno,',
+'                         round( sum(c.area_trrno_igac)*100/(select sum(c.area_trrno_igac) from v_gi_g_cinta_igac c ',
+'                                                                           join et_g_procesos_carga b on c.id_prcso_crga = b.id_prcso_crga ',
+'                                                                           join et_g_carga d on b.id_crga = d.id_crga ',
+'                                                                      where c.nmro_orden_igac               = ''001'' ',
+'                                                                            and substr(c.rfrncia_igac,1,2 ) = ''00''',
+'                                                                      and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')',
+'                                                                      and c.cdgo_clnte      = :F_CDGO_CLNTE ),2)|| ''%'' Porcentaje_ttal_trrno,',
+'                          sum(c.area_cnstrda_igac) ttal_cnstrda,',
+'                          round(sum(c.area_cnstrda_igac)*100/(select sum(c.area_cnstrda_igac) from v_gi_g_cinta_igac c ',
+'                                                                           join et_g_procesos_carga b on c.id_prcso_crga = b.id_prcso_crga ',
+'                                                                           join et_g_carga d on b.id_crga = d.id_crga ',
+'                                                                      where c.nmro_orden_igac               = ''001'' ',
+'                                                                            and substr(c.rfrncia_igac,1,2 ) = ''00''',
+'                                                                      and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')',
+'                                                                      and c.cdgo_clnte      = :F_CDGO_CLNTE ),2)|| ''%'' Porcentaje_ttal_cnstrda,',
+'                          sum(c.avluo_igac) ttal_avluos,',
+'                          round(sum(c.avluo_igac)*100/(select sum(c.avluo_igac) from v_gi_g_cinta_igac c ',
+'                                                                           join et_g_procesos_carga b on c.id_prcso_crga = b.id_prcso_crga ',
+'                                                                           join et_g_carga d on b.id_crga = d.id_crga ',
+'                                                                      where c.nmro_orden_igac               = ''001'' ',
+'                                                                            and substr(c.rfrncia_igac,1,2 ) = ''00''',
+'                                                                      and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')',
+'                                                                      and c.cdgo_clnte      = :F_CDGO_CLNTE ),2)|| ''%'' Porcentaje_ttal_avluos,',
+'                          max(1) orden       ',
+'                     from v_gi_g_cinta_igac c',
+'                     join et_g_procesos_carga b ',
+'                       on c.id_prcso_crga = b.id_prcso_crga ',
+'                     join et_g_carga d ',
+'                       on b.id_crga = d.id_crga',
+'                    where c.nmro_orden_igac          = ''001'' ',
+'                      and substr(c.rfrncia_igac,1,2)  = ''00''',
+'                      and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')',
+'                     and c.cdgo_clnte      = :F_CDGO_CLNTE',
+'                    group by c.dstno_ecnmco_igac',
+'',
+'  union',
+'                   select '' '' dstno_ecnmco_igac, ',
+'                          ''TOTAL RURAL'' dscrpcion,',
+'                     --   '' '' hmlga,',
+'                          3 tpo,',
+'                          count(*) cntdad , ',
+'                          ''100%'' Porcentaje_cantidad,',
+'                          sum(c.area_trrno_igac) ttal_trrno,',
+'                          ''100%'' Porcentaje_ttal_trrno,',
+'                          sum(c.area_cnstrda_igac) ttal_cnstrda, ',
+'                          ''100%'' Porcentaje_ttal_cnstrda,',
+'                          sum(c.avluo_igac) ttal_avluos,',
+'                          ''100%'' Porcentaje_ttal_avluos,',
+'                          99 orden  ',
+'                     from v_gi_g_cinta_igac c',
+'                     join et_g_procesos_carga b ',
+'                       on c.id_prcso_crga = b.id_prcso_crga ',
+'                     join et_g_carga d ',
+'                       on b.id_crga = d.id_crga ',
+'                    where c.nmro_orden_igac           = ''001'' ',
+'                      and substr(c.rfrncia_igac,1,2 ) = ''00''',
+'                      and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')',
+'                      and c.cdgo_clnte      = :F_CDGO_CLNTE',
+'                    order by orden)  a',
+'                    order by a.orden ,',
+'                             a.tpo ,',
+'                             a.dstno_ecnmco_igac;   ',
+'',
+'',
+''))
+);
+wwv_flow_api.create_shared_query_stmnt(
+ p_id=>wwv_flow_api.id(6113095800294581)
+,p_shared_query_id=>wwv_flow_api.id(52830385468016467)
+,p_sql_statement=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'/* Q#37 Q#28_b Predios Urbanos totales y porcentajes-- falta la columna de Homologacion   --     nvl((select d.hmlga_esttto from destinos_igac d where d.cdgo_dstno_igac = c.dstno_ecnmco_igac),''Z'') hmlga,*/',
+'  select a.dstno_ecnmco_igac "Destino",',
+unistr('       a.dscrpcion         "Descripci\00F3n Destino",'),
+'    --   a.cntdad             "No. Predios",',
+'      trim(to_char(a.cntdad  ,''999G999G999G999G999G999G990''))  "No. Predios",',
+'      a.Prcntje_cntdad_prdios_urbnos,',
+unistr('      ''$'' || trim(to_char(a.ttal_avluos ,''999G999G999G999G999G999G990''))  "Total Aval\00FAos",'),
+'      Prcntje_avluos_prdios_urbnos',
+'from (',
+'      select c.dstno_ecnmco_igac, ',
+'       nvl((select d.nmbre_dstno_igac from df_s_destinos_igac d where d.cdgo_dstno_igac = c.dstno_ecnmco_igac),''NO CLASIFICADO'') dscrpcion,',
+'  ',
+'       nvl((select 1 from df_s_destinos_igac d where d.cdgo_dstno_igac = c.dstno_ecnmco_igac), 2) tpo,',
+'       count(*) cntdad,',
+'       round( count(*)*100/(select count(*) cntdad from v_gi_g_cinta_igac c ',
+'                                              where c.nmro_orden_igac = ''001'' ',
+'                                              and substr(c.rfrncia_igac,1,2)<>''00'' ',
+'                                              and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')',
+'                                              and c.cdgo_clnte      = :F_CDGO_CLNTE),2)|| ''%'' Prcntje_cntdad_prdios_urbnos,',
+'       sum(c.avluo_igac) ttal_avluos,',
+'       round( sum(c.avluo_igac)*100/(select sum(c.avluo_igac) ttal_avluos from v_gi_g_cinta_igac c ',
+'                                              where c.nmro_orden_igac = ''001'' ',
+'                                              and substr(c.rfrncia_igac,1,2)<>''00'' ',
+'                                              and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')',
+'                                              and c.cdgo_clnte      = :F_CDGO_CLNTE),2)|| ''%'' Prcntje_avluos_prdios_urbnos,',
+'       max(1) orden       ',
+'from v_gi_g_cinta_igac c',
+'where c.nmro_orden_igac = ''001'' ',
+'    and substr(c.rfrncia_igac,1,2)<>''00'' ',
+'    and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')',
+'    and c.cdgo_clnte      = :F_CDGO_CLNTE',
+'group by c.dstno_ecnmco_igac',
+'',
+'',
+'union',
+'select '' '' dstno_ecnmco_igac, ',
+'       ''TOTAL URBANO'' dscrpcion,',
+'   ',
+'       3 tpo,',
+'       count(*) cntdad,',
+'       ''100%'' Prcntje_cntdad_prdios_urbnos,',
+'       sum(c.avluo_igac) ttal_avluos,',
+'       ''100%'' Prcntje_avluos_prdios_urbnos,',
+'       99 orden',
+'from v_gi_g_cinta_igac c',
+'where c.nmro_orden_igac = ''001'' ',
+'    and substr(c.rfrncia_igac,1,2)<>''00'' ',
+'    and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')',
+'    and c.cdgo_clnte      = :F_CDGO_CLNTE',
+' order by orden) a',
+'order by a.orden,a.tpo, a.dstno_ecnmco_igac;',
+''))
+);
+end;
+/
+begin
+wwv_flow_api.create_shared_query_stmnt(
+ p_id=>wwv_flow_api.id(6113271202294581)
+,p_shared_query_id=>wwv_flow_api.id(52830385468016467)
+,p_sql_statement=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'/*Q#38 Q#30_b ******** query_23: estadisticas (totales y porcentajes) por predios urbanos de destino habitacional x estrato reemplazando ''NO DEFINIDO'' por Estrato ''99 - Existen'' ***/',
+'select c.Destino,',
+'        Nvl(c.estrato_d,''Estrato 99 - Nuevos'') "Estrato",',
+'        trim(to_char(c.cntdad ,''999G999G999G999G999G999G990''))  "Total Predios",',
+'        c.Prcntje_cntdad_urbnos_hbtcnal ,',
+'      --  c.cntdad "Total Predios",',
+unistr('      --  c.ttal_avluos "Total Aval\00FAos"'),
+unistr('        ''$'' || trim(to_char(c.ttal_avluos ,''999G999G999G999G999G999G990''))  "Total Aval\00FAos",'),
+'       c.Prcntje_avluos_urbnos_hbtcnal',
+'from (',
+'',
+'select ''HABITACIONAL'' Destino,',
+'      b.estrato,',
+'      (select decode(e.dscrpcion_estrto,''NO DEFINIDO'',''Estrato 99 - Existen'',e.dscrpcion_estrto,e.dscrpcion_estrto)  from df_s_estratos e where e.cdgo_estrto = b.estrato) estrato_d, ',
+'      count(*) cntdad,',
+'      round(count(*)*100/(select count(*) cntdad  from v_gi_g_cinta_igac c where c.nmro_orden_igac = ''001''',
+'                                                and substr(c.rfrncia_igac,1,2)<>''00'' ',
+'                                                and c.dstno_ecnmco_igac = ''A'' ',
+'                                                and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')',
+'                                                and c.cdgo_clnte      = :F_CDGO_CLNTE),2)|| ''%'' Prcntje_cntdad_urbnos_hbtcnal ,',
+'      sum(b.avluo) Ttal_avluos, ',
+'      round(sum(b.avluo)*100/(select sum(c.avluo_igac)  from v_gi_g_cinta_igac c where c.nmro_orden_igac = ''001''',
+'                                                and substr(c.rfrncia_igac,1,2)<>''00'' ',
+'                                                and c.dstno_ecnmco_igac = ''A'' ',
+'                                                and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')',
+'                                                and c.cdgo_clnte      = :F_CDGO_CLNTE),2)|| ''%'' Prcntje_avluos_urbnos_hbtcnal',
+'from (',
+'select a.rfrncia_igac,',
+'       a.avluo,',
+'       case a.estrto',
+'       when ''1'' then ''1''  ',
+'       when ''2'' then ''2''',
+'       when ''3'' then ''3''',
+'       when ''4'' then ''4''  ',
+'       when ''5'' then ''5''',
+'       when ''6'' then ''6''',
+'       when ''99'' then ''99''    ',
+'       else ''98'' end estrato',
+'from (',
+'select c.rfrncia_igac,',
+'       c.avluo_igac avluo,',
+'       (select p.CDGO_ESTRTO from si_c_sujetos s join si_i_predios p on s.id_sjto = p.id_prdio  where s.idntfccion = c.rfrncia_igac) estrto',
+'    --p.id_sjto ',
+'from v_gi_g_cinta_igac c ',
+'where c.nmro_orden_igac = ''001''',
+'      and substr(c.rfrncia_igac,1,2)<>''00'' ',
+'      and c.dstno_ecnmco_igac = ''A'' ',
+'      and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')',
+'      and c.cdgo_clnte      = :F_CDGO_CLNTE',
+'      ) a',
+'      ) b',
+'group by b.estrato',
+'',
+'union',
+'select ''TOTAL'' Destino,',
+'       '''' "Estrato",',
+'       ''_'' estrato_d,',
+'       count(*) cntdad,',
+'       ''100%'' Prcntje_cntdad_urbnos_hbtcnal,',
+'       sum(c.avluo_igac) ttal_avluos,    ',
+'      ''100%'' Prcntje_avluos_urbnos_hbtcnal ',
+'from v_gi_g_cinta_igac c ',
+'where c.nmro_orden_igac = ''001''',
+'      and substr(c.rfrncia_igac,1,2)<>''00'' ',
+'      and c.dstno_ecnmco_igac = ''A'' ',
+'      and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')',
+'      and c.cdgo_clnte      = :F_CDGO_CLNTE',
+'',
+') c',
+'order by c.estrato;'))
+);
+wwv_flow_api.create_shared_query_stmnt(
+ p_id=>wwv_flow_api.id(6113499104294581)
+,p_shared_query_id=>wwv_flow_api.id(52830385468016467)
+,p_sql_statement=>wwv_flow_string.join(wwv_flow_t_varchar2(
+unistr('/*Q#39  Q#23_b   Predios que en la informaci\00F3n enviada por la Gerencia de Catastro posean los destinos homologados en el estatuto tributario*/'),
+'select a.dstno_ecnmco_igac "Destino IGAC" ,',
+unistr('               a.dscrpcion         "Descripci\00F3n Destino" ,'),
+'              trim(to_char(a.cntdad ,''999G999G999G999G999G999G990''))  "No. Predios" ,',
+'          --    a.cntdad             "No. Predios" ,',
+'              a.Prcntje_cntdad_homo ,',
+unistr('                ''$'' || trim(to_char(a.ttal_avluos ,''999G999G999G999G999G999G990''))   "Total Aval\00FAos",'),
+unistr('          --     a.ttal_avluos        "Total Aval\00FAos"'),
+'             a.Prcntje_avluos_hom',
+'         from (',
+'                select c.dstno_ecnmco_igac , ',
+'               (select d.nmbre_dstno_igac from df_s_destinos_igac d where d.cdgo_dstno_igac = c.dstno_ecnmco_igac) dscrpcion,',
+'                count(*) cntdad ,',
+'                round( count(*)*100/( select count(*) cntdad  from v_gi_g_cinta_igac c',
+'                                               join et_g_procesos_carga b on c.id_prcso_crga = b.id_prcso_crga ',
+'                                               join et_g_carga d on b.id_crga = d.id_crga',
+'                                               where c.nmro_orden_igac          =  ''001'' ',
+'                                                     and substr(c.rfrncia_igac,1,2) <> ''00''',
+'                                                     and c.dstno_ecnmco_igac in (''B'',''C'',''F'',''G'',''H'',''I'')',
+'                                                     and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')',
+'                                                     and c.cdgo_clnte      = :F_CDGO_CLNTE),2)|| ''%'' Prcntje_cntdad_homo ,',
+'                  sum(c.avluo_igac) ttal_avluos,',
+'                  round(  sum(c.avluo_igac)*100/( select  sum(c.avluo_igac)  from v_gi_g_cinta_igac c',
+'                                               join et_g_procesos_carga b on c.id_prcso_crga = b.id_prcso_crga ',
+'                                               join et_g_carga d on b.id_crga = d.id_crga',
+'                                               where c.nmro_orden_igac          =  ''001'' ',
+'                                                     and substr(c.rfrncia_igac,1,2) <> ''00''',
+'                                                     and c.dstno_ecnmco_igac in (''B'',''C'',''F'',''G'',''H'',''I'')',
+'                                                     and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')',
+'                                                     and c.cdgo_clnte      = :F_CDGO_CLNTE),2)|| ''%'' Prcntje_avluos_hom,',
+'                  max(1) orden       ',
+'                  from v_gi_g_cinta_igac c',
+'                 join et_g_procesos_carga b ',
+'                   on c.id_prcso_crga = b.id_prcso_crga ',
+'                 join et_g_carga d ',
+'                   on b.id_crga = d.id_crga',
+'                 where c.nmro_orden_igac          =  ''001''',
+'                   and substr(c.rfrncia_igac,1,2) <> ''00'' ',
+'                   and c.dstno_ecnmco_igac in (''B'',''C'',''F'',''G'',''H'',''I'')',
+'                   and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')',
+'                   and c.cdgo_clnte      = :F_CDGO_CLNTE',
+'                 group by c.dstno_ecnmco_igac',
+'           union',
+'                select '' '' dstno_ecnmco_igac, ',
+'                       ''TOTALES'' dscrpcion,',
+'                       count(*) cntdad,',
+'                       ''100%'' Prcntje_cntdad_homo, ',
+'                       sum(c.avluo_igac) ttal_avluos,',
+'                       ''100%'' Prcntje_avluos_hom, ',
+'                       99 orden',
+'                  from v_gi_g_cinta_igac c',
+'                 join et_g_procesos_carga b ',
+'                   on c.id_prcso_crga = b.id_prcso_crga ',
+'                 join et_g_carga d ',
+'                   on b.id_crga = d.id_crga',
+'                 where c.nmro_orden_igac          =  ''001'' ',
+'                   and substr(c.rfrncia_igac,1,2) <> ''00''',
+'                   and c.dstno_ecnmco_igac in (''B'',''C'',''F'',''G'',''H'',''I'')',
+'                   and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')',
+'                   and c.cdgo_clnte      = :F_CDGO_CLNTE',
+'                 order by orden ) a',
+'        order by a.orden, a.dstno_ecnmco_igac;        ',
+''))
+);
+wwv_flow_api.create_shared_query_stmnt(
+ p_id=>wwv_flow_api.id(6113635602294585)
+,p_shared_query_id=>wwv_flow_api.id(52830385468016467)
+,p_sql_statement=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'/*Q#40 Q#45  Q#40--query_48: estadisticas por predios destinos urbanos NO homologados por estatuto o por asignacion de la GGI */',
+'select a.dstno_ecnmco_igac "Destino IGAC",',
+unistr('       a.dscrpcion         "Descripci\00F3n Destino",'),
+'    --   a.cntdad             "No. Predios",',
+'       ',
+'       trim(to_char( a.cntdad   ,''999G999G999G999G999G999G990''))    "No. Predios",',
+'       a.prcntje_prds_urbno_n_hmlgdos,',
+unistr('      ''$'' || trim(to_char(a.ttal_avluos ,''999G999G999G999G999G999G990''))  "Total Aval\00FAos",'),
+'       a.prcntje_avls_urbno_n_hmlgdos',
+'from (',
+'select c.dstno_ecnmco_igac, ',
+'       nvl((select d.nmbre_dstno_igac from df_s_destinos_igac d where d.cdgo_dstno_igac = c.dstno_ecnmco_igac),''NO CLASIFICADO'') dscrpcion,',
+'       nvl((select 1 from df_s_destinos_igac d where d.cdgo_dstno_igac = c.dstno_ecnmco_igac), 2) tpo,',
+'       count(*) cntdad,',
+'       round(count(*)*100/( select  count(*) cntdad from v_gi_g_cinta_igac c where c.nmro_orden_igac = ''001'' ',
+'                                  and substr(c.rfrncia_igac,1,2)<>''00''',
+'                                  and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')',
+'                                  and c.dstno_ecnmco_igac not in (''A'',''B'',''C'',''F'',''G'',''H'',''I'',''J'',''K'',''P'',''R'',''S'',''T'')',
+'                                  and c.cdgo_clnte      = :F_CDGO_CLNTE),2) || ''%'' prcntje_prds_urbno_n_hmlgdos,',
+'       sum(c.avluo_igac) ttal_avluos,',
+'       round(sum(c.avluo_igac)*100/( select sum(c.avluo_igac) cntdad from v_gi_g_cinta_igac c where c.nmro_orden_igac = ''001'' ',
+'                                  and substr(c.rfrncia_igac,1,2)<>''00''',
+'                                  and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')',
+'                                  and c.dstno_ecnmco_igac not in (''A'',''B'',''C'',''F'',''G'',''H'',''I'',''J'',''K'',''P'',''R'',''S'',''T'')',
+'                                  and c.cdgo_clnte      = :F_CDGO_CLNTE),2)|| ''%'' prcntje_avls_urbno_n_hmlgdos,',
+'       max(1) orden       ',
+'from v_gi_g_cinta_igac c',
+'where c.nmro_orden_igac = ''001'' ',
+'      and substr(c.rfrncia_igac,1,2)<>''00''',
+'      and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')',
+'      and c.dstno_ecnmco_igac not in (''A'',''B'',''C'',''F'',''G'',''H'',''I'',''J'',''K'',''P'',''R'',''S'',''T'')',
+'      and c.cdgo_clnte      = :F_CDGO_CLNTE',
+'group by c.dstno_ecnmco_igac',
+'union',
+'select '' '' dstno_ecnmco_igac, ',
+'       ''TOTALES'' dscrpcion,',
+'       3 tpo,',
+'       count(*) cntdad,',
+'       ''100%'' prcntje_prds_urbno_n_hmlgdos,',
+'       sum(c.avluo_igac) ttal_avluos,',
+'       ''100%'' prcntje_avls_urbno_n_hmlgdos,',
+'       99 orden',
+'from v_gi_g_cinta_igac c',
+'where c.nmro_orden_igac = ''001'' ',
+'      and substr(c.rfrncia_igac,1,2)<>''00''',
+'      and c.id_prcso_crga = pkg_gn_generalidades.fnc_ca_extract_value( p_xml => :P2_XML , p_nodo => ''P2_ARCHIVO'')',
+'      and c.dstno_ecnmco_igac not in (''A'',''B'',''C'',''F'',''G'',''H'',''I'',''J'',''K'',''P'',''R'',''S'',''T'')',
+'      and c.cdgo_clnte      = :F_CDGO_CLNTE',
+' order by orden) a',
+'order by a.orden, a.tpo, a.dstno_ecnmco_igac;'))
+);
+end;
+/

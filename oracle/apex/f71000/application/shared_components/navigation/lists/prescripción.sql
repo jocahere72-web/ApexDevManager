@@ -1,0 +1,37 @@
+prompt --application/shared_components/navigation/lists/prescripción
+begin
+wwv_flow_api.create_list(
+ p_id=>wwv_flow_api.id(49125142517124305)
+,p_name=>unistr('Prescripci\00F3n')
+,p_list_status=>'PUBLIC'
+);
+wwv_flow_api.create_list_item(
+ p_id=>wwv_flow_api.id(49126267765124315)
+,p_list_item_display_sequence=>10
+,p_list_item_link_text=>'Registro'
+,p_list_item_link_target=>'f?p=&APP_ID.:95:&SESSION.::&DEBUG.::::'
+,p_list_item_current_type=>'TARGET_PAGE'
+);
+wwv_flow_api.create_list_item(
+ p_id=>wwv_flow_api.id(49129887078124338)
+,p_list_item_display_sequence=>30
+,p_list_item_link_text=>unistr('An\00E1lisis ')
+,p_list_item_link_target=>'f?p=&APP_ID.:96:&SESSION.::&DEBUG.::::'
+,p_list_item_current_type=>'TARGET_PAGE'
+);
+wwv_flow_api.create_list_item(
+ p_id=>wwv_flow_api.id(49134152933124341)
+,p_list_item_display_sequence=>40
+,p_list_item_link_text=>unistr('Proyecci\00F3n')
+,p_list_item_link_target=>'f?p=&APP_ID.:97:&SESSION.::&DEBUG.::::'
+,p_list_item_current_type=>'TARGET_PAGE'
+);
+wwv_flow_api.create_list_item(
+ p_id=>wwv_flow_api.id(49138407067124343)
+,p_list_item_display_sequence=>50
+,p_list_item_link_text=>unistr('Aplicaci\00F3n')
+,p_list_item_link_target=>'f?p=&APP_ID.:98:&SESSION.::&DEBUG.::::'
+,p_list_item_current_type=>'TARGET_PAGE'
+);
+end;
+/

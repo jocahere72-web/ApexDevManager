@@ -1,0 +1,26 @@
+
+  CREATE OR REPLACE FORCE EDITIONABLE VIEW "V_MC_G_DESEMBARGOS_OFICIO" ("ID_DSMBRGO_OFCIO", "ID_DSMBRGOS_RSLCION", "ID_ACTO", "NMRO_ACTO", "FCHA_ACTO", "RSLCION_DSMBRGO", "FCHA_RSLCION_DSMBRGO", "ENTIDAD", "IDNTFCCION", "RSPNSBLE", "DRCCION_NTFCCION", "NMRO_ACTO_OFCIO", "FCHA_OFCIO", "NMRO_RSLCION_EMB", "FCHA_RSLCION_EMB", "ID_SLCTD_OFCIO", "ID_EMBRGOS_CRTRA", "ID_ENTDDES") AS
+  select a.ID_DSMBRGO_OFCIO,
+        A.ID_DSMBRGOS_RSLCION,
+        A.ID_ACTO,
+        A.NMRO_ACTO,
+        A.FCHA_ACTO,
+        B.NMRO_ACTO as rslcion_dsmbrgo,
+        b.fcha_acto as fcha_rslcion_dsmbrgo,
+        C.DSCRPCION AS ENTIDAD,
+        C.IDNTFCCION,
+        C.RSPNSBLE,
+        C.DRCCION_NTFCCION,
+        C.NMRO_ACTO_OFCIO,
+        c.fcha_ofcio,
+        C.NMRO_RSLCION_EMB,
+        c.fcha_rslcion_emb,
+        C.ID_SLCTD_OFCIO,
+        c.id_embrgos_crtra,
+        c.id_entddes
+   from MC_G_DESEMBARGOS_OFICIO a
+   join MC_G_DESEMBARGOS_RESOLUCION b on A.ID_DSMBRGOS_RSLCION = B.ID_DSMBRGOS_RSLCION
+   join v_MC_G_SOLICITUDES_Y_OFICIOS c on C.ID_SLCTD_OFCIO = A.ID_SLCTD_OFCIO
+   join V_MC_G_EMBARGOS_RESOLUCION d on D.ID_EMBRGOS_RSLCION = C.ID_EMBRGOS_RSLCION
+                                     and d.cdgo_estdos_crtra not in ('N');
+

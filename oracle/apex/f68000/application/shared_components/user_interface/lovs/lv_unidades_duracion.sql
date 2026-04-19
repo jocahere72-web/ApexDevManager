@@ -1,0 +1,39 @@
+prompt --application/shared_components/user_interface/lovs/lv_unidades_duracion
+begin
+wwv_flow_api.create_list_of_values(
+ p_id=>wwv_flow_api.id(72043574425839190)
+,p_lov_name=>'LV_UNIDADES_DURACION'
+,p_lov_query=>'.'||wwv_flow_api.id(72043574425839190)||'.'
+);
+wwv_flow_api.create_static_lov_data(
+ p_id=>wwv_flow_api.id(72043975693839190)
+,p_lov_disp_sequence=>1
+,p_lov_disp_value=>'Minutos'
+,p_lov_return_value=>'MN'
+);
+wwv_flow_api.create_static_lov_data(
+ p_id=>wwv_flow_api.id(72044366681839190)
+,p_lov_disp_sequence=>2
+,p_lov_disp_value=>'Horas'
+,p_lov_return_value=>'HR'
+);
+wwv_flow_api.create_static_lov_data(
+ p_id=>wwv_flow_api.id(72044792091839190)
+,p_lov_disp_sequence=>3
+,p_lov_disp_value=>unistr('D\00EDas')
+,p_lov_return_value=>'DI'
+);
+wwv_flow_api.create_static_lov_data(
+ p_id=>wwv_flow_api.id(72045132490839190)
+,p_lov_disp_sequence=>4
+,p_lov_disp_value=>'Semanas'
+,p_lov_return_value=>'SM'
+);
+wwv_flow_api.create_static_lov_data(
+ p_id=>wwv_flow_api.id(72045501868839190)
+,p_lov_disp_sequence=>5
+,p_lov_disp_value=>'Meses'
+,p_lov_return_value=>'MS'
+);
+end;
+/

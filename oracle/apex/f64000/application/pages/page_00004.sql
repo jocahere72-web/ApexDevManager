@@ -1,0 +1,316 @@
+prompt --application/pages/page_00004
+begin
+wwv_flow_api.create_page(
+ p_id=>4
+,p_user_interface_id=>wwv_flow_api.id(304917555609291792)
+,p_name=>'Informe Log'
+,p_step_title=>'Informe Log'
+,p_autocomplete_on_off=>'OFF'
+,p_step_template=>wwv_flow_api.id(304865460026291429)
+,p_page_template_options=>'#DEFAULT#'
+,p_last_updated_by=>'ADMIN'
+,p_last_upd_yyyymmddhh24miss=>'20201222103503'
+);
+wwv_flow_api.create_page_plug(
+ p_id=>wwv_flow_api.id(104150861633178499)
+,p_plug_name=>'Breadcrumb'
+,p_region_template_options=>'#DEFAULT#:t-BreadcrumbRegion--useBreadcrumbTitle'
+,p_component_template_options=>'#DEFAULT#'
+,p_plug_template=>wwv_flow_api.id(304888368427291580)
+,p_plug_display_sequence=>10
+,p_plug_display_point=>'REGION_POSITION_01'
+,p_menu_id=>wwv_flow_api.id(304918791846291874)
+,p_plug_source_type=>'NATIVE_BREADCRUMB'
+,p_menu_template_id=>wwv_flow_api.id(304907184148291642)
+);
+wwv_flow_api.create_page_plug(
+ p_id=>wwv_flow_api.id(205533073737503127)
+,p_plug_name=>'Filtros'
+,p_region_template_options=>'#DEFAULT#:t-Region--scrollBody'
+,p_plug_template=>wwv_flow_api.id(304883916990291570)
+,p_plug_display_sequence=>20
+,p_include_in_reg_disp_sel_yn=>'Y'
+,p_plug_display_point=>'REGION_POSITION_02'
+,p_plug_query_options=>'DERIVED_REPORT_COLUMNS'
+,p_attribute_01=>'N'
+,p_attribute_02=>'HTML'
+);
+wwv_flow_api.create_page_plug(
+ p_id=>wwv_flow_api.id(207364668105373961)
+,p_plug_name=>'New'
+,p_parent_plug_id=>wwv_flow_api.id(205533073737503127)
+,p_region_template_options=>'#DEFAULT#'
+,p_plug_template=>wwv_flow_api.id(304878479137291560)
+,p_plug_display_sequence=>10
+,p_plug_display_point=>'BODY'
+,p_plug_query_options=>'DERIVED_REPORT_COLUMNS'
+,p_attribute_01=>'N'
+,p_attribute_02=>'HTML'
+);
+wwv_flow_api.create_page_plug(
+ p_id=>wwv_flow_api.id(205806481531976568)
+,p_plug_name=>'Informe Logs'
+,p_region_template_options=>'#DEFAULT#:t-Region--scrollBody'
+,p_plug_template=>wwv_flow_api.id(304883916990291570)
+,p_plug_display_sequence=>40
+,p_plug_display_point=>'BODY'
+,p_query_type=>'SQL'
+,p_plug_source=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'select ID_CNFGRCION_LOG,',
+'       CDGO_CLNTE,',
+'       ID_IMPSTO,',
+'       NMBRE_UP,',
+'       NVEL_LOG',
+'  from V_SG_D_CONFIGURACIONES_LOG',
+'WHERE (NVL(:P4_IMPUESTO, ''XXX'') = ''XXX'' OR ID_IMPSTO = :P4_IMPUESTO) ',
+'    and (NVL(:P4_UP, ''XXX'') = ''XXX'' OR NMBRE_UP = :P4_UP) ',
+'    and (NVL(:P4_NIVEL_LOG, ''XXX'') = ''XXX'' OR NVEL_LOG = :P4_NIVEL_LOG) '))
+,p_plug_source_type=>'NATIVE_IR'
+,p_plug_query_options=>'DERIVED_REPORT_COLUMNS'
+);
+wwv_flow_api.create_worksheet(
+ p_id=>wwv_flow_api.id(205806644756976568)
+,p_name=>unistr('Configuraci\00F3n Log')
+,p_max_row_count=>'1000000'
+,p_max_row_count_message=>'The maximum row count for this report is #MAX_ROW_COUNT# rows.  Please apply a filter to reduce the number of records in your query.'
+,p_no_data_found_message=>'No data found.'
+,p_show_nulls_as=>'-'
+,p_pagination_type=>'ROWS_X_TO_Y'
+,p_pagination_display_pos=>'BOTTOM_RIGHT'
+,p_report_list_mode=>'TABS'
+,p_show_detail_link=>'C'
+,p_download_formats=>'CSV:HTML:EMAIL:XLS:PDF:RTF'
+,p_detail_link=>'f?p=&APP_ID.:3:&SESSION.::&DEBUG.:RP:P3_ID_CNFGRCION_LOG:#ID_CNFGRCION_LOG#'
+,p_detail_link_text=>'<img src="#IMAGE_PREFIX#app_ui/img/icons/apex-edit-page.png" class="apex-edit-page" alt="">'
+,p_owner=>'JALCOCER'
+,p_internal_uid=>203603226281325635
+);
+wwv_flow_api.create_worksheet_column(
+ p_id=>wwv_flow_api.id(104160519818193698)
+,p_db_column_name=>'ID_CNFGRCION_LOG'
+,p_display_order=>1
+,p_column_identifier=>'A'
+,p_column_label=>'Id Cnfgrcion Log'
+,p_column_type=>'NUMBER'
+,p_display_text_as=>'HIDDEN'
+);
+wwv_flow_api.create_worksheet_column(
+ p_id=>wwv_flow_api.id(104160972224193704)
+,p_db_column_name=>'CDGO_CLNTE'
+,p_display_order=>2
+,p_column_identifier=>'B'
+,p_column_label=>'Cdgo Clnte'
+,p_column_type=>'NUMBER'
+,p_display_text_as=>'HIDDEN'
+);
+wwv_flow_api.create_worksheet_column(
+ p_id=>wwv_flow_api.id(104161410515193704)
+,p_db_column_name=>'ID_IMPSTO'
+,p_display_order=>3
+,p_column_identifier=>'C'
+,p_column_label=>'Impuesto'
+,p_column_type=>'NUMBER'
+,p_display_text_as=>'LOV_ESCAPE_SC'
+,p_column_alignment=>'CENTER'
+,p_rpt_named_lov=>wwv_flow_api.id(103865872820473573)
+,p_rpt_show_filter_lov=>'1'
+);
+wwv_flow_api.create_worksheet_column(
+ p_id=>wwv_flow_api.id(104161752294193705)
+,p_db_column_name=>'NMBRE_UP'
+,p_display_order=>4
+,p_column_identifier=>'D'
+,p_column_label=>'Up'
+,p_column_type=>'STRING'
+,p_column_alignment=>'CENTER'
+);
+wwv_flow_api.create_worksheet_column(
+ p_id=>wwv_flow_api.id(104162126178193711)
+,p_db_column_name=>'NVEL_LOG'
+,p_display_order=>5
+,p_column_identifier=>'E'
+,p_column_label=>'Nivel Log'
+,p_column_type=>'NUMBER'
+,p_display_text_as=>'LOV_ESCAPE_SC'
+,p_column_alignment=>'CENTER'
+,p_rpt_named_lov=>wwv_flow_api.id(103866137190497903)
+,p_rpt_show_filter_lov=>'1'
+);
+wwv_flow_api.create_worksheet_rpt(
+ p_id=>wwv_flow_api.id(205810364037981486)
+,p_application_user=>'APXWS_DEFAULT'
+,p_report_seq=>10
+,p_report_alias=>'1019591'
+,p_status=>'PUBLIC'
+,p_is_default=>'Y'
+,p_report_columns=>'ID_CNFGRCION_LOG:CDGO_CLNTE:ID_IMPSTO:NMBRE_UP:NVEL_LOG'
+);
+wwv_flow_api.create_page_button(
+ p_id=>wwv_flow_api.id(104796511029141361)
+,p_button_sequence=>10
+,p_button_plug_id=>wwv_flow_api.id(207364668105373961)
+,p_button_name=>'Limpiar'
+,p_button_action=>'DEFINED_BY_DA'
+,p_button_template_options=>'#DEFAULT#:t-Button--iconRight'
+,p_button_template_id=>wwv_flow_api.id(304906801966291639)
+,p_button_image_alt=>'Limpiar'
+,p_button_position=>'BELOW_BOX'
+,p_warn_on_unsaved_changes=>null
+,p_icon_css_classes=>'fa-square-o'
+,p_grid_new_grid=>false
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(104155434380188332)
+,p_name=>'P4_IMPUESTO'
+,p_item_sequence=>20
+,p_item_plug_id=>wwv_flow_api.id(205533073737503127)
+,p_prompt=>'<b>Tributo</b>'
+,p_display_as=>'NATIVE_SELECT_LIST'
+,p_named_lov=>'LV_IMPUESTOS'
+,p_lov=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'select upper(nmbre_impsto) || '' ['' || cdgo_impsto || '']'' as d, ',
+'       id_impsto as r',
+'  from v_df_c_impuestos',
+' where cdgo_clnte = :F_CDGO_CLNTE',
+'       and actvo = ''S''',
+' order by 1'))
+,p_lov_display_null=>'YES'
+,p_lov_null_text=>'-Seleccione Impuesto-'
+,p_cHeight=>1
+,p_field_template=>wwv_flow_api.id(304906335439291628)
+,p_item_template_options=>'#DEFAULT#'
+,p_lov_display_extra=>'YES'
+,p_attribute_01=>'NONE'
+,p_attribute_02=>'N'
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(104155824175188336)
+,p_name=>'P4_UP'
+,p_item_sequence=>30
+,p_item_plug_id=>wwv_flow_api.id(205533073737503127)
+,p_prompt=>'<b>UP</b>'
+,p_display_as=>'NATIVE_TEXT_FIELD'
+,p_cSize=>30
+,p_field_template=>wwv_flow_api.id(304906335439291628)
+,p_item_template_options=>'#DEFAULT#'
+,p_help_text=>'<b>Escriba Nombre de UP</b>'
+,p_attribute_01=>'N'
+,p_attribute_02=>'N'
+,p_attribute_04=>'TEXT'
+,p_attribute_05=>'BOTH'
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(104156271790188336)
+,p_name=>'P4_NIVEL_LOG'
+,p_item_sequence=>40
+,p_item_plug_id=>wwv_flow_api.id(205533073737503127)
+,p_prompt=>'<b>NIVEL LOG</b>'
+,p_display_as=>'NATIVE_SELECT_LIST'
+,p_lov=>'STATIC:0;0,1;1,2;2,3;3,4;4,5;5,6;6'
+,p_lov_display_null=>'YES'
+,p_cHeight=>1
+,p_field_template=>wwv_flow_api.id(304906335439291628)
+,p_item_template_options=>'#DEFAULT#'
+,p_lov_display_extra=>'YES'
+,p_attribute_01=>'NONE'
+,p_attribute_02=>'N'
+);
+wwv_flow_api.create_page_da_event(
+ p_id=>wwv_flow_api.id(104096737905387347)
+,p_name=>'Submit'
+,p_event_sequence=>10
+,p_triggering_element_type=>'ITEM'
+,p_triggering_element=>'P4_IMPUESTO'
+,p_bind_type=>'bind'
+,p_bind_event_type=>'change'
+);
+wwv_flow_api.create_page_da_action(
+ p_id=>wwv_flow_api.id(104096871296387348)
+,p_event_id=>wwv_flow_api.id(104096737905387347)
+,p_event_result=>'TRUE'
+,p_action_sequence=>10
+,p_execute_on_page_init=>'N'
+,p_action=>'NATIVE_SUBMIT_PAGE'
+,p_attribute_02=>'Y'
+,p_stop_execution_on_error=>'Y'
+);
+wwv_flow_api.create_page_da_event(
+ p_id=>wwv_flow_api.id(104096934713387349)
+,p_name=>'Submits'
+,p_event_sequence=>20
+,p_triggering_element_type=>'ITEM'
+,p_triggering_element=>'P4_UP'
+,p_bind_type=>'bind'
+,p_bind_event_type=>'change'
+);
+wwv_flow_api.create_page_da_action(
+ p_id=>wwv_flow_api.id(104097053417387350)
+,p_event_id=>wwv_flow_api.id(104096934713387349)
+,p_event_result=>'TRUE'
+,p_action_sequence=>10
+,p_execute_on_page_init=>'N'
+,p_action=>'NATIVE_SUBMIT_PAGE'
+,p_attribute_02=>'Y'
+,p_stop_execution_on_error=>'Y'
+);
+wwv_flow_api.create_page_da_event(
+ p_id=>wwv_flow_api.id(104097122100387351)
+,p_name=>'Submit_Pag'
+,p_event_sequence=>30
+,p_triggering_element_type=>'ITEM'
+,p_triggering_element=>'P4_NIVEL_LOG'
+,p_bind_type=>'bind'
+,p_bind_event_type=>'change'
+);
+wwv_flow_api.create_page_da_action(
+ p_id=>wwv_flow_api.id(104097222042387352)
+,p_event_id=>wwv_flow_api.id(104097122100387351)
+,p_event_result=>'TRUE'
+,p_action_sequence=>10
+,p_execute_on_page_init=>'N'
+,p_action=>'NATIVE_SUBMIT_PAGE'
+,p_attribute_02=>'Y'
+,p_stop_execution_on_error=>'Y'
+);
+wwv_flow_api.create_page_da_event(
+ p_id=>wwv_flow_api.id(104097678400387356)
+,p_name=>'Refresh_Region'
+,p_event_sequence=>50
+,p_triggering_element_type=>'REGION'
+,p_triggering_region_id=>wwv_flow_api.id(205806481531976568)
+,p_bind_type=>'bind'
+,p_bind_event_type=>'apexafterclosedialog'
+);
+wwv_flow_api.create_page_da_action(
+ p_id=>wwv_flow_api.id(104097792409387357)
+,p_event_id=>wwv_flow_api.id(104097678400387356)
+,p_event_result=>'TRUE'
+,p_action_sequence=>10
+,p_execute_on_page_init=>'N'
+,p_action=>'NATIVE_REFRESH'
+,p_affected_elements_type=>'REGION'
+,p_affected_region_id=>wwv_flow_api.id(205806481531976568)
+,p_stop_execution_on_error=>'Y'
+);
+wwv_flow_api.create_page_da_event(
+ p_id=>wwv_flow_api.id(104771954424883542)
+,p_name=>'LIMPIAR_ITEMS'
+,p_event_sequence=>60
+,p_triggering_element_type=>'BUTTON'
+,p_triggering_button_id=>wwv_flow_api.id(104796511029141361)
+,p_bind_type=>'bind'
+,p_bind_event_type=>'click'
+);
+wwv_flow_api.create_page_da_action(
+ p_id=>wwv_flow_api.id(104772068322883543)
+,p_event_id=>wwv_flow_api.id(104771954424883542)
+,p_event_result=>'TRUE'
+,p_action_sequence=>10
+,p_execute_on_page_init=>'N'
+,p_action=>'NATIVE_CLEAR'
+,p_affected_elements_type=>'ITEM'
+,p_affected_elements=>'P4_IMPUESTO,P4_NIVEL_LOG,P4_UP'
+,p_stop_execution_on_error=>'Y'
+);
+end;
+/

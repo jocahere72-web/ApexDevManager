@@ -1,0 +1,55 @@
+prompt --application/shared_components/user_interface/themes
+begin
+wwv_flow_api.create_theme(
+ p_id=>wwv_flow_api.id(252203197385651502)
+,p_theme_id=>42
+,p_theme_name=>'Universal Theme'
+,p_theme_internal_name=>'UNIVERSAL_THEME'
+,p_ui_type_name=>'DESKTOP'
+,p_navigation_type=>'L'
+,p_nav_bar_type=>'LIST'
+,p_reference_id=>4070917134413059350
+,p_is_locked=>false
+,p_default_page_template=>wwv_flow_api.id(252165693921651362)
+,p_default_dialog_template=>wwv_flow_api.id(252163786603651344)
+,p_error_template=>wwv_flow_api.id(252162518438651337)
+,p_printer_friendly_template=>wwv_flow_api.id(252165693921651362)
+,p_breadcrumb_display_point=>'REGION_POSITION_01'
+,p_sidebar_display_point=>'REGION_POSITION_02'
+,p_login_template=>wwv_flow_api.id(252162518438651337)
+,p_default_button_template=>wwv_flow_api.id(252201929979651469)
+,p_default_region_template=>wwv_flow_api.id(252179169018651396)
+,p_default_chart_template=>wwv_flow_api.id(252179169018651396)
+,p_default_form_template=>wwv_flow_api.id(252179169018651396)
+,p_default_reportr_template=>wwv_flow_api.id(252179169018651396)
+,p_default_tabform_template=>wwv_flow_api.id(252179169018651396)
+,p_default_wizard_template=>wwv_flow_api.id(252179169018651396)
+,p_default_menur_template=>wwv_flow_api.id(252183485503651399)
+,p_default_listr_template=>wwv_flow_api.id(252179169018651396)
+,p_default_irr_template=>wwv_flow_api.id(252178663149651395)
+,p_default_report_template=>wwv_flow_api.id(252189090581651414)
+,p_default_label_template=>wwv_flow_api.id(252201432664651457)
+,p_default_menu_template=>wwv_flow_api.id(252202452052651469)
+,p_default_calendar_template=>wwv_flow_api.id(252202573298651474)
+,p_default_list_template=>wwv_flow_api.id(252197876147651440)
+,p_default_nav_list_template=>wwv_flow_api.id(252200823193651454)
+,p_default_top_nav_list_temp=>wwv_flow_api.id(252200823193651454)
+,p_default_side_nav_list_temp=>wwv_flow_api.id(252199849417651446)
+,p_default_nav_list_position=>'SIDE'
+,p_default_dialogbtnr_template=>wwv_flow_api.id(252173689295651394)
+,p_default_dialogr_template=>wwv_flow_api.id(252169105903651390)
+,p_default_option_label=>wwv_flow_api.id(252201432664651457)
+,p_default_required_label=>wwv_flow_api.id(252201624512651457)
+,p_default_page_transition=>'NONE'
+,p_default_popup_transition=>'NONE'
+,p_default_navbar_list_template=>wwv_flow_api.id(252197109417651439)
+,p_file_prefix => nvl(wwv_flow_application_install.get_static_theme_file_prefix(42),'#IMAGE_PREFIX#themes/theme_42/1.2/')
+,p_files_version=>84
+,p_icon_library=>'FONTAPEX'
+,p_javascript_file_urls=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'#IMAGE_PREFIX#libraries/apex/#MIN_DIRECTORY#widget.stickyWidget#MIN#.js?v=#APEX_VERSION#',
+'#THEME_IMAGES#js/theme42#MIN#.js?v=#APEX_VERSION#'))
+,p_css_file_urls=>'#THEME_IMAGES#css/Core#MIN#.css?v=#APEX_VERSION#'
+);
+end;
+/

@@ -1,0 +1,458 @@
+prompt --application/shared_components/plugins/region_type/com_jk64_heatmap
+begin
+wwv_flow_api.create_plugin(
+ p_id=>wwv_flow_api.id(80203202018784706)
+,p_plugin_type=>'REGION TYPE'
+,p_name=>'COM.JK64.HEATMAP'
+,p_display_name=>'GeoHeatMap'
+,p_supported_ui_types=>'DESKTOP:JQM_SMARTPHONE'
+,p_image_prefix => nvl(wwv_flow_application_install.get_static_plugin_file_prefix('REGION TYPE','COM.JK64.HEATMAP'),'')
+,p_javascript_file_urls=>'#IMAGE_PREFIX#plugins/infortributos/com.jk64.heatmap/jk64plugin.min.js'
+,p_plsql_code=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'PROCEDURE set_map_extents',
+'    (p_lat     IN NUMBER',
+'    ,p_lng     IN NUMBER',
+'    ,p_lat_min IN OUT NUMBER',
+'    ,p_lat_max IN OUT NUMBER',
+'    ,p_lng_min IN OUT NUMBER',
+'    ,p_lng_max IN OUT NUMBER',
+'    ) IS',
+'BEGIN',
+'    p_lat_min := LEAST   (NVL(p_lat_min, p_lat), p_lat);',
+'    p_lat_max := GREATEST(NVL(p_lat_max, p_lat), p_lat);',
+'    p_lng_min := LEAST   (NVL(p_lng_min, p_lng), p_lng);',
+'    p_lng_max := GREATEST(NVL(p_lng_max, p_lng), p_lng);',
+'END set_map_extents;',
+'',
+'FUNCTION latlng2ch (lat IN NUMBER, lng IN NUMBER) RETURN VARCHAR2 IS',
+'BEGIN',
+'  RETURN ''"lat":''',
+'      || TO_CHAR(lat, ''fm990.0999999999999999'')',
+'      || '',"lng":''',
+'      || TO_CHAR(lng, ''fm990.0999999999999999'');',
+'END latlng2ch;',
+'',
+'FUNCTION get_data',
+'    (p_region  IN APEX_PLUGIN.t_region',
+'    ,p_lat_min IN OUT NUMBER',
+'    ,p_lat_max IN OUT NUMBER',
+'    ,p_lng_min IN OUT NUMBER',
+'    ,p_lng_max IN OUT NUMBER',
+'    ) RETURN APEX_APPLICATION_GLOBAL.VC_ARR2 IS',
+'',
+'    l_data   APEX_APPLICATION_GLOBAL.VC_ARR2;',
+'    l_lat    NUMBER;',
+'    l_lng    NUMBER;',
+'    l_count  NUMBER;',
+'    ',
+'    l_column_value_list  APEX_PLUGIN_UTIL.t_column_value_list;',
+'',
+'BEGIN',
+'',
+'    l_column_value_list := APEX_PLUGIN_UTIL.get_data',
+'        (p_sql_statement  => p_region.source',
+'        ,p_min_columns    => 3',
+'        ,p_max_columns    => 3',
+'        ,p_component_name => p_region.name',
+'        ,p_max_rows       => p_region.fetched_rows);',
+'  ',
+'    FOR i IN 1..l_column_value_list(1).count LOOP',
+'  ',
+'        l_lat   := TO_NUMBER(l_column_value_list(1)(i));',
+'        l_lng   := TO_NUMBER(l_column_value_list(2)(i));',
+'        l_count := TO_NUMBER(l_column_value_list(3)(i));',
+'        ',
+'        -- minimise size of data to be sent',
+'        l_data(NVL(l_data.LAST,0)+1) :=',
+'             ''{"a":'' || TO_CHAR(l_lat, ''fm990.0999999999999999'')',
+'          || '',"b":'' || TO_CHAR(l_lng, ''fm990.0999999999999999'')',
+'          || '',"c":''  || TO_CHAR(l_count, ''fm9999990'')',
+'          || ''}'';',
+'    ',
+'        set_map_extents',
+'          (p_lat     => l_lat',
+'          ,p_lng     => l_lng',
+'          ,p_lat_min => p_lat_min',
+'          ,p_lat_max => p_lat_max',
+'          ,p_lng_min => p_lng_min',
+'          ,p_lng_max => p_lng_max',
+'          );',
+'      ',
+'    END LOOP;',
+'',
+'    RETURN l_data;',
+'END get_data;',
+'',
+'PROCEDURE htp_arr (arr IN APEX_APPLICATION_GLOBAL.VC_ARR2) IS',
+'BEGIN',
+'    FOR i IN 1..arr.COUNT LOOP',
+'        -- use prn to avoid loading a whole lot of unnecessary \n characters',
+'        sys.htp.prn(CASE WHEN i > 1 THEN '','' END || arr(i));',
+'    END LOOP;',
+'END htp_arr;',
+'',
+'FUNCTION render_map',
+'    (p_region IN APEX_PLUGIN.t_region',
+'    ,p_plugin IN APEX_PLUGIN.t_plugin',
+'    ,p_is_printer_friendly IN BOOLEAN',
+'    ) RETURN APEX_PLUGIN.t_region_render_result IS',
+'',
+'    SUBTYPE plugin_attr is VARCHAR2(32767);',
+'    ',
+'    l_result       APEX_PLUGIN.t_region_render_result;',
+'',
+'    l_region       VARCHAR2(100);',
+'    l_script       VARCHAR2(32767);',
+'    l_data         APEX_APPLICATION_GLOBAL.VC_ARR2;',
+'    l_lat_min      NUMBER;',
+'    l_lat_max      NUMBER;',
+'    l_lng_min      NUMBER;',
+'    l_lng_max      NUMBER;',
+'',
+'    -- Plugin attributes (application level)',
+'    l_api_key       plugin_attr := p_plugin.attribute_01;',
+'',
+'    -- Component attributes',
+'    l_map_height    plugin_attr := p_region.attribute_01;',
+'    l_sign_in       plugin_attr := p_region.attribute_02;',
+'    l_dissipating   plugin_attr := p_region.attribute_03;',
+'    l_opacity       plugin_attr := p_region.attribute_04;',
+'    l_radius        plugin_attr := p_region.attribute_05;',
+'    l_mapstyle      plugin_attr := p_region.attribute_06;',
+'    ',
+'    FUNCTION js_params RETURN VARCHAR2 IS',
+'        buf VARCHAR2(1000);',
+'    BEGIN',
+'    ',
+'        IF l_api_key IS NOT NULL THEN',
+'            buf := ''key='' || l_api_key;',
+'            IF l_sign_in = ''Y'' THEN',
+'                buf := buf || ''&''||''signed_in=true'';',
+'            END IF;',
+'        END IF;',
+'      ',
+'        -- load library required for heatmap feature',
+'        buf := buf || CASE WHEN buf IS NOT NULL THEN ''&'' END',
+'          || ''key=AIzaSyB0YGNvRc2838L0hbJUyBi78tmMyylw9zM&libraries=visualization'';',
+'    ',
+'        RETURN ''?'' || buf;',
+'    END js_params;',
+'    ',
+'BEGIN',
+'    -- debug information will be included',
+'    IF APEX_APPLICATION.g_debug then',
+'        APEX_PLUGIN_UTIL.debug_region',
+'          (p_plugin => p_plugin',
+'          ,p_region => p_region',
+'          ,p_is_printer_friendly => p_is_printer_friendly);',
+'    END IF;',
+'',
+'    APEX_JAVASCRIPT.add_library',
+'      (p_name           => ''js'' || js_params',
+'      ,p_directory      => ''https://maps.googleapis.com/maps/api/''',
+'      ,p_skip_extension => true);',
+'/*',
+'    APEX_JAVASCRIPT.add_library',
+'      (p_name           => ''jk64plugin.min''',
+'      ,p_directory      => p_plugin.file_prefix);',
+'*/',
+'    l_region := CASE',
+'                WHEN p_region.static_id IS NOT NULL',
+'                THEN p_region.static_id',
+'                ELSE ''R''||p_region.id',
+'                END;',
+'',
+'    IF p_region.source IS NOT NULL THEN',
+'',
+'      l_data := get_data',
+'        (p_region  => p_region',
+'        ,p_lat_min => l_lat_min',
+'        ,p_lat_max => l_lat_max',
+'        ,p_lng_min => l_lng_min',
+'        ,p_lng_max => l_lng_max',
+'        );',
+'        ',
+'    END IF;',
+'',
+'    -- show entire map if no points to show',
+'    IF l_data.COUNT = 0 THEN',
+'      l_lat_min := -90;',
+'      l_lat_max := 90;',
+'      l_lng_min := -180;',
+'      l_lng_max := 180;',
+'    END IF;',
+'    ',
+'    l_script := ''<script>',
+'var opt_#REGION# = {',
+'   container:      "map_#REGION#_container"',
+'  ,regionId:       "#REGION#"',
+'  ,ajaxIdentifier: "''||APEX_PLUGIN.get_ajax_identifier||''"',
+'  ,southwest:      {''||latlng2ch(l_lat_min,l_lng_min)||''}',
+'  ,northeast:      {''||latlng2ch(l_lat_max,l_lng_max)||''}',
+'  ,dissipating:    ''||CASE WHEN l_dissipating = ''Y'' THEN ''true'' ELSE ''false'' END||''',
+'  ,opacity:        ''||l_opacity||''',
+'  ,radius:         ''||l_radius ||',
+'  CASE WHEN l_mapstyle IS NOT NULL THEN ''',
+'  ,mapstyle:       ''||l_mapstyle END || ''',
+'  ,ajaxItems:      "''||APEX_PLUGIN_UTIL.page_item_names_to_jquery(p_region.ajax_items_to_submit)||''"',
+'  ,noDataMessage:  "''||p_region.no_data_found_message||''"',
+'};',
+'function r_#REGION#(f){/in/.test(document.readyState)?setTimeout("r_#REGION#("+f+")",9):f()}',
+'r_#REGION#(function(){',
+'  opt_#REGION#.mapdata = ['';',
+'    sys.htp.p(REPLACE(l_script,''#REGION#'',l_region));',
+'    htp_arr(l_data);',
+'    l_script := ''];',
+'  jk64plugin_initMap(opt_#REGION#);',
+'  apex.jQuery("##REGION#").bind("apexrefresh", function(){jk64plugin_refreshMap(opt_#REGION#);});',
+'});',
+'</script>'';',
+'    sys.htp.p(REPLACE(l_script,''#REGION#'',l_region));',
+'    sys.htp.p(''<div id="map_''||l_region||''_container" style="min-height:''||l_map_height||''px"></div>'');',
+'  ',
+'    RETURN l_result;',
+'END render_map;',
+'',
+'FUNCTION ajax',
+'    (p_region IN APEX_PLUGIN.t_region',
+'    ,p_plugin IN APEX_PLUGIN.t_plugin',
+'    ) RETURN APEX_PLUGIN.t_region_ajax_result IS',
+'',
+'    l_result       APEX_PLUGIN.t_region_ajax_result;',
+'',
+'    l_data         APEX_APPLICATION_GLOBAL.VC_ARR2;',
+'    l_lat_min      NUMBER;',
+'    l_lat_max      NUMBER;',
+'    l_lng_min      NUMBER;',
+'    l_lng_max      NUMBER;',
+'	',
+'BEGIN',
+'    -- debug information will be included',
+'    IF APEX_APPLICATION.g_debug then',
+'        APEX_PLUGIN_UTIL.debug_region',
+'          (p_plugin => p_plugin',
+'          ,p_region => p_region);',
+'    END IF;',
+'    APEX_DEBUG.message(''ajax'');',
+'',
+'    IF p_region.source IS NOT NULL THEN',
+'',
+'      l_data := get_data',
+'        (p_region  => p_region',
+'        ,p_lat_min => l_lat_min',
+'        ,p_lat_max => l_lat_max',
+'        ,p_lng_min => l_lng_min',
+'        ,p_lng_max => l_lng_max',
+'        );',
+'        ',
+'    END IF;',
+'',
+'    -- show entire map if no points to show',
+'    IF l_data.COUNT = 0 THEN',
+'      l_lat_min := -90;',
+'      l_lat_max := 90;',
+'      l_lng_min := -180;',
+'      l_lng_max := 180;',
+'    END IF;',
+'',
+'    sys.owa_util.mime_header(''text/plain'', false);',
+'    sys.htp.p(''Cache-Control: no-cache'');',
+'    sys.htp.p(''Pragma: no-cache'');',
+'    sys.owa_util.http_header_close;',
+'    ',
+'    APEX_DEBUG.message(''l_lat_min=''||l_lat_min||'' data=''||l_data.COUNT);',
+'    ',
+'    sys.htp.p(''{"southwest":{''',
+'      || latlng2ch(l_lat_min,l_lng_min)',
+'      || ''},"northeast":{''',
+'      || latlng2ch(l_lat_max,l_lng_max)',
+'      || ''},"mapdata":['');',
+'    htp_arr(l_data);',
+'    sys.htp.p('']}'');',
+'    ',
+'    APEX_DEBUG.message(''ajax finished'');',
+'    RETURN l_result;',
+'EXCEPTION',
+'    WHEN OTHERS THEN',
+'        APEX_DEBUG.error(SQLERRM);',
+'        sys.htp.p(''{"error":"''||sqlerrm||''"}'');',
+'END ajax;'))
+,p_api_version=>1
+,p_render_function=>'render_map'
+,p_ajax_function=>'ajax'
+,p_standard_attributes=>'SOURCE_SQL:AJAX_ITEMS_TO_SUBMIT:FETCHED_ROWS:NO_DATA_FOUND_MESSAGE'
+,p_substitute_attributes=>true
+,p_subscribe_plugin_settings=>true
+,p_help_text=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'This plugin takes a SQL query with nothing but a whole lot of lat,lng pairs, along with a weighting value, and plots them on a Google Map using the "Heatmap" visualisation. If you don''t have any weighting data, just set that third column to 1 for eac'
+||'h record and it''ll work fine; however if you have a lot of data points, see if you can reduce the volume of data by grouping them by lat,lng and use count(*) for the weight. You might want to reduce the precision for the latitude and longitude values'
+||' somewhat so that they are more likely to get grouped together.',
+'<p>',
+'<strong>Don''t forget to set the <em>Number of Rows</em> attribute on your region to the maximum rows you expect to get from the query, e.g. 1000 or more.</strong>',
+'<p>',
+'Play with the dissipating and radius plugin attributes until you''re happy with the result.',
+'<p>',
+'If you want, you can change the default map style, e.g. to show the map in greyscale (which helps to make the heatmap easier to see) - see help under the <strong>Map Style</strong> attribute for more details.'))
+,p_version_identifier=>'0.2'
+,p_about_url=>'https://github.com/jeffreykemp/jk64-plugin-heatmap'
+,p_files_version=>37
+);
+wwv_flow_api.create_plugin_attribute(
+ p_id=>wwv_flow_api.id(80203406227784708)
+,p_plugin_id=>wwv_flow_api.id(80203202018784706)
+,p_attribute_scope=>'APPLICATION'
+,p_attribute_sequence=>1
+,p_display_sequence=>10
+,p_prompt=>'Google API Key'
+,p_attribute_type=>'TEXT'
+,p_is_required=>false
+,p_default_value=>'AIzaSyB0YGNvRc2838L0hbJUyBi78tmMyylw9zM'
+,p_is_translatable=>false
+,p_help_text=>'Optional. If you don''t set this, you may get a "Google Maps API warning: NoApiKeys" warning in the console log. You can add this later if required. Refer: https://developers.google.com/maps/documentation/javascript/get-api-key#get-an-api-key'
+);
+wwv_flow_api.create_plugin_attribute(
+ p_id=>wwv_flow_api.id(80203807084784708)
+,p_plugin_id=>wwv_flow_api.id(80203202018784706)
+,p_attribute_scope=>'COMPONENT'
+,p_attribute_sequence=>1
+,p_display_sequence=>10
+,p_prompt=>'Map Height'
+,p_attribute_type=>'INTEGER'
+,p_is_required=>true
+,p_default_value=>'400'
+,p_display_length=>5
+,p_max_length=>22
+,p_unit=>'pixels'
+,p_is_translatable=>false
+,p_help_text=>'Map Height in pixels'
+);
+wwv_flow_api.create_plugin_attribute(
+ p_id=>wwv_flow_api.id(80204283877784708)
+,p_plugin_id=>wwv_flow_api.id(80203202018784706)
+,p_attribute_scope=>'COMPONENT'
+,p_attribute_sequence=>2
+,p_display_sequence=>20
+,p_prompt=>'Google Sign-in'
+,p_attribute_type=>'CHECKBOX'
+,p_is_required=>false
+,p_default_value=>'N'
+,p_is_translatable=>false
+,p_help_text=>'Set to Yes to sign-in user to Google (only applicable if Google API Key is provided)'
+);
+wwv_flow_api.create_plugin_attribute(
+ p_id=>wwv_flow_api.id(80204626535784708)
+,p_plugin_id=>wwv_flow_api.id(80203202018784706)
+,p_attribute_scope=>'COMPONENT'
+,p_attribute_sequence=>3
+,p_display_sequence=>30
+,p_prompt=>'Dissipating'
+,p_attribute_type=>'CHECKBOX'
+,p_is_required=>false
+,p_default_value=>'N'
+,p_is_translatable=>false
+,p_help_text=>'Specifies whether heatmaps dissipate on zoom. Yes means the radius of influence of a data point is specified by the radius option only. When dissipating is disabled, the radius option is interpreted as a radius at zoom level 0.'
+);
+wwv_flow_api.create_plugin_attribute(
+ p_id=>wwv_flow_api.id(80205037615784708)
+,p_plugin_id=>wwv_flow_api.id(80203202018784706)
+,p_attribute_scope=>'COMPONENT'
+,p_attribute_sequence=>4
+,p_display_sequence=>40
+,p_prompt=>'Opacity'
+,p_attribute_type=>'NUMBER'
+,p_is_required=>true
+,p_default_value=>'0.6'
+,p_display_length=>5
+,p_is_translatable=>false
+,p_help_text=>'The opacity of the heatmap, expressed as a number between 0 and 1.'
+);
+wwv_flow_api.create_plugin_attribute(
+ p_id=>wwv_flow_api.id(80205476229784708)
+,p_plugin_id=>wwv_flow_api.id(80203202018784706)
+,p_attribute_scope=>'COMPONENT'
+,p_attribute_sequence=>5
+,p_display_sequence=>50
+,p_prompt=>'Radius'
+,p_attribute_type=>'NUMBER'
+,p_is_required=>true
+,p_default_value=>'5'
+,p_display_length=>5
+,p_unit=>'pixels'
+,p_is_translatable=>false
+,p_help_text=>'The radius of influence for each data point, in pixels.'
+);
+wwv_flow_api.create_plugin_attribute(
+ p_id=>wwv_flow_api.id(80205825453784709)
+,p_plugin_id=>wwv_flow_api.id(80203202018784706)
+,p_attribute_scope=>'COMPONENT'
+,p_attribute_sequence=>6
+,p_display_sequence=>60
+,p_prompt=>'Map Style'
+,p_attribute_type=>'TEXTAREA'
+,p_is_required=>false
+,p_is_translatable=>false
+,p_examples=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'Here is an example, a light greyscale style map:',
+'<pre>',
+'[{"featureType":"water","elementType":"geometry","stylers":[{"color":"#e9e9e9"},{"lightness":17}]},{"featureType":"landscape","elementType":"geometry","stylers":[{"color":"#f5f5f5"},{"lightness":20}]},{"featureType":"road.highway","elementType":"geom'
+||'etry.fill","stylers":[{"color":"#ffffff"},{"lightness":17}]},{"featureType":"road.highway","elementType":"geometry.stroke","stylers":[{"color":"#ffffff"},{"lightness":29},{"weight":0.2}]},{"featureType":"road.arterial","elementType":"geometry","style'
+||'rs":[{"color":"#ffffff"},{"lightness":18}]},{"featureType":"road.local","elementType":"geometry","stylers":[{"color":"#ffffff"},{"lightness":16}]},{"featureType":"poi","elementType":"geometry","stylers":[{"color":"#f5f5f5"},{"lightness":21}]},{"featu'
+||'reType":"poi.park","elementType":"geometry","stylers":[{"color":"#dedede"},{"lightness":21}]},{"elementType":"labels.text.stroke","stylers":[{"visibility":"on"},{"color":"#ffffff"},{"lightness":16}]},{"elementType":"labels.text.fill","stylers":[{"sat'
+||'uration":36},{"color":"#333333"},{"lightness":40}]},{"elementType":"labels.icon","stylers":[{"visibility":"off"}]},{"featureType":"transit","elementType":"geometry","stylers":[{"color":"#f2f2f2"},{"lightness":19}]},{"featureType":"administrative","el'
+||'ementType":"geometry.fill","stylers":[{"color":"#fefefe"},{"lightness":20}]},{"featureType":"administrative","elementType":"geometry.stroke","stylers":[{"color":"#fefefe"},{"lightness":17},{"weight":1.2}]}]',
+'</pre>'))
+,p_help_text=>'Easiest way is to copy one from a site like https://snazzymaps.com/'
+);
+wwv_flow_api.create_plugin_std_attribute(
+ p_id=>wwv_flow_api.id(80206781367784710)
+,p_plugin_id=>wwv_flow_api.id(80203202018784706)
+,p_name=>'SOURCE_SQL'
+,p_sql_min_column_count=>3
+,p_sql_max_column_count=>3
+,p_examples=>'SELECT lat, lng, weight FROM mytable;'
+);
+wwv_flow_api.create_plugin_event(
+ p_id=>wwv_flow_api.id(80207123140784710)
+,p_plugin_id=>wwv_flow_api.id(80203202018784706)
+,p_name=>'maploaded'
+,p_display_name=>'mapLoaded'
+);
+end;
+/
+begin
+wwv_flow_api.g_varchar2_table := wwv_flow_api.empty_varchar2_table;
+wwv_flow_api.g_varchar2_table(1) := '66756E6374696F6E206A6B3634706C7567696E5F686561746D61702861297B696628617065782E646562756728612E726567696F6E49642B2220686561746D617022292C612E686561746D6170262628617065782E646562756728612E726567696F6E49';
+wwv_flow_api.g_varchar2_table(2) := '642B22206869646520686561746D617022292C612E686561746D61702E7365744D6170286E756C6C292C617065782E646562756728612E726567696F6E49642B222072656D6F766520686561746D617022292C612E686561746D61705B2264656C657465';
+wwv_flow_api.g_varchar2_table(3) := '225D2C612E686561746D61703D6E756C6C292C612E6D6170646174612E6C656E6774683E30297B612E696E666F4E6F44617461466F756E64262628617065782E646562756728612E726567696F6E49642B222068696465204E6F204461746120466F756E';
+wwv_flow_api.g_varchar2_table(4) := '6420696E666F77696E646F7722292C612E696E666F4E6F44617461466F756E642E636C6F73652829293B666F722876617220653D5B5D2C743D303B743C612E6D6170646174612E6C656E6774683B742B2B29652E70757368287B6C6F636174696F6E3A6E';
+wwv_flow_api.g_varchar2_table(5) := '657720676F6F676C652E6D6170732E4C61744C6E6728612E6D6170646174615B745D2E612C612E6D6170646174615B745D2E62292C7765696768743A612E6D6170646174615B745D2E637D293B612E686561746D61703D6E657720676F6F676C652E6D61';
+wwv_flow_api.g_varchar2_table(6) := '70732E76697375616C697A6174696F6E2E486561746D61704C61796572287B646174613A652C6D61703A612E6D61702C6469737369706174696E673A612E6469737369706174696E672C6F7061636974793A612E6F7061636974792C7261646975733A61';
+wwv_flow_api.g_varchar2_table(7) := '2E7261646975737D297D656C73652222213D3D612E6E6F446174614D657373616765262628617065782E646562756728612E726567696F6E49642B222073686F77204E6F204461746120466F756E6420696E666F77696E646F7722292C612E696E666F4E';
+wwv_flow_api.g_varchar2_table(8) := '6F44617461466F756E643F612E696E666F4E6F44617461466F756E642E636C6F736528293A612E696E666F4E6F44617461466F756E643D6E657720676F6F676C652E6D6170732E496E666F57696E646F77287B636F6E74656E743A612E6E6F446174614D';
+wwv_flow_api.g_varchar2_table(9) := '6573736167652C706F736974696F6E3A7B6C61743A302C6C6E673A307D7D292C612E696E666F4E6F44617461466F756E642E6F70656E28612E6D617029297D66756E6374696F6E206A6B3634706C7567696E5F696E69744D61702861297B617065782E64';
+wwv_flow_api.g_varchar2_table(10) := '6562756728612E726567696F6E49642B2220696E69744D617022293B76617220653D7B7A6F6F6D3A322C6D61705479706549643A676F6F676C652E6D6170732E4D61705479706549642E524F41444D41507D3B612E6D61703D6E657720676F6F676C652E';
+wwv_flow_api.g_varchar2_table(11) := '6D6170732E4D617028646F63756D656E742E676574456C656D656E744279496428612E636F6E7461696E6572292C65292C612E6D61707374796C652626612E6D61702E7365744F7074696F6E73287B7374796C65733A612E6D61707374796C657D292C61';
+wwv_flow_api.g_varchar2_table(12) := '2E6D61702E666974426F756E6473286E657720676F6F676C652E6D6170732E4C61744C6E67426F756E647328612E736F757468776573742C612E6E6F7274686561737429292C6A6B3634706C7567696E5F686561746D61702861292C617065782E646562';
+wwv_flow_api.g_varchar2_table(13) := '756728612E726567696F6E49642B2220696E69744D61702066696E697368656422292C617065782E6A5175657279282223222B612E726567696F6E4964292E7472696767657228226D61706C6F61646564222C7B6D61703A612E6D61707D297D66756E63';
+wwv_flow_api.g_varchar2_table(14) := '74696F6E206A6B3634706C7567696E5F726566726573684D61702861297B617065782E646562756728612E726567696F6E49642B2220726566726573684D617022292C617065782E6A5175657279282223222B612E726567696F6E4964292E7472696767';
+wwv_flow_api.g_varchar2_table(15) := '65722822617065786265666F72657265667265736822292C617065782E64656275672822616A61784974656D733D222B612E616A61784974656D73292C617065782E7365727665722E706C7567696E28612E616A61784964656E7469666965722C7B7061';
+wwv_flow_api.g_varchar2_table(16) := '67654974656D733A612E616A61784974656D737D2C7B64617461547970653A226A736F6E222C737563636573733A66756E6374696F6E2865297B617065782E646562756728612E726567696F6E49642B22207375636365737322292C617065782E646562';
+wwv_flow_api.g_varchar2_table(17) := '756728612E726567696F6E49642B222070446174612E736F757468776573743D222B652E736F757468776573742E6C61742B222C222B652E736F757468776573742E6C6E672B222070446174612E6E6F727468656173743D222B652E6E6F727468656173';
+wwv_flow_api.g_varchar2_table(18) := '742E6C61742B222C222B652E6E6F727468656173742E6C6E67292C612E6D61702E666974426F756E6473287B736F7574683A652E736F757468776573742E6C61742C776573743A652E736F757468776573742E6C6E672C6E6F7274683A652E6E6F727468';
+wwv_flow_api.g_varchar2_table(19) := '656173742E6C61742C656173743A652E6E6F727468656173742E6C6E677D292C617065782E646562756728612E726567696F6E49642B222070446174612E6D6170646174612E6C656E6774683D222B652E6D6170646174612E6C656E677468292C612E6D';
+wwv_flow_api.g_varchar2_table(20) := '6170646174613D652E6D6170646174612C6A6B3634706C7567696E5F686561746D61702861292C617065782E6A5175657279282223222B612E726567696F6E4964292E7472696767657228226170657861667465727265667265736822297D7D292C6170';
+wwv_flow_api.g_varchar2_table(21) := '65782E646562756728612E726567696F6E49642B2220726566726573684D61702066696E697368656422297D';
+null;
+end;
+/
+begin
+wwv_flow_api.create_plugin_file(
+ p_id=>wwv_flow_api.id(80207534680784711)
+,p_plugin_id=>wwv_flow_api.id(80203202018784706)
+,p_file_name=>'jk64plugin.min.js'
+,p_mime_type=>'application/javascript'
+,p_file_charset=>'utf-8'
+,p_file_content=>wwv_flow_api.varchar2_to_blob(wwv_flow_api.g_varchar2_table)
+);
+end;
+/

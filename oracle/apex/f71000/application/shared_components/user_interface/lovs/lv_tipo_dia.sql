@@ -1,0 +1,21 @@
+prompt --application/shared_components/user_interface/lovs/lv_tipo_dia
+begin
+wwv_flow_api.create_list_of_values(
+ p_id=>wwv_flow_api.id(177373083056050686)
+,p_lov_name=>'LV_TIPO_DIA'
+,p_lov_query=>'.'||wwv_flow_api.id(177373083056050686)||'.'
+);
+wwv_flow_api.create_static_lov_data(
+ p_id=>wwv_flow_api.id(177373195186050686)
+,p_lov_disp_sequence=>1
+,p_lov_disp_value=>unistr('H\00E1bil')
+,p_lov_return_value=>'H'
+);
+wwv_flow_api.create_static_lov_data(
+ p_id=>wwv_flow_api.id(177373318871050686)
+,p_lov_disp_sequence=>2
+,p_lov_disp_value=>'Calendario'
+,p_lov_return_value=>'C'
+);
+end;
+/

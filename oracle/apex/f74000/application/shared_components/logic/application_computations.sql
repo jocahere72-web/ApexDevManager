@@ -1,0 +1,40 @@
+prompt --application/shared_components/logic/application_computations
+begin
+wwv_flow_api.create_flow_computation(
+ p_id=>wwv_flow_api.id(14438090084523620)
+,p_computation_sequence=>10
+,p_computation_item=>'F_CDGO_CLNTE'
+,p_computation_point=>'ON_NEW_INSTANCE'
+,p_computation_type=>'STATIC_ASSIGNMENT'
+,p_computation_processed=>'REPLACE_EXISTING'
+,p_computation=>'23001'
+);
+wwv_flow_api.create_flow_computation(
+ p_id=>wwv_flow_api.id(67089356702854061)
+,p_computation_sequence=>10
+,p_computation_item=>'F_DRCCION_SRVDOR'
+,p_computation_point=>'ON_NEW_INSTANCE'
+,p_computation_type=>'STATIC_ASSIGNMENT'
+,p_computation_processed=>'REPLACE_EXISTING'
+,p_computation=>'http://99.0.4.235:8031/ords/api/'
+);
+wwv_flow_api.create_flow_computation(
+ p_id=>wwv_flow_api.id(139631112957592877)
+,p_computation_sequence=>10
+,p_computation_item=>'F_DRCCION_SRVDOR_PRVDO'
+,p_computation_point=>'ON_NEW_INSTANCE'
+,p_computation_type=>'STATIC_ASSIGNMENT'
+,p_computation_processed=>'REPLACE_EXISTING'
+,p_computation=>'http://99.0.4.235:8031/ords/api/'
+);
+wwv_flow_api.create_flow_computation(
+ p_id=>wwv_flow_api.id(139631752803658320)
+,p_computation_sequence=>10
+,p_computation_item=>'F_DRCCION_SRVDOR_PBLCO'
+,p_computation_point=>'ON_NEW_INSTANCE'
+,p_computation_type=>'STATIC_ASSIGNMENT'
+,p_computation_processed=>'REPLACE_EXISTING'
+,p_computation=>'https://monteria-test.taxationsmart.co/ords/api/'
+);
+end;
+/

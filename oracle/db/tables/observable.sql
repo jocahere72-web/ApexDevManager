@@ -1,0 +1,6 @@
+
+  CREATE TABLE "OBSERVABLE"
+   (	"V_N001" NUMBER,
+	"V_C001" VARCHAR2(1000)
+   ) ;
+

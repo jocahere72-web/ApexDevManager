@@ -1,0 +1,53 @@
+prompt --application/pages/page_00901
+begin
+wwv_flow_api.create_page(
+ p_id=>901
+,p_user_interface_id=>wwv_flow_api.id(95249231080808714)
+,p_name=>'Consulta Sujeto Impuesto 2'
+,p_step_title=>'Consulta Sujeto Tributo 2'
+,p_autocomplete_on_off=>'OFF'
+,p_page_template_options=>'#DEFAULT#'
+,p_last_upd_yyyymmddhh24miss=>'20190201031553'
+);
+wwv_flow_api.create_page_plug(
+ p_id=>wwv_flow_api.id(181802247691724608)
+,p_plug_name=>'Datos'
+,p_region_template_options=>'#DEFAULT#:t-Region--scrollBody'
+,p_plug_template=>wwv_flow_api.id(29552524947068508)
+,p_plug_display_sequence=>10
+,p_include_in_reg_disp_sel_yn=>'Y'
+,p_plug_display_point=>'BODY'
+,p_plug_query_options=>'DERIVED_REPORT_COLUMNS'
+,p_attribute_01=>'N'
+,p_attribute_02=>'HTML'
+);
+wwv_flow_api.create_page_button(
+ p_id=>wwv_flow_api.id(181802300002724609)
+,p_button_sequence=>10
+,p_button_plug_id=>wwv_flow_api.id(181802247691724608)
+,p_button_name=>'Modal'
+,p_button_action=>'REDIRECT_PAGE'
+,p_button_template_options=>'#DEFAULT#'
+,p_button_template_id=>wwv_flow_api.id(29604648415068538)
+,p_button_image_alt=>'Modal'
+,p_button_position=>'BELOW_BOX'
+,p_button_redirect_url=>'f?p=&APP_ID.:900:&SESSION.::&DEBUG.:RP:P900_APP,P900_ITEM,P900_PAGE:&APP_ID.,P901_NEW,&APP_PAGE_ID.'
+,p_grid_new_grid=>false
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(181802478670724610)
+,p_name=>'P901_NEW'
+,p_item_sequence=>10
+,p_item_plug_id=>wwv_flow_api.id(181802247691724608)
+,p_prompt=>'New'
+,p_display_as=>'NATIVE_TEXT_FIELD'
+,p_cSize=>30
+,p_field_template=>wwv_flow_api.id(29603993160068537)
+,p_item_template_options=>'#DEFAULT#'
+,p_attribute_01=>'N'
+,p_attribute_02=>'N'
+,p_attribute_04=>'TEXT'
+,p_attribute_05=>'BOTH'
+);
+end;
+/

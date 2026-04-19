@@ -1,0 +1,21 @@
+prompt --application/shared_components/user_interface/lovs/lvl_orgn_ajste
+begin
+wwv_flow_api.create_list_of_values(
+ p_id=>wwv_flow_api.id(30501169762463313)
+,p_lov_name=>'LVL_ORGN_AJSTE'
+,p_lov_query=>'.'||wwv_flow_api.id(30501169762463313)||'.'
+);
+wwv_flow_api.create_static_lov_data(
+ p_id=>wwv_flow_api.id(30501494507463313)
+,p_lov_disp_sequence=>1
+,p_lov_disp_value=>'Automatico'
+,p_lov_return_value=>'A'
+);
+wwv_flow_api.create_static_lov_data(
+ p_id=>wwv_flow_api.id(30501847149463313)
+,p_lov_disp_sequence=>2
+,p_lov_disp_value=>'Manual'
+,p_lov_return_value=>'M'
+);
+end;
+/

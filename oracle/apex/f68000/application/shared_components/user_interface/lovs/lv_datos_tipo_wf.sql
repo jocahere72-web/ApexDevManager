@@ -1,0 +1,27 @@
+prompt --application/shared_components/user_interface/lovs/lv_datos_tipo_wf
+begin
+wwv_flow_api.create_list_of_values(
+ p_id=>wwv_flow_api.id(72033801060839153)
+,p_lov_name=>'LV_DATOS_TIPO_WF'
+,p_lov_query=>'.'||wwv_flow_api.id(72033801060839153)||'.'
+);
+wwv_flow_api.create_static_lov_data(
+ p_id=>wwv_flow_api.id(72034222909839153)
+,p_lov_disp_sequence=>1
+,p_lov_disp_value=>'Caracter'
+,p_lov_return_value=>'CARACTER'
+);
+wwv_flow_api.create_static_lov_data(
+ p_id=>wwv_flow_api.id(72034660787839179)
+,p_lov_disp_sequence=>2
+,p_lov_disp_value=>unistr('N\00FAmero')
+,p_lov_return_value=>'NUMERO'
+);
+wwv_flow_api.create_static_lov_data(
+ p_id=>wwv_flow_api.id(72035057758839180)
+,p_lov_disp_sequence=>3
+,p_lov_disp_value=>'Fecha'
+,p_lov_return_value=>'FECHA'
+);
+end;
+/

@@ -1,0 +1,6 @@
+
+  CREATE TABLE "GD_G_DUMMY"
+   (	"ID_DMMY" NUMBER,
+	"FILE_BLOB" BLOB
+   ) ;
+

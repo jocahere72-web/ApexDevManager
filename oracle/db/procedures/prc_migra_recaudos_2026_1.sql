@@ -1,0 +1,293 @@
+
+  CREATE OR REPLACE EDITIONABLE PROCEDURE "PRC_MIGRA_RECAUDOS_2026_1" (P_CDGO_CLNTE     IN NUMBER,
+                                                      P_VGNCIA         IN VARCHAR2,
+                                                      P_RFNCIA_CTSTRAL IN VARCHAR2 DEFAULT NULL,
+                                                      O_MNSJE          OUT VARCHAR2) IS
+
+  CURSOR C1 IS
+    SELECT D.MODPVALO,
+           D.MODPTIIM,
+           D.MODPSUIM,
+           NVL(T.SUIMCOAL, D.MODPSUIM) SUIMCOAL,
+           case
+             when D.MODPNUDO like '0%' then
+              '2' || D.MODPNUDO
+             when D.MODPNUDO like '1%' then
+              '20' || D.MODPNUDO
+             else
+              MODPNUDO
+           end MODPNUDO,
+           D.MODPFEPA,
+           D.MODPFEAP,
+           D.MODPENFI,
+           D.MODPDPNU,
+           D.MODPCUEF,
+           D.MODPDIGI,
+           D.MODPSECU,
+           D.MODPNUPA,
+           D.MODPVADE,
+           D.MODPDCNU
+      FROM MOVIDOPA@IMPLUSQA D
+      JOIN SUJEIMPU@IMPLUSQA T
+        ON T.SUIMTISI = D.MODPTISI
+       AND T.SUIMSUIM = D.MODPSUIM
+     WHERE EXISTS
+     (SELECT 1
+              FROM AJUSSASI@IMPLUSQA T
+             WHERE T.AJSSDPND = D.MODPDPNU
+               AND T.AJSSSUIM = D.MODPSUIM
+               AND T.AJSSDPSE = D.MODPSECU
+                  --  AND T.AJSSNUPA = D.MODPNUPA
+               AND T.AJSSTISI = '01'
+               AND T.AJSSESTA = 'in')
+       AND (TO_CHAR(D.MODPFEPA, 'yyyy') = P_VGNCIA OR P_VGNCIA IS NULL)
+       AND D.MODPDPEM = '01'
+       AND D.MODPCAEM = '01'
+       AND D.MODPTISI = '01'
+       AND D.MODPTIIM = '01'
+       AND D.MODPESTA = 'ac'
+       AND D.MODPSUIM IS NOT NULL
+       AND D.MODPSUIM <> '0'
+       AND (T.SUIMCOAL = P_RFNCIA_CTSTRAL OR P_RFNCIA_CTSTRAL IS NULL)
+     ORDER BY D.MODPNUDO;
+
+  CURSOR C2(R_MODPDPNU NUMBER,
+            R_MODPSUIM VARCHAR2,
+            R_MODPSECU NUMBER,
+            R_MODPNUPA NUMBER) IS
+    SELECT T.AJSSPERI, T.AJSSCOMO, T.AJSSVALO, T.AJSSVADE
+      FROM MOVIDOPA@IMPLUSQA D
+      JOIN AJUSSASI@IMPLUSQA T
+        ON T.AJSSDPND = D.MODPDPNU
+       AND T.AJSSSUIM = D.MODPSUIM
+       AND T.AJSSDPSE = D.MODPSECU
+          -- AND T.AJSSNUPA = D.MODPNUPA
+       AND T.AJSSTISI = '01'
+       AND T.AJSSESTA = 'in'
+     WHERE D.MODPDPNU = R_MODPDPNU
+       AND D.MODPSUIM = R_MODPSUIM
+       AND D.MODPSECU = R_MODPSECU
+          --  AND D.MODPNUPA = R_MODPNUPA
+       AND D.MODPDPEM = '01'
+       AND D.MODPCAEM = '01'
+       AND D.MODPTISI = '01'
+       AND D.MODPTIIM = '01'
+       AND D.MODPESTA = 'ac'
+       AND D.MODPSUIM IS NOT NULL
+       AND D.MODPSUIM <> '0'
+       AND (T.AJSSAJUS = 'N' OR (T.AJSSAJUS = 'S' AND T.AJSSTIMO = 'DEBI' AND
+           T.AJSSCOMO = '5000'))
+     ORDER BY T.AJSSPERI, T.AJSSCOMO;
+
+  V_CDGO_CLNTE        DF_S_CLIENTES.CDGO_CLNTE%TYPE;
+  V_ID_IMPSTO         DF_C_IMPUESTOS.ID_IMPSTO%TYPE;
+  V_ID_IMPSTO_SBMPSTO DF_I_IMPUESTOS_SUBIMPUESTO.ID_IMPSTO_SBMPSTO%TYPE;
+  V_ID_IMPSTO_ACTO    DF_I_IMPUESTOS_ACTO.ID_IMPSTO_ACTO%TYPE;
+
+  V_ID_SJTO_IMPSTO SI_I_SUJETOS_IMPUESTO.ID_SJTO_IMPSTO%TYPE;
+
+  V_ID_INTRMDIA_MSTRO NUMBER;
+
+  V_CNTDOR       NUMBER;
+  V_TXTO         VARCHAR2(4000);
+  V_ARCHVO       VARCHAR2(200);
+  V_ARCHVO_CMMIT VARCHAR2(200);
+  V_ARCHVO_ERROR VARCHAR2(200);
+  V_FCHA_HRA     VARCHAR2(50);
+
+  /*Migración de los pagos de taxation 2013 a 2015 */
+BEGIN
+  V_FCHA_HRA := TO_CHAR(SYSDATE, 'yyyymmdd_hh24miss');
+
+  V_ARCHVO       := 'PRC_MIGRA_RECAUDOS_2026_1_' || V_FCHA_HRA ||
+                    '_log.txt';
+  V_ARCHVO_CMMIT := 'PRC_MIGRA_RECAUDOS_2026_1_' || V_FCHA_HRA ||
+                    '_cmmit.txt';
+  V_ARCHVO_ERROR := 'PRC_MIGRA_RECAUDOS_2026_1_' || V_FCHA_HRA ||
+                    '_error.txt';
+
+  SITPR001('Entrando a PRC_MIGRA_RECAUDOS_2026_1', V_ARCHVO);
+
+  V_CDGO_CLNTE := NULL;
+
+  BEGIN
+    SELECT A.CDGO_CLNTE
+      INTO V_CDGO_CLNTE
+      FROM DF_S_CLIENTES A
+     WHERE A.CDGO_CLNTE = P_CDGO_CLNTE;
+  EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+      SITPR001('Error (1) en clientes: ' || SQLCODE || '-' || SQLERRM,
+               V_ARCHVO_ERROR);
+    WHEN OTHERS THEN
+      SITPR001('Error (2) en clientes: ' || SQLCODE || '-' || SQLERRM,
+               V_ARCHVO_ERROR);
+  END;
+
+  IF V_CDGO_CLNTE IS NULL THEN
+
+    O_MNSJE := 'Error en cliente, no existe en el sistema!';
+    RETURN;
+  END IF;
+
+  BEGIN
+    SELECT A.ID_IMPSTO, B.ID_IMPSTO_SBMPSTO
+      INTO V_ID_IMPSTO, V_ID_IMPSTO_SBMPSTO
+      FROM DF_C_IMPUESTOS A
+      JOIN DF_I_IMPUESTOS_SUBIMPUESTO B
+        ON A.ID_IMPSTO = B.ID_IMPSTO
+     WHERE A.CDGO_CLNTE = P_CDGO_CLNTE
+       AND A.CDGO_IMPSTO = 'IPU'
+       AND B.CDGO_IMPSTO_SBMPSTO = 'IPU';
+  EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+      SITPR001('Error (1) en impuesto-subimpuesto: ' || SQLCODE || '-' ||
+               SQLERRM,
+               V_ARCHVO_ERROR);
+    WHEN OTHERS THEN
+      SITPR001('Error (2) en impuesto-subimpuesto: ' || SQLCODE || '-' ||
+               SQLERRM,
+               V_ARCHVO_ERROR);
+  END;
+
+  IF V_ID_IMPSTO IS NULL OR V_ID_IMPSTO_SBMPSTO IS NULL THEN
+
+    O_MNSJE := 'Error en impuesto-subImpuesto, no existe en el sistema!';
+    RETURN;
+  END IF;
+
+  V_ID_IMPSTO_ACTO := NULL;
+
+  BEGIN
+    SELECT IA.ID_IMPSTO_ACTO
+      INTO V_ID_IMPSTO_ACTO
+      FROM DF_I_IMPUESTOS_ACTO IA
+     WHERE IA.ID_IMPSTO = V_ID_IMPSTO
+       AND IA.ID_IMPSTO_SBMPSTO = V_ID_IMPSTO_SBMPSTO;
+  EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+      SITPR001('Error (1) en impuesto acto: ' || SQLCODE || '-' || SQLERRM,
+               V_ARCHVO_ERROR);
+    WHEN OTHERS THEN
+      SITPR001('Error (2) en impuesto acto: ' || SQLCODE || '-' || SQLERRM,
+               V_ARCHVO_ERROR);
+  END;
+
+  IF V_ID_IMPSTO_ACTO IS NULL THEN
+
+    O_MNSJE := 'Error en impuesto acto, no existe en el sistema!';
+    RETURN;
+  END IF;
+
+  V_CNTDOR := 0;
+
+  DELETE FROM MIGRA.MG_G_INTERMEDIA_IPU_RECAUDO_2026_DETALLE D
+   WHERE EXISTS
+   (SELECT 1
+            FROM MIGRA.MG_G_INTERMEDIA_IPU_RECAUDO_2026_MAESTRO A
+           WHERE (TO_CHAR(A.FCHA_PGO, 'yyyy') = P_VGNCIA OR P_VGNCIA IS NULL)
+             AND D.ID_INTRMDIA_MSTRO = A.ID_INTRMDIA
+             AND A.ESTDO not in ('S')
+             AND (A.RFRNIA_CTSTRAL = P_RFNCIA_CTSTRAL OR
+                 P_RFNCIA_CTSTRAL IS NULL));
+
+  DELETE FROM MIGRA.MG_G_INTERMEDIA_IPU_RECAUDO_2026_MAESTRO A
+   WHERE (TO_CHAR(A.FCHA_PGO, 'yyyy') = P_VGNCIA OR P_VGNCIA IS NULL)
+     AND A.ESTDO not in ('S')
+     AND (A.RFRNIA_CTSTRAL = P_RFNCIA_CTSTRAL OR P_RFNCIA_CTSTRAL IS NULL);
+  COMMIT;
+
+  FOR R1 IN C1 LOOP
+    SITPR001('Procesando recaudo: ' || R1.MODPDPNU, V_ARCHVO);
+
+    BEGIN
+      SELECT A.ID_SJTO_IMPSTO
+        INTO V_ID_SJTO_IMPSTO
+        FROM HOMO_SUJETO_IMPUESTO A
+       WHERE A.CDGO_CLNTE = P_CDGO_CLNTE
+         AND A.ID_IMPSTO = V_ID_IMPSTO
+         AND A.IDNTFCCION = R1.SUIMCOAL;
+    EXCEPTION
+      WHEN NO_DATA_FOUND THEN
+        V_ID_SJTO_IMPSTO := NULL;
+    END;
+
+    INSERT INTO MIGRA.MG_G_INTERMEDIA_IPU_RECAUDO_2026_MAESTRO
+      (CDGO_IMPSTO,
+       CDGO_SBIMPSTO,
+       CDGO_BNCO,
+       NMRO_CNTA,
+       FCHA_PGO,
+       VLOR_PGO,
+       ESTDO,
+       RFRNIA_CTSTRAL,
+       USRIO,
+       FCHA_APLCCION,
+       DCMNTO_PGO,
+       NMRO_DCMNTO,
+       SCNCIA,
+       NMRO_PQTE,
+       SJTO_IMPSTO,
+       ID_IMPSTO,
+       ID_IMPSTO_SBMPSTO,
+       ID_IMPSTO_ACTO,
+       ID_SJTO_IMPSTO,
+       ESTDO_RGSTRO,
+       NMRO_CNVNIO)
+    VALUES
+      ('IPU',
+       'IPU',
+       nvl(R1.MODPENFI, '999'), --CODIGO BANCO
+       nvl(R1.MODPCUEF, '999'), -- CUENTA BANCO
+       R1.MODPFEPA, -- FECHA PAGO
+       R1.MODPVALO, -- VALOR PAGADO
+       'AC', --ESTADO
+       R1.SUIMCOAL, --RFRNCIA_NVA
+       R1.MODPDIGI, -- USUARIO DIGITA
+       R1.MODPFEAP, --FECHA APLICACION
+       R1.MODPDPNU, --DOCUMENTO DE PAGO
+       NVL(R1.MODPNUDO, R1.MODPDPNU), --NUMERO DOCUMENTO
+       R1.MODPSECU, --SECUENCIA
+       R1.MODPNUPA, --NUMERO PAQUETE
+       R1.MODPSUIM, -- IDNTFCCION
+       V_ID_IMPSTO, --ID IMPSTO
+       V_ID_IMPSTO_SBMPSTO, -- ID_SBIMPSTO
+       V_ID_IMPSTO_ACTO, --ID_IMPSTO_ACTO
+       V_ID_SJTO_IMPSTO, --V_ID_SJTO_IMPSTO
+       DECODE(V_ID_SJTO_IMPSTO, NULL, 'E', 'L'),
+       R1.MODPDCNU) --ESTADO
+    RETURNING ID_INTRMDIA INTO V_ID_INTRMDIA_MSTRO;
+
+    FOR R2 IN C2(R1.MODPDPNU, R1.MODPSUIM, R1.MODPSECU, R1.MODPNUPA) LOOP
+      INSERT INTO MIGRA.MG_G_INTERMEDIA_IPU_RECAUDO_2026_DETALLE
+        (ID_INTRMDIA_MSTRO,
+         CDGO_IMPSTO,
+         CDGO_SBIMPSTO,
+         VGNCIA,
+         CDGO_CNCPTO,
+         VLOR_PGDO)
+      VALUES
+        (V_ID_INTRMDIA_MSTRO,
+         'IPU',
+         'IPU',
+         R2.AJSSPERI, -- VGENCIA
+         R2.AJSSCOMO, --CONCEPTO
+         R2.AJSSVALO - NVL(R2.AJSSVADE, 0) --VALOR
+         );
+    END LOOP;
+
+    V_CNTDOR := V_CNTDOR + 1;
+
+    IF MOD(V_CNTDOR, 100) = 0 THEN
+      V_TXTO := 'Se han procesado ' || V_CNTDOR || ' registros';
+
+      COMMIT;
+      GENESYS.SITPR001(V_TXTO, V_ARCHVO_CMMIT);
+    END IF;
+  END LOOP;
+  V_TXTO := 'Se procesaron ' || V_CNTDOR || ' registros ';
+  GENESYS.SITPR001(V_TXTO, V_ARCHVO_CMMIT);
+  COMMIT;
+END PRC_MIGRA_RECAUDOS_2026_1;
+/
+

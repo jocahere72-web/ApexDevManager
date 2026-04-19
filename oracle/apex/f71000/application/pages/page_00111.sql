@@ -1,0 +1,62 @@
+prompt --application/pages/page_00111
+begin
+wwv_flow_api.create_page(
+ p_id=>111
+,p_user_interface_id=>wwv_flow_api.id(177366559650050652)
+,p_name=>unistr('Prescripci\00F3n Visualizaci\00F3n de Documentos')
+,p_page_mode=>'MODAL'
+,p_step_title=>unistr('Prescripci\00F3n Visualizaci\00F3n de Documentos')
+,p_autocomplete_on_off=>'OFF'
+,p_page_template_options=>'#DEFAULT#'
+,p_dialog_width=>'70%'
+,p_last_updated_by=>'JDIAZ'
+,p_last_upd_yyyymmddhh24miss=>'20190213175750'
+);
+wwv_flow_api.create_page_plug(
+ p_id=>wwv_flow_api.id(83615662753881202)
+,p_plug_name=>'Visor de Documentos'
+,p_region_template_options=>'#DEFAULT#:t-Region--removeHeader:t-Region--scrollBody'
+,p_plug_template=>wwv_flow_api.id(177332998617050607)
+,p_plug_display_sequence=>10
+,p_include_in_reg_disp_sel_yn=>'Y'
+,p_plug_grid_column_span=>10
+,p_plug_display_column=>2
+,p_plug_display_point=>'BODY'
+,p_plug_source=>'htp.p(:P111_DCMNTO);'
+,p_plug_source_type=>'NATIVE_PLSQL'
+,p_plug_query_options=>'DERIVED_REPORT_COLUMNS'
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(83615709612881203)
+,p_name=>'P111_DCMNTO'
+,p_item_sequence=>20
+,p_item_plug_id=>wwv_flow_api.id(83615662753881202)
+,p_use_cache_before_default=>'NO'
+,p_item_default=>'LOCURS'
+,p_source=>'DCMNTO'
+,p_source_type=>'DB_COLUMN'
+,p_display_as=>'NATIVE_HIDDEN'
+,p_attribute_01=>'Y'
+);
+wwv_flow_api.create_page_item(
+ p_id=>wwv_flow_api.id(83615863815881204)
+,p_name=>'P111_ID_DCMNTO'
+,p_item_sequence=>10
+,p_item_plug_id=>wwv_flow_api.id(83615662753881202)
+,p_item_default=>'LOCURS'
+,p_display_as=>'NATIVE_HIDDEN'
+,p_attribute_01=>'Y'
+);
+wwv_flow_api.create_page_process(
+ p_id=>wwv_flow_api.id(83615950287881205)
+,p_process_sequence=>10
+,p_process_point=>'AFTER_HEADER'
+,p_process_type=>'NATIVE_FORM_FETCH'
+,p_process_name=>unistr('Recuperaci\00F3n autom\00E1tica de fila APEX')
+,p_attribute_02=>'GF_G_PRESCRIPCIONES_DCMNTO'
+,p_attribute_03=>'P111_ID_DCMNTO'
+,p_attribute_04=>'ID_DCMNTO'
+,p_error_display_location=>'INLINE_IN_NOTIFICATION'
+);
+end;
+/
